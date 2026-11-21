@@ -4,11 +4,11 @@ export const site = {
   tagline: "Make every ride count",
   description:
     "T Party turns feedback on Boston's public transit into a game. Explore a pixel-art MBTA map, take on real transit challenges, and get rewarded for feedback worth reading.",
-  // The map is the home page. `short` is the label on phone screens.
+  // Three tabs. `also` lists other routes that keep the tab lit (My Challenges lives under Home, Rewards under Their World).
   nav: [
-    { href: "/", label: "Explore", short: "Explore" },
-    { href: "/my-challenges", label: "My Journey", short: "Journey" },
-    { href: "/rewards", label: "Collection", short: "Collection" },
+    { href: "/", label: "Home", short: "Home", also: ["/explore", "/my-challenges"] },
+    { href: "/island", label: "Their World", short: "World", also: ["/rewards"] },
+    { href: "/report", label: "Report", short: "Report" },
   ],
   /** Quieter pages, in the "more" menu. Quests is the list of every quest; Stats are the team's KPIs. */
   moreNav: [
