@@ -1,4 +1,72 @@
+// All Report text and settings in one place.
 export const content = {
   title: "Report",
-  blurb: "Spot something the city should fix? Soon you can snap it here and we'll draft the request for you.",
-};
+  promise: "See something broken? Snap it.",
+  promiseBody: "We check it, draft the 311 request for you, and show you who fixed it.",
+  takePhoto: "Take a photo",
+  steps: [
+    { title: "Snap", body: "A live photo, taken where you stand." },
+    { title: "We check", body: "Is it something the city can fix? We draft it in 311's own words." },
+    { title: "You follow it", body: "See the team and the note when it's closed." },
+  ],
+  permissionNote: "We use your camera and location only to file this report. Reports are anonymous: just the photo, the spot and your description.",
+  demoNote: "Demo: sending is simulated for now. Nothing is sent to the city yet. Nearby cases and followed cases are real Boston 311 data.",
+  myReports: "My reports",
+  noReports: "Nothing yet. Your cases show up here, with the city's answer when there is one.",
+
+  camera: {
+    starting: "Starting the camera…",
+    locating: "Finding you…",
+    located: (m: number) => `Located, within about ${Math.round(m)} m`,
+    shutter: "Take photo",
+    close: "Close",
+    denied: "The camera is blocked. Allow camera access in your browser settings, then try again. We don't accept photos from your gallery.",
+    unavailable: "This device has no camera we can use. Open Tada on your phone. Camera access also needs a secure (https) page.",
+    busy: "The camera couldn't start. Close other apps using it, then try again.",
+    locationDenied: "We need your location to file a report. Allow location access in your browser settings, then try again.",
+    locationFailed: "We couldn't find you. Move to open sky and try again.",
+  },
+  review: { use: "Use this photo", retake: "Retake", note: "Optional: add a note (what's wrong, where exactly)" },
+  checking: ["Looking at your photo…", "Matching 311's categories…", "Almost there…"],
+  retry: "Try again",
+
+  verdict: {
+    private: { title: "Not something the city can fix", next: "Nothing was sent, and you lost nothing." },
+    unclear: { title: "We can't tell what this is", next: "Nothing was sent. Try a clearer photo." },
+    emergency: { title: "This looks like an emergency", body: "Please call 911 now. Boston 311 is not for emergencies, so we did not file anything.", call: "Call 911" },
+    wrong: "I think this is wrong",
+    wrongThanks: "Thanks. We noted it. Nothing was sent.",
+  },
+
+  draft: {
+    title: "Check your report",
+    category: "Category",
+    description: "Description",
+    descriptionHint: "One or two sentences. The city reads exactly this.",
+    goesTo: (team: string) => `Goes to: ${team}`,
+    pin: "Location is fixed to where you took the photo.",
+    anonymous: "Sent anonymously: photo, location, description.",
+    cancel: "Cancel",
+    send: "Send report",
+    sending: "Sending…",
+    tooShort: "Describe the problem in a sentence or two.",
+    personal: "This looks like a phone number or email. The city will see it. Remove it if you can.",
+    sendFailed: "We couldn't send it. Nothing was sent. Your draft is still here.",
+  },
+
+  dupes: {
+    title: "Someone already reported this",
+    body: "An open case of the same type is within about 50 m. Follow it instead of filing a duplicate.",
+    follow: "Follow this case",
+    notSame: "This is a different problem, file mine",
+    away: (m: number) => `${m} m away`,
+    opened: (d: string) => `opened ${d}`,
+    checkFailed: "We couldn't check for nearby cases. You can still file; it might be a duplicate.",
+  },
+
+  stages: { sent: "Sent", in_progress: "In progress", closed: "Closed" },
+  sentTitle: "Report sent",
+  followedTitle: "You're following this case",
+  sentBody: "Track it in My reports. We'll show the city's answer here when there is one.",
+  back: "Back to My reports",
+} as const;

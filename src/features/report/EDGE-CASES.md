@@ -95,3 +95,14 @@ Handling always follows the README rules: reason plus next step, nothing uncheck
 | M-01 | Venue Wi-Fi is bad | Cache the seeded case; show a clear offline state. | Open |
 | M-02 | Camera permission prompt on stage | Do it once on the demo phone beforehand. | Open |
 | M-03 | Real case will not close on cue | Seed one case with a real-style closure note. | Open |
+
+## Found while building v1
+| ID | Case | Handling | State |
+|---|---|---|---|
+| B-01 | The "inside Boston" test is a rough box, so parts of Cambridge and Somerville pass it | Accepted for the demo; the AI may call it `private`. A real boundary check is needed before launch. | Open |
+| B-02 | The send route trusts the client's category and text; it does not re-check the AI verdict | Fine while sending is simulated. Sign the verdict on the server before any real send. | Open |
+| B-03 | Rate limit is in memory, so it resets when the server restarts | Best effort for the demo. | Open |
+| B-04 | The browser pane and some desktops block the camera | The error screen explains it; test the camera on a real phone over https. | Decided |
+| B-05 | A saved draft after an AI failure is kept only for the session ("Try again" keeps the photo) | Leaving the tab loses it. | Open |
+| B-06 | Demo cases close about 50 seconds after sending | Labelled "Demo case: not sent to the city". Never shown as real. | Decided |
+| B-07 | Followed real cases show "In progress" until the first status answer arrives | Keeps the last known status if the data is unreachable. | Decided |
