@@ -12,7 +12,7 @@ export type Challenge = {
   id: string;
   title: string;
   description: string;
-  /** Official = real MBTA request for input. Community = made by T Party, must be labelled unofficial. */
+  /** Official = real MBTA request for input. Community = made by Tada, must be labelled unofficial. */
   type: "official_opportunity" | "community_mission";
   stationIds: string[];
   category: string;

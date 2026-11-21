@@ -82,7 +82,7 @@ export function TrolleyChat({ placement = "bottom-right", className = "" }: Prop
         <section id={panelId} className="trolley-chat__panel" role="dialog" aria-label="Chat with Trolley">
           <header className="trolley-chat__header">
             <span className="trolley-chat__portrait"><Image src={avatar} alt="" width={40} height={40} /></span>
-            <div><strong>Trolley</strong><small>{source === "guide" ? "Built-in rider guide" : "T Party rider guide"}</small></div>
+            <div><strong>Trolley</strong><small>{source === "guide" ? "Built-in rider guide" : "Tada rider guide"}</small></div>
             <button type="button" onClick={close} aria-label="Close chat"><X size={18} /></button>
           </header>
           <div className="trolley-chat__log" ref={log} role="log" aria-label="Conversation" aria-live="polite">

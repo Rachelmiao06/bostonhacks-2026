@@ -161,7 +161,7 @@ export async function GET() {
       liveSyncs: Number(history[0].live_syncs),
       // Fixes left out of time-to-fix because we could not pin their end time to within 30 minutes.
       fixesExcludedAsImprecise: Number(history[0].imprecise),
-      sources: ["MBTA V3 API (live alerts)", "MBTA LAMP public alert archive", "T Party rider submissions"],
+      sources: ["MBTA V3 API (live alerts)", "MBTA LAMP public alert archive", "Tada rider submissions"],
     },
   });
 }
