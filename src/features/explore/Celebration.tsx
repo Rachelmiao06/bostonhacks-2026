@@ -13,6 +13,7 @@ import { unlockSteps } from "@/features/island/content";
 import { categoryInfo, categoryOf, categoryStyle } from "./category";
 import { content } from "./content";
 import { stampCount, useMyProgress } from "./progress";
+import { glassClass, glassStyle, primaryClass, primaryStyle } from "./glass";
 import { AtlasButton } from "./ui";
 
 type Props = {
@@ -131,13 +132,14 @@ export function Celebration({ quest, already, handedOff, onHandOff, extra, onDon
           <>
             <Link
               href="/world"
-              className="inline-flex h-10 items-center rounded-full bg-graphite px-4 text-sm font-medium text-ivory outline-none hover:opacity-90 focus-visible:ring-4 focus-visible:ring-graphite/25"
+              className={`${primaryClass} h-10 px-5 text-sm`}
+              style={primaryStyle}
             >
               {content.celebrate.collection}
             </Link>
-            <AtlasButton tone="outline" onClick={onDone}>
+            <button type="button" onClick={onDone} className={`${glassClass} h-10 px-5 text-sm`} style={glassStyle}>
               {content.celebrate.first.keep}
-            </AtlasButton>
+            </button>
           </>
         ) : (
           <>
