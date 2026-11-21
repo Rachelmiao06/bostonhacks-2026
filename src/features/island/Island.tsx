@@ -81,25 +81,37 @@ function IslandView({
   const [known, setKnown] = useState(plan.known); // tiers knitted in right now
   const [waiting, setWaiting] = useState<number | null>(null); // tier whose thread lies on the quilt
   const [note, setNote] = useState("");
+  const [previewDrops, setPreviewDrops] = useState(0); // how many portal drops the preview button has played
   const handle = useRef<IslandHandle | null>(null);
   const offerRef = useRef<(h: IslandHandle, index: number, more: boolean) => void>(() => {});
 
-  // Leaves a loose thread for tier `index`; when it is pulled the piece knits in and is remembered.
+  // Brings in the reward for stamp `index`. Pieces of the world itself wait on a loose thread until it is pulled;
+  // trophies (and the extra sheep) then fall through a purple portal. The reward is remembered once all of it has arrived.
   useEffect(() => {
     offerRef.current = (h, index, more) => {
       const tier = unlockTiers[index];
       if (!tier) return;
-      const ok = h.offerGift(tier.stages, tier.name, () => {
-        writeSeen(index + 1); // remembered only once the piece has really been knitted in
+      const arrived = () => {
+        writeSeen(index + 1); // remembered only once the reward has really arrived
         setKnown(index + 1);
         setWaiting(null);
-        setNote(content.giftKnitted(tier.name));
+        setNote(content.portalDone(tier.name));
         if (index + 1 < plan.earned) window.setTimeout(() => offerRef.current(h, index + 1, true), 1600);
+      };
+      const drop = () => {
+        setNote(content.portalOpening);
+        if (!h.dropIn(tier.drops, arrived)) arrived();
+      };
+      if (tier.stages.length === 0) return drop();
+      const ok = h.offerGift(tier.stages, tier.name, () => {
+        setWaiting(null);
+        setNote(content.giftKnitted(tier.name));
+        window.setTimeout(drop, 900);
       });
       if (ok) {
         setWaiting(index);
         setNote(more ? content.giftMore : content.giftReady(tier.name));
-      }
+      } else drop();
     };
   }, [plan.earned]);
 
@@ -159,6 +171,18 @@ function IslandView({
           {waiting !== null && !preview && (
             <button type="button" onClick={() => handle.current?.acceptGift()} className={primary}>
               {content.giftButton}
+            </button>
+          )}
+          {preview && phase === "idle" && (
+            <button
+              type="button"
+              onClick={() => {
+                const reward = unlockTiers[previewDrops % total];
+                if (handle.current?.dropIn(reward.drops)) setPreviewDrops((n) => n + 1);
+              }}
+              className={primary}
+            >
+              {content.portalButton}
             </button>
           )}
           <button

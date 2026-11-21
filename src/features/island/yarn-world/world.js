@@ -18,6 +18,9 @@ import { setupGroundArt } from './groundart.js';
 import { setupSmoke } from './smoke.js';
 import { setupMeadow } from './meadow.js';
 import { setupKite } from './kite.js';
+import { setupPortal } from './portal.js';
+import { setupTrophies } from './trophies.js';
+import { setupTrophyPlay } from './trophyplay.js';
 import { buildBlanket } from './blanket.js';
 import { LAYOUT, L, S, H, ROLL, HOUSE, BALL, FLOWER_CLUSTERS } from './layout.js';
 
@@ -52,6 +55,8 @@ const P = {
 	orange: '#d58a3c',
 	blue: '#4c6f9f',
 	green: '#4d8566',
+	// T Party: trophies
+	gold: '#d6a63e',
 };
 
 // ---------------------------------------------------------------------------
@@ -1107,6 +1112,8 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 		{ x: S(-0.9), z: S(3.5), yaw: -1.9, phase: 0.1, hopPeriod: 11 },
 		{ x: S(-4.6), z: S(1.3), yaw: 0.9, phase: 0.45, hopPeriod: 13 },
 		{ x: S(0.7), z: S(-1.9), yaw: 2.4, phase: 0.8, hopPeriod: 9 },
+		// T Party: a fourth sheep (arrives through the portal at 9 stamps); the island holds four at most
+		{ x: S(4.0), z: S(1.0), yaw: -0.8, phase: 0.2, hopPeriod: 12 },
 	];
 	const sheep = sheepSpecs.map((s) => makeSheep(s, root));
 	const ballRig = buildYarnBall(root, rand, sheepSpecs[0]);
@@ -1182,6 +1189,9 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 	const kite = setupKite({ root, wind, kit, terrain });
 	// sheep walk around the kite stake, and the wildflower patches stay clear of it
 	blockers.push([kite.items[0].base.x, kite.items[0].base.z, 0.45]);
+	// T Party: one trophy per stamp, on open ground the sheep then walk around; a portal to drop them through
+	const trophies = setupTrophies({ root, kit, terrain, count: 12, avoid: [[kite.items[0].base.x, kite.items[0].base.z]] });
+	const portal = setupPortal({ root });
 	const meadow = setupMeadow({ root, wind, kit, terrain, trees });
 	const syncColliders = () => {
 		for (const c of sheepColliders) c.s.body.localToWorld(c.center.set(0, 0.5, -0.05));
@@ -1285,6 +1295,8 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 		kite.update(t, dt);
 		meadow.update(t, dt);
 		weave.update(t, dt);
+		portal.update(dt);
+		trophyPlay.update(dt);
 		// the first gust sweeps over the island as soon as the knit-in finishes; cloud shadows fade in with it
 		const busy = weave.busy;
 		if (wasBusy && !busy) wind.gust(1.1);
@@ -1327,7 +1339,9 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 			...pines.map((pn) => ({ obj: pn.g, stage: 'pine' })),
 			...flowerClusters.map(({ group, base }) => ({ obj: group, stage: 'flower', clip: true, base })),
 			{ obj: ballG, stage: 'ball', follow: ballRig.group, drop: 0.5 },
-			...sheep.map((s) => ({ obj: s.g, stage: 'sheep' })),
+			// T Party: the first sheep arrives with the grass (stage 'sheep'); sheep2..4 fall through the portal
+			...sheep.map((s, i) => ({ obj: s.g, stage: i === 0 ? 'sheep' : `sheep${i + 1}` })),
+			...trophies.items,
 			...clouds.map((c) => ({ obj: c.pivot, stage: 'cloud' })),
 			...windProps.items,
 			...water.items,
@@ -1342,6 +1356,7 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 		thread: { path: buildThreadPath() },
 		onStart: () => resetAll(),
 		isUnlocked,
+		portal,
 	});
 
 	// reset the other modules, then knit the world in again
@@ -1357,9 +1372,13 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 		smoke.reset();
 		kite.reset();
 		meadow.reset();
+		trophyPlay.reset();
 		if (skipIntro) weave.skipIntro();
 		else weave.playIntro();
 	}
+
+	// T Party: trophies can be poked and dragged (they check `weave.live` themselves)
+	const trophyPlay = setupTrophyPlay({ trophies, terrain, weave });
 
 	// the thread and the sheep are only grabbable while the world is fully there
 	const gate = (g) => ({ pick: (ray, camera) => (weave.busy ? null : g.pick(ray, camera)), grab: () => g.grab() });
@@ -1374,7 +1393,7 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 			return out.set(rq.nx, groundAt(rq.nx, rq.nz), rq.nz);
 		},
 		// same array for the whole run: poke.js keeps a reference to it
-		grabbables: [...[yarn.grabbable, ...unravel.grabbables, ...sheepLife.grabbables, ...critters.grabbables].map(gate), weave.grabbable],
+		grabbables: [...[yarn.grabbable, ...unravel.grabbables, ...sheepLife.grabbables, ...critters.grabbables].map(gate), ...trophyPlay.grabbables, weave.grabbable],
 		reset: () => resetAll(),
 		playIntro: () => resetAll(),
 		// the finished island at once (no opening), for a returning visitor
@@ -1382,6 +1401,8 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 		// a hidden piece (by stage names) that a loose thread on the quilt knits in when pulled
 		offerGift: (stages, label, onKnitted) => weave.offerGift(stages, label, onKnitted),
 		acceptGift: () => weave.acceptGift(),
+		// pieces (by stage names) fall one at a time through a purple portal above their place
+		dropIn: (stages, onLanded) => weave.dropIn(stages, { onLanded }),
 		setPullSpan: (v) => weave.setPullSpan(v),
 		get phase() {
 			return weave.phase;
@@ -1393,6 +1414,7 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 		// for ?debug=1 inspection
 		sheep,
 		sheepLife,
+		trophies: trophies.items,
 		yarn,
 		wind,
 		critters,

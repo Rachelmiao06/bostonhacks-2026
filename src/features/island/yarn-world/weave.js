@@ -25,7 +25,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { Rope } from './rope.js';
 import { Spring } from './spring.js';
 import { H, S } from './layout.js';
-import { playBaa, playChime, playPop } from './sound.js';
+import { playBaa, playChime, playPop, playThump, playWhoosh } from './sound.js';
 
 // ---------------------------------------------------------------------------
 // Feel knobs
@@ -60,6 +60,10 @@ const WIGGLE_POINTS = 7; // rope particles at the tail that move
 const GIFT_PULL = 0.6; // how far the new piece's thread must be pulled out to knit the piece in
 const GIFT_POP_T = 1.1; // s a piece takes to spring into place
 const GIFT_STAGGER = 0.13; // s between the pieces of one gift
+const DROP_OPEN_T = 1.0; // s the portal takes to open before a piece falls (T Party)
+const DROP_FALL_T = 0.7; // s a piece takes to fall through it
+const DROP_SETTLE_T = 0.8; // s the landing squash lasts; the portal closes as it starts
+const DROP_HEIGHT = 3.6; // how high above its place the portal hangs
 const COLLAPSE_HINT_T = 6; // s after the intro ends that hint reports 'collapse'
 const BALL_THREAD_DIR = [0.55, 0.83]; // xz direction the ball thread trails (toward the default camera)
 const BALL_THREAD_Y = -0.68; // anchor height on the unit ball, relative to its center
@@ -296,7 +300,7 @@ function buildMat(kit) {
 //         the thread. 'start': state 'ball' with the ball thread live and not held. 'collapse': the first
 //         COLLAPSE_HINT_T s after the intro ends while the edge thread is not held.
 // ---------------------------------------------------------------------------
-export function setupWeave({ root, ground, items: specs, kit, H, groundAt, thread, floorY, onStart, isUnlocked = () => true }) {
+export function setupWeave({ root, ground, items: specs, kit, H, groundAt, thread, floorY, onStart, isUnlocked = () => true, portal = null }) {
 	const { mat, sphereRep, P } = kit;
 	let state = 'ball'; // intro | idle | unravel | ball
 	let clock = 0;
@@ -430,6 +434,7 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 	};
 	// undo whatever the intro or outro hid; world.js calls this before it resets the other modules
 	const restore = () => {
+		cancelDrop();
 		showUnknown();
 		for (const c of outroHidden) c.visible = true;
 		outroHidden.length = 0;
@@ -1106,6 +1111,82 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 		cb?.();
 	}
 
+	// ---- drop: T Party. Pieces fall one at a time out of a portal above their place (trophies, new sheep) -------
+	let dropJob = null; // { queue, cur, t, landed, sounded, onLanded }
+	function dropIn(stages, { onLanded = null } = {}) {
+		if (state !== 'idle' || !portal) return false;
+		cancelDrop();
+		const set = new Set(stages);
+		const picked = items.filter((it) => set.has(it.stage));
+		if (!picked.length) return false;
+		for (const it of picked) {
+			refreshBase(it);
+			it.locked = true;
+			hideItem(it);
+		}
+		dropJob = { queue: picked, cur: 0, t: 0, landed: false, sounded: false, fell: false, onLanded };
+		return true;
+	}
+	// the island is being folded away: whatever has not landed yet is simply part of it now
+	function cancelDrop() {
+		if (!dropJob) return;
+		for (const it of dropJob.queue) {
+			it.locked = false;
+			resetItem(it);
+		}
+		dropJob = null;
+		portal?.reset();
+	}
+	function stepDrop(dt) {
+		const j = dropJob;
+		if (!j) return;
+		const it = j.queue[j.cur];
+		const sheepPiece = it.stage.startsWith('sheep');
+		j.t += dt;
+		refreshBase(it);
+		const b = it.base;
+		portal.open(b.x, b.y + DROP_HEIGHT, b.z, b.y);
+		if (!j.sounded && j.t > 0) {
+			j.sounded = true;
+			playChime();
+		}
+		const tf = j.t - DROP_OPEN_T;
+		if (tf < 0) return;
+		if (tf < DROP_FALL_T) {
+			if (!j.fell) {
+				j.fell = true;
+				playWhoosh();
+			}
+			const u = tf / DROP_FALL_T;
+			const grow = 0.3 + 0.7 * Math.min(1, u * 6); // it comes out of the portal small and swells
+			it.w.visible = true;
+			place(it, grow, grow, grow, b.x, b.y + DROP_HEIGHT * (1 - u * u), b.z);
+			return;
+		}
+		const ts = tf - DROP_FALL_T;
+		if (!j.landed) {
+			j.landed = true;
+			portal.close();
+			if (sheepPiece) playBaa();
+			else playThump({ pitch: 1.3 });
+			playPop({ pitch: 1.2 });
+		}
+		const q = Math.exp(-7 * ts) * Math.cos(16 * ts);
+		place(it, 1 + 0.2 * q, 1 - 0.34 * q, 1 + 0.2 * q, b.x, b.y, b.z);
+		if (ts < DROP_SETTLE_T) return;
+		it.locked = false;
+		resetItem(it);
+		j.cur++;
+		if (j.cur >= j.queue.length) {
+			const cb = j.onLanded;
+			dropJob = null;
+			cb?.();
+			return;
+		}
+		j.t = -0.3; // a short gap before the next piece
+		j.landed = j.sounded = j.fell = false;
+	}
+
 	let thS = 0;
 	let spawnAcc = 0;
 	let finalAt = -1;
@@ -1113,6 +1194,7 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 	function startUnravel() {
 		hideHandle(giftH);
 		gift = null;
+		cancelDrop();
 		state = 'unravel';
 		clock = 0;
 		thS = 0;
@@ -1270,6 +1352,7 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 		else if (state === 'idle') stepIdle(dt);
 		else if (state === 'unravel') stepUnravel(dt);
 		stepGift(dt);
+		stepDrop(dt);
 		stepStreaks(dt);
 		if (bigRoot.visible) updateBall(dt);
 		// the ball thread follows the ball surface (after updateBall)
@@ -1299,6 +1382,12 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 		playIntro,
 		skipIntro,
 		offerGift,
+		dropIn,
+		// T Party: is this piece on the island right now (shown, earned, not mid-animation)? Gates playing with it.
+		live(obj) {
+			const it = items.find((i) => i.obj === obj);
+			return state === 'idle' && !!it && it.w.visible && !it.locked;
+		},
 		// the no-drag way to knit the waiting piece in
 		acceptGift() {
 			if (state === 'idle' && gift && !gift.popping) startGift();

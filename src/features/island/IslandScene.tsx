@@ -11,6 +11,8 @@ export type IslandHandle = {
   offerGift: (stages: string[], label: string, onKnitted: () => void) => boolean;
   /** Knit the waiting piece in without dragging. */
   acceptGift: () => void;
+  /** Hide pieces (by stage names) and drop them one by one through a purple portal. Calls back when the last has landed. */
+  dropIn: (stages: string[], onLanded?: () => void) => boolean;
 };
 
 type Props = {

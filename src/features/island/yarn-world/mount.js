@@ -208,6 +208,7 @@ export function mountIsland(container, { isUnlocked, onPhase, instant = false })
 		replay: () => world.playIntro(),
 		offerGift: (stages, label, onKnitted) => world.offerGift(stages, label, onKnitted),
 		acceptGift: () => world.acceptGift(),
+		dropIn: (stages, onLanded) => world.dropIn(stages, onLanded),
 		dispose() {
 			renderer.setAnimationLoop(null);
 			observer.disconnect();
