@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Fredoka, Geist_Mono, Press_Start_2P } from "next/font/google";
+import { Fraunces, Fredoka, Geist, Geist_Mono, Press_Start_2P } from "next/font/google";
 import "./globals.css";
 import { SiteNav } from "@/components/shared/site-nav";
 import { SiteFooter } from "@/components/shared/site-footer";
@@ -16,6 +16,17 @@ const pressStart = Press_Start_2P({
   weight: "400",
 });
 
+// Atlas look: editorial serif headings and a quiet sans for interface text.
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+});
+
+const geist = Geist({
+  variable: "--font-geist",
+  subsets: ["latin"],
+});
+
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
@@ -30,7 +41,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${fredoka.variable} ${pressStart.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${fredoka.variable} ${pressStart.variable} ${geistMono.variable} ${fraunces.variable} ${geist.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <SiteNav />
