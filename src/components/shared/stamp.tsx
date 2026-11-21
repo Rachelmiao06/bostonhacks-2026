@@ -16,7 +16,7 @@ type Props = {
 const SIZES = {
   sm: "size-14 text-[0.5rem] [&_strong]:text-[0.7rem]",
   md: "size-20 text-[0.55rem] [&_strong]:text-sm",
-  lg: "size-28 text-[0.65rem] [&_strong]:text-lg",
+  lg: "size-28 text-[0.62rem] [&_strong]:text-[0.95rem]",
 };
 
 /** A round rubber stamp: double ring, slight tilt, ink-coloured text. Used for contributions and the collection. */
@@ -32,7 +32,7 @@ export function Stamp({ top, middle, bottom, tone, size = "md", className }: Pro
     >
       <span className="flex flex-col items-center gap-0.5 px-1">
         <span className="line-clamp-1">{top}</span>
-        <strong className="font-serif leading-none font-bold tracking-normal normal-case">{middle}</strong>
+        <strong className="line-clamp-2 font-serif leading-none font-bold tracking-normal break-words normal-case">{middle}</strong>
         {bottom && <span className="line-clamp-1 opacity-80">{bottom}</span>}
       </span>
     </span>
