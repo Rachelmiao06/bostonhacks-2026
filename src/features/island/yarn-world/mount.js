@@ -113,7 +113,7 @@ export function mountIsland(container, { isUnlocked, onPhase, onHotspot, onHover
 	const swayOffset = new THREE.Vector3();
 	function sway() {
 		const now = performance.now() / 1000;
-		if (swayHeld || pointerOnObject || userActive || reducedMotion.matches || now - idleAt < 2.5) {
+		if (flight || swayHeld || pointerOnObject || userActive || reducedMotion.matches || now - idleAt < 2.5) {
 			swayResume = true;
 			return;
 		}
@@ -187,6 +187,45 @@ export function mountIsland(container, { isUnlocked, onPhase, onHotspot, onHover
 	const screenCenter = new THREE.Vector2(0, 0);
 	let focusDist = camera.position.distanceTo(controls.target);
 
+	// A guided look: fly the camera toward one object (so a first-time rider is shown where to look next), or back
+	// to the overview. It pauses the sway while it runs, and any drag by the rider cancels it. Reduced Motion jumps.
+	const home = { pos: camera.position.clone(), target: controls.target.clone() };
+	let flight = null; // { t, dur, fromPos, toPos, fromTarget, toTarget }
+	controls.addEventListener('start', () => {
+		flight = null;
+	});
+	const ease = (u) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
+	function flyTo(pos, target) {
+		if (reducedMotion.matches) {
+			camera.position.copy(pos);
+			controls.target.copy(target);
+			flight = null;
+			return;
+		}
+		flight = { t: 0, dur: 1.7, fromPos: camera.position.clone(), toPos: pos.clone(), fromTarget: controls.target.clone(), toTarget: target.clone() };
+	}
+	function stepFlight(dt) {
+		if (!flight) return;
+		flight.t += dt;
+		const k = ease(Math.min(1, flight.t / flight.dur));
+		camera.position.lerpVectors(flight.fromPos, flight.toPos, k);
+		controls.target.lerpVectors(flight.fromTarget, flight.toTarget, k);
+		if (flight.t >= flight.dur) flight = null;
+	}
+	const flyObj = new THREE.Vector3();
+	function focusOn(id) {
+		hotspot(id).group.getWorldPosition(flyObj);
+		const c = home.target;
+		const out = new THREE.Vector3(flyObj.x - c.x, 0, flyObj.z - c.z);
+		if (out.lengthSq() < 1e-4) out.set(0, 0, 1);
+		out.normalize();
+		const horizontal = Math.hypot(home.pos.x - c.x, home.pos.z - c.z) * 0.8;
+		const pos = new THREE.Vector3(c.x + out.x * horizontal, (home.pos.y - c.y) * 0.72 + c.y, c.z + out.z * horizontal);
+		const target = c.clone().lerp(flyObj, 0.85);
+		target.y = flyObj.y + 0.45; // the object sits a little below the middle, with room for a tip over it
+		flyTo(pos, target);
+	}
+
 	const timer = new THREE.Timer();
 	const FOCUS_HOLD = 4;
 	const focusLock = { point: new THREE.Vector3(), until: -1 };
@@ -225,6 +264,7 @@ export function mountIsland(container, { isUnlocked, onPhase, onHotspot, onHover
 		const rawDt = timer.getDelta();
 		const dt = Math.min(rawDt, 0.05);
 		const t = timer.getElapsed();
+		stepFlight(Math.min(rawDt, 0.25)); // real elapsed time, so the guided look takes the same time on a slow device
 		sway();
 		controls.update(dt);
 		if (t < focusLock.until) {
@@ -270,6 +310,10 @@ export function mountIsland(container, { isUnlocked, onPhase, onHotspot, onHover
 			out.visible = anchorPoint.z < 1;
 			return out;
 		},
+		/** Fly the camera toward a hotspot (the journal or a gift), smoothly. */
+		focusHotspot: (id) => focusOn(id),
+		/** Fly the camera back to the overview it started with. */
+		resetCamera: () => flyTo(home.pos, home.target),
 		/** Hold the gentle camera sway while a ticket is open, so the camera stays where it is. */
 		holdCamera: (hold) => {
 			swayHeld = hold;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { glass } from "./glass";
 import type { IslandHandle } from "./IslandScene";
 
 const MARGIN = 10;
@@ -28,7 +29,7 @@ export function CoachMark({ id, text, skipLabel, onSkip, handle }: { id: string;
         const ht = node.offsetHeight;
         const bob = reduced.matches ? 0 : Math.sin(now / 450) * 4;
         const x = Math.min(Math.max(out.x - w / 2, MARGIN), Math.max(MARGIN, parent.clientWidth - w - MARGIN));
-        const y = Math.max(TOP_MIN, out.y - ht - 58 + bob);
+        const y = Math.max(TOP_MIN, out.y - ht - 46 + bob); // well above the object (its own tag is hidden while this shows)
         node.style.transform = `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`;
         if (arrow.current) arrow.current.style.left = `${Math.min(Math.max(out.x - x - 7, 16), w - 30)}px`;
         node.style.opacity = out.visible && out.x > 0 && out.x < parent.clientWidth ? "1" : "0";
@@ -40,14 +41,14 @@ export function CoachMark({ id, text, skipLabel, onSkip, handle }: { id: string;
   }, [handle, id]);
 
   return (
-    <div ref={el} style={{ opacity: 0 }} className="pointer-events-auto absolute top-0 left-0 z-20 w-[min(15rem,calc(100%-1.25rem))] rounded-2xl border border-ivory/80 bg-ivory/95 p-3.5 font-ui text-graphite shadow-float backdrop-blur-xl will-change-transform">
-      <p role="status" className="text-sm leading-snug font-medium">
+    <div ref={el} style={{ opacity: 0 }} className={`pointer-events-auto absolute top-0 left-0 z-20 w-[min(15rem,calc(100%-1.25rem))] rounded-3xl p-3.5 font-ui text-graphite will-change-transform ${glass}`}>
+      <p role="status" className="relative text-sm leading-snug font-medium">
         {text}
       </p>
-      <button type="button" onClick={onSkip} className="mt-2 cursor-pointer text-[0.72rem] text-taupe underline underline-offset-2 outline-none hover:text-graphite focus-visible:ring-2 focus-visible:ring-graphite/30">
+      <button type="button" onClick={onSkip} className="relative mt-2 cursor-pointer text-[0.72rem] text-taupe underline underline-offset-2 outline-none hover:text-graphite focus-visible:ring-2 focus-visible:ring-graphite/30">
         {skipLabel}
       </button>
-      <span ref={arrow} aria-hidden className="absolute -bottom-1.5 size-3.5 rotate-45 border-r border-b border-ivory/80 bg-ivory/95" />
+      <span ref={arrow} aria-hidden className="absolute -bottom-1.5 size-3.5 rotate-45 border-r border-b border-ivory/90 bg-ivory/90" />
     </div>
   );
 }

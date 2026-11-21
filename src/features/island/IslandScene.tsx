@@ -20,6 +20,10 @@ export type IslandHandle = {
   highlightHotspot: (id: string, on: boolean) => void;
   /** Where a hotspot is on screen, in pixels of the scene, so labels and tickets can sit beside it. */
   hotspotScreen: (id: string, out: { x: number; y: number; visible: boolean }) => { x: number; y: number; visible: boolean };
+  /** Fly the camera toward a hotspot (the journal or a gift), smoothly. */
+  focusHotspot: (id: string) => void;
+  /** Fly the camera back to the overview it started with. */
+  resetCamera: () => void;
   /** Hold the gentle camera sway while a ticket is open, so the camera stays where it is. */
   holdCamera: (hold: boolean) => void;
 };

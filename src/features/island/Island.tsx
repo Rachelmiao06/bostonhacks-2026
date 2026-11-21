@@ -8,6 +8,7 @@ import { attributions } from "@/lib/places";
 import { demoGifts } from "./gifts";
 import Link from "next/link";
 import { CoachMark } from "./CoachMark";
+import { glass } from "./glass";
 import { GiftTicket } from "./GiftTicket";
 import { HotspotLabel, type TagIcon } from "./HotspotLabel";
 import { IslandHelp } from "./IslandHelp";
@@ -137,7 +138,8 @@ function IslandView({
   const places = useNearbyPlaces(true);
   // First-visit tips, one at a time: 0 the gift, 1 the journal, 2 how the world grows, 3 done. Not shown in the preview.
   const [coach, setCoach] = useState(() => (preview ? 3 : readOnboard()));
-  const [coachReady, setCoachReady] = useState(false);
+  const [readyStep, setReadyStep] = useState<number | null>(null); // the tip that has finished its camera move and may show
+  const prevCoach = useRef(coach);
   const handle = useRef<IslandHandle | null>(null);
   const dropRef = useRef<(h: IslandHandle, index: number) => void>(() => {});
 
@@ -228,16 +230,30 @@ function IslandView({
     handle.current?.setGiftStates(giftStatesFor(known, openedRef.current));
   }, [known]);
 
-  // The tips wait a moment after the island is knitted, and are remembered (display memory only).
+  // The tour: for each tip the camera first flies to its object (or back to the overview for the last one), and only then
+  // does the tip show. A tip is remembered once done (display memory only). Opening a ticket pauses the tour.
   useEffect(() => {
-    if (phase !== "idle" || preview) return;
-    const t = window.setTimeout(() => setCoachReady(true), 2500);
-    return () => window.clearTimeout(t);
-  }, [phase, preview]);
+    if (phase !== "idle" || preview || ticket !== null || coach >= 3) return;
+    const first = prevCoach.current === coach && readyStep === null;
+    const t0 = window.setTimeout(() => {
+      const h = handle.current;
+      if (coach === 0) h?.focusHotspot("gift-0");
+      else if (coach === 1) h?.focusHotspot("journal");
+      else h?.resetCamera();
+    }, first ? 1800 : 600);
+    const t1 = window.setTimeout(() => setReadyStep(coach), (first ? 1800 : 600) + 1900);
+    return () => {
+      window.clearTimeout(t0);
+      window.clearTimeout(t1);
+    };
+  }, [phase, preview, ticket, coach, readyStep]);
   useEffect(() => {
     if (!preview) writeOnboard(coach);
+    // the tour is over (finished or skipped): back to the overview
+    if (prevCoach.current < 3 && coach >= 3 && !preview) handle.current?.resetCamera();
+    prevCoach.current = coach;
   }, [coach, preview]);
-  const coachTarget = coachReady && phase === "idle" && ticket === null ? (coach === 0 ? "gift-0" : coach === 1 ? "journal" : null) : null;
+  const coachTarget = readyStep === coach && phase === "idle" && ticket === null ? (coach === 0 ? "gift-0" : coach === 1 ? "journal" : null) : null;
   useEffect(() => {
     if (!coachTarget) return;
     const h = handle.current;
@@ -294,8 +310,8 @@ function IslandView({
 
       {/* First-visit tips: point at the gift, then the journal, then say how the world grows */}
       {coachTarget && <CoachMark key={coachTarget} id={coachTarget} text={coach === 0 ? content.coach.gift : content.coach.journal} skipLabel={content.coach.skip} onSkip={() => setCoach(3)} handle={handle} />}
-      {coachReady && phase === "idle" && ticket === null && coach === 2 && (
-        <div className="absolute inset-x-3 bottom-16 z-20 mx-auto flex max-w-sm flex-col gap-2 rounded-2xl border border-ivory/80 bg-ivory/95 p-3.5 text-graphite shadow-float backdrop-blur-xl sm:bottom-20">
+      {readyStep === 2 && phase === "idle" && ticket === null && coach === 2 && (
+        <div className={`absolute inset-x-3 bottom-16 z-20 mx-auto flex max-w-sm flex-col gap-2 rounded-3xl p-3.5 text-graphite sm:bottom-20 ${glass}`}>
           <p role="status" className="text-sm leading-snug font-medium">
             {content.coach.grow}
           </p>
@@ -337,7 +353,7 @@ function IslandView({
       {/* Every object wears a small glass tag that follows it, so you can tell what it is; hover or focus grows it */}
       {phase === "idle" && ticket === null && (
         <div className="pointer-events-none absolute inset-0 z-10">
-          {hotspotIds.map((id) => (
+          {hotspotIds.filter((id) => id !== coachTarget).map((id) => (
             <HotspotLabel key={id} id={id} expanded={(hover ?? focused) === id} handle={handle} {...labelFor(id, giftStates, plan.progressKnown ? known : null, hasPlace)} />
           ))}
         </div>
