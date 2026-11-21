@@ -165,7 +165,7 @@ export function createCollection(canvas, { sources, states, reveal = new Set() }
 			const d = s.i - activeSmooth;
 			const near = Math.max(0, 1 - Math.abs(d)); // 1 at the centre
 			s.hover += ((hover === s.i ? 1 : 0) - s.hover) * Math.min(1, dt * 10);
-			s.sel += ((active === s.i ? 1 : 0) - s.sel) * Math.min(1, dt * 8);
+			s.sel += ((Math.round(activeSmooth) === s.i ? 1 : 0) - s.sel) * Math.min(1, dt * 8);
 			const calm = reduced.matches ? 0 : 1;
 			if (s.reveal < 1 && revealDelay <= 0) s.reveal = Math.min(1, s.reveal + dt / (reduced.matches ? 0.01 : 1.5));
 			const rise = ease(s.reveal);
@@ -193,6 +193,13 @@ export function createCollection(canvas, { sources, states, reveal = new Set() }
 		setActive(i) {
 			active = Math.max(0, Math.min(slots.length - 1, i));
 		},
+		/** Follow the pointer: put the row at a fractional position right now (no easing), clamped to the row. */
+		setScroll(f) {
+			active = Math.max(0, Math.min(slots.length - 1, f));
+			activeSmooth = active;
+		},
+		/** The row's current position, as a fractional item index. */
+		position: () => activeSmooth,
 		setHover(i) {
 			hover = i;
 		},

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronLeft, ChevronRight, Lock, X } from "lucide-react";
+import { Check, Lock, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { content, unlockSteps } from "./content";
 import { glass } from "./glass";
@@ -10,6 +10,8 @@ import { readCollectionSeen, writeCollectionSeen } from "./seen";
 
 type Controller = {
   setActive: (i: number) => void;
+  setScroll: (f: number) => void;
+  position: () => number;
   setHover: (i: number | null) => void;
   resize: (w: number, h: number) => void;
   slots: () => { x: number; y: number; size: number; shown: boolean }[];
@@ -102,8 +104,24 @@ export function Collection({ known, handle, onClose }: { known: number | null; h
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  // Pointer: hover lifts a piece; a short press selects it; a horizontal swipe moves along the row.
-  const down = useRef<{ x: number; y: number } | null>(null);
+  // Pointer: the row follows the mouse or finger as you drag, and the wheel / trackpad scrolls it; on release it glides
+  // to the nearest piece. Hover lifts a piece; a short press selects it. No side buttons are needed.
+  const pos = useRef(active);
+  const drag = useRef<{ x: number; start: number; moved: boolean; v: number; lastX: number; lastT: number } | null>(null);
+  const snapTimer = useRef(0);
+  const clamp = (f: number) => Math.max(0, Math.min(total - 1, f));
+  const settle = (f: number) => {
+    const to = Math.round(clamp(f));
+    pos.current = to;
+    setActive(to);
+    ctrl.current?.setActive(to);
+  };
+  const follow = (f: number) => {
+    pos.current = clamp(f);
+    ctrl.current?.setScroll(pos.current);
+    const r = Math.round(pos.current);
+    setActive((a) => (a === r ? a : r));
+  };
   const nearest = (x: number, y: number): number | null => {
     const ctl = ctrl.current;
     if (!ctl) return null;
@@ -119,10 +137,34 @@ export function Collection({ known, handle, onClose }: { known: number | null; h
     });
     return best;
   };
-  const local = (e: React.PointerEvent) => {
+  const local = (e: { clientX: number; clientY: number }) => {
     const r = stage.current!.getBoundingClientRect();
     return { x: e.clientX - r.left, y: e.clientY - r.top };
   };
+  // keep pos in step when the selection changes some other way (keyboard, label button)
+  useEffect(() => {
+    if (Math.round(pos.current) !== active) pos.current = active;
+  }, [active]);
+  // wheel / trackpad: horizontal (or vertical) scrolling moves the row
+  useEffect(() => {
+    const el = stage.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      const ctl = ctrl.current;
+      if (!ctl) return;
+      e.preventDefault();
+      const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      follow(pos.current + d / Math.max(120, ctl.spacingPx()) * 0.9);
+      window.clearTimeout(snapTimer.current);
+      snapTimer.current = window.setTimeout(() => settle(pos.current), 140);
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+      window.clearTimeout(snapTimer.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const unlockedHere = known !== null && active < known;
   const next = known !== null && known < total ? unlockSteps[known] : null;
@@ -149,26 +191,47 @@ export function Collection({ known, handle, onClose }: { known: number | null; h
       {/* The floating row. One canvas for all pieces; the labels below are real buttons (roving focus, arrow keys). */}
       <div
         ref={stage}
-        className="relative mt-3 h-[min(40svh,20rem)] w-full max-w-5xl flex-none touch-pan-y select-none sm:h-[min(44svh,22rem)]"
+        className="relative mt-3 h-[min(40svh,20rem)] w-full max-w-5xl flex-none touch-pan-y cursor-grab select-none active:cursor-grabbing sm:h-[min(44svh,22rem)]"
         onPointerMove={(e) => {
+          const d = drag.current;
+          const ctl = ctrl.current;
+          if (d && ctl) {
+            const dx = e.clientX - d.x;
+            if (!d.moved && Math.abs(dx) > 5) {
+              d.moved = true;
+              ctl.setHover(null);
+            }
+            if (d.moved) {
+              const now = performance.now();
+              if (now > d.lastT) d.v = (d.v * 0.6 + (((e.clientX - d.lastX) / ctl.spacingPx()) / (now - d.lastT)) * 0.4);
+              d.lastX = e.clientX;
+              d.lastT = now;
+              follow(d.start - dx / ctl.spacingPx());
+            }
+            return;
+          }
           if (e.pointerType !== "mouse") return;
           const p = local(e);
-          ctrl.current?.setHover(nearest(p.x, p.y));
+          ctl?.setHover(nearest(p.x, p.y));
         }}
         onPointerLeave={() => ctrl.current?.setHover(null)}
         onPointerDown={(e) => {
-          down.current = local(e);
+          e.currentTarget.setPointerCapture?.(e.pointerId);
+          drag.current = { x: e.clientX, start: pos.current, moved: false, v: 0, lastX: e.clientX, lastT: performance.now() };
+        }}
+        onPointerCancel={() => {
+          drag.current = null;
+          settle(pos.current);
         }}
         onPointerUp={(e) => {
-          const d = down.current;
-          down.current = null;
+          const d = drag.current;
+          drag.current = null;
           if (!d) return;
-          const p = local(e);
-          const dx = p.x - d.x;
-          if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(p.y - d.y)) setActive((a) => Math.max(0, Math.min(total - 1, a + (dx < 0 ? 1 : -1))));
+          if (d.moved) settle(pos.current - d.v * 180);
           else {
+            const p = local(e);
             const hit = nearest(p.x, p.y);
-            if (hit !== null) setActive(hit);
+            if (hit !== null) settle(hit);
           }
         }}
       >
@@ -207,12 +270,6 @@ export function Collection({ known, handle, onClose }: { known: number | null; h
           })}
         </div>
 
-        <button type="button" onClick={() => setActive((a) => Math.max(0, a - 1))} disabled={active === 0} aria-label={c.prev} className="absolute top-1/2 left-0 grid size-9 -translate-y-1/2 cursor-pointer place-items-center rounded-full text-taupe outline-none hover:text-graphite focus-visible:ring-2 focus-visible:ring-graphite/40 disabled:opacity-30">
-          <ChevronLeft className="size-5" aria-hidden />
-        </button>
-        <button type="button" onClick={() => setActive((a) => Math.min(total - 1, a + 1))} disabled={active === total - 1} aria-label={c.next} className="absolute top-1/2 right-0 grid size-9 -translate-y-1/2 cursor-pointer place-items-center rounded-full text-taupe outline-none hover:text-graphite focus-visible:ring-2 focus-visible:ring-graphite/40 disabled:opacity-30">
-          <ChevronRight className="size-5" aria-hidden />
-        </button>
       </div>
 
       {/* One concise detail for the selected piece */}
