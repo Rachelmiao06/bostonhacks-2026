@@ -128,7 +128,8 @@ function ProblemBody({ quest, done, onContribute }: { quest: Quest; done: boolea
   const style = categoryStyle[category];
   const Icon = style.icon;
   const verify = quest.mode === "verify";
-  const showFacility = quest.facilityName && quest.facilityName !== quest.header;
+  // MBTA headers often start with the unit name; only print it separately when they do not.
+  const showFacility = quest.facilityName && !quest.header.startsWith(quest.facilityName);
 
   return (
     <div className="px-4 pt-3 pb-3.5">
