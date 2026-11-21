@@ -65,3 +65,13 @@ CREATE TABLE IF NOT EXISTS review_calls (
   ip_hash   text NOT NULL   -- SHA-256 of the address, never the address itself
 );
 CREATE INDEX IF NOT EXISTS review_calls_time_idx ON review_calls (called_at);
+
+-- A rider's answer to a verify quest: "MBTA says this is fixed. Is it?"
+CREATE TABLE IF NOT EXISTS verifications (
+  alert_id   text NOT NULL REFERENCES outages (alert_id),
+  user_id    text NOT NULL,
+  verdict    text NOT NULL,            -- working | still_broken
+  note       text NOT NULL DEFAULT '',
+  created_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (alert_id, user_id)
+);

@@ -52,13 +52,14 @@ export async function GET() {
       ),
       query<{ station_name: string; outages: string }>(
         `SELECT station_name, count(*) outages FROM outages
-         WHERE started_at >= now() - make_interval(days => $1)
+         WHERE started_at >= now() - make_interval(days => $1) AND station_name <> 'Unknown station'
          GROUP BY station_name ORDER BY count(*) DESC, station_name LIMIT 10`,
         [WINDOW_DAYS],
       ),
       query<{
         submissions: string; completed: string; riders: string; first_try: string; handed_off: string;
         open_outages: string; open_with_report: string; resolved_after_report: string;
+        verifications: string; said_working: string; disputed_fixes: string;
       }>(
         `SELECT
            (SELECT count(*) FROM submissions) submissions,
@@ -71,7 +72,10 @@ export async function GET() {
               AND EXISTS (SELECT 1 FROM submissions s WHERE s.alert_id = o.alert_id)) open_with_report,
            (SELECT count(*) FROM outages o WHERE resolved_at IS NOT NULL
               AND EXISTS (SELECT 1 FROM submissions s WHERE s.alert_id = o.alert_id AND s.status = 'completed'
-                          AND s.completed_at < o.resolved_at)) resolved_after_report`,
+                          AND s.completed_at < o.resolved_at)) resolved_after_report,
+           (SELECT count(*) FROM verifications) verifications,
+           (SELECT count(*) FROM verifications WHERE verdict = 'working') said_working,
+           (SELECT count(DISTINCT alert_id) FROM verifications WHERE verdict = 'still_broken') disputed_fixes`,
       ),
       query<{ total: string; since: string | null; live_syncs: string; imprecise: string }>(
         `SELECT (SELECT count(*) FROM outages) total,
@@ -146,6 +150,10 @@ export async function GET() {
       handoffPercent: share(Number(r.handed_off), completed),
       // Outages MBTA resolved after a rider had reported them here. A correlation, never a cause.
       resolvedAfterReport: Number(r.resolved_after_report),
+      // Riders checking fixes MBTA announced. A disputed fix = at least one rider said "still broken".
+      verifications: Number(r.verifications),
+      confirmedWorkingPercent: share(Number(r.said_working), Number(r.verifications)),
+      disputedFixes: Number(r.disputed_fixes),
     },
     dataNotes: {
       totalOutagesOnRecord: Number(history[0].total),

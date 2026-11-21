@@ -5,7 +5,13 @@
 import { readFileSync } from "node:fs";
 import pg from "pg";
 
-const KIND = { ELEVATOR_CLOSURE: "elevator", ESCALATOR_CLOSURE: "escalator", ACCESS_ISSUE: "access" };
+const KIND = {
+  ELEVATOR_CLOSURE: "elevator", ESCALATOR_CLOSURE: "escalator", ACCESS_ISSUE: "access",
+  STATION_ISSUE: "station", STATION_CLOSURE: "closure", SHUTTLE: "shuttle", SUSPENSION: "suspension",
+};
+const ACCESS = ["ELEVATOR_CLOSURE", "ESCALATOR_CLOSURE", "ACCESS_ISSUE"];
+const subway = JSON.parse(readFileSync(new URL("../src/lib/data/stations.json", import.meta.url), "utf8"));
+const subwayNames = new Map(subway.stations.map((s) => [s.id, s.name]));
 const history = JSON.parse(readFileSync(process.argv[2], "utf8"));
 
 // MBTA's list of elevators and escalators tells us which station each unit belongs to.
@@ -17,17 +23,32 @@ const facilities = await res.json();
 const stopNames = new Map((facilities.included ?? []).map((s) => [s.id, s.attributes.name]));
 const stationOf = new Map(facilities.data.map((f) => [f.id, f.relationships.stop.data?.id ?? null]));
 
+// Platform ids -> their station, for alerts that only list platforms.
+async function getJson(url) {
+  for (let attempt = 0; attempt < 12; attempt++) {
+    const r = await fetch(url, { headers: process.env.MBTA_API_KEY ? { "x-api-key": process.env.MBTA_API_KEY } : undefined });
+    if (r.ok) return r.json();
+    await new Promise((done) => setTimeout(done, 6000)); // MBTA rate limit: wait and try again
+  }
+  throw new Error(`MBTA did not answer: ${url}`);
+}
+const platforms = await getJson("https://api-v3.mbta.com/stops?filter%5Broute_type%5D=0,1");
+const parentOf = new Map(platforms.data.map((p) => [p.id, p.relationships.parent_station?.data?.id ?? null]));
+
 const iso = (seconds) => new Date(seconds * 1000).toISOString();
 const rows = history.map((h) => {
-  const stationId = h.station_id ?? stationOf.get(h.facility_id) ?? null;
+  const stationId =
+    h.station_id ?? stationOf.get(h.facility_id) ?? (h.stops ?? []).map((id) => parentOf.get(id)).find(Boolean) ?? null;
   // Fallback name: MBTA headers start with the station, e.g. "Maverick Escalator 433 (...) is unavailable".
   const fromHeader = (h.header ?? "").split(/ (Elevator|Escalator) /)[0];
   return {
     alert_id: h.alert_id,
-    facility_id: h.facility_id,
+    facility_id: ACCESS.includes(h.effect) ? h.facility_id : null,
     kind: KIND[h.effect],
     station_id: stationId,
-    station_name: stopNames.get(stationId) ?? (fromHeader.length < 60 && fromHeader) ?? "Unknown station",
+    station_name:
+      stopNames.get(stationId) ?? subwayNames.get(stationId) ??
+      (ACCESS.includes(h.effect) && fromHeader.length < 60 ? fromHeader : "Unknown station"),
     lines: [...new Set((h.routes ?? []).map((r) => (r.startsWith("Green") ? "Green" : r)))].sort(),
     header: h.header ?? "",
     cause: h.cause ?? "UNKNOWN_CAUSE",

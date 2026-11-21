@@ -2,7 +2,7 @@
 // GET  /api/submissions?userId=...: that rider's reports, completed quests and token balance.
 import type { NextRequest } from "next/server";
 import { hasDb, query } from "@/lib/db";
-import { REWARD_TOKENS } from "@/lib/mbta";
+import { REWARD_TOKENS, VERIFY_REWARD_TOKENS } from "@/lib/mbta";
 
 const MAX_TEXT = 2000;
 
@@ -45,12 +45,19 @@ export async function GET(request: NextRequest) {
      WHERE s.user_id = $1 ORDER BY s.updated_at DESC`,
     [userId],
   );
+  const verifications = await query<{ alert_id: string; verdict: string; created_at: string; station_name: string; header: string }>(
+    `SELECT v.alert_id, v.verdict, v.created_at, o.station_name, o.header
+     FROM verifications v JOIN outages o USING (alert_id) WHERE v.user_id = $1 ORDER BY v.created_at DESC`,
+    [userId],
+  );
   const completed = submissions.filter((s) => s.status === "completed");
   return Response.json({
     submissions,
+    verifications,
     completedQuestIds: completed.map((s) => s.alert_id),
+    verifiedQuestIds: verifications.map((v) => v.alert_id),
     // Tokens are counted, not stored: one reward per completed quest, so no double rewards.
-    tokenBalance: completed.length * REWARD_TOKENS,
+    tokenBalance: completed.length * REWARD_TOKENS + verifications.length * VERIFY_REWARD_TOKENS,
   });
 }
 
