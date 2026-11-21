@@ -130,7 +130,7 @@ export function Collection({ known, handle, onClose }: { known: number | null; h
   const need = known === null ? null : Math.max(0, active + 1 - known);
 
   return (
-    <div className="absolute inset-0 z-30 flex flex-col items-center justify-center overflow-hidden bg-stone/55 px-4 pt-20 pb-20 font-ui text-graphite backdrop-blur-[3px]" role="dialog" aria-label={c.title}>
+    <div className="absolute inset-0 z-30 flex flex-col items-center justify-center overflow-hidden bg-linear-to-b from-ivory/75 via-ivory/62 to-ivory/75 px-4 pt-20 pb-20 font-ui text-graphite backdrop-blur-[5px]" role="dialog" aria-label={c.title}>
       <button
         type="button"
         onClick={onClose}
@@ -143,7 +143,7 @@ export function Collection({ known, handle, onClose }: { known: number | null; h
 
       <header className="max-w-xl px-10 text-center sm:px-0">
         <h2 className="font-serif text-xl leading-tight font-semibold tracking-tight sm:text-3xl">{c.title}</h2>
-        <p className="mt-1 text-xs text-taupe sm:text-sm">{c.subtitle}</p>
+        <p className="mt-1 text-sm text-graphite/80">{c.subtitle}</p>
       </header>
 
       {/* The floating row. One canvas for all pieces; the labels below are real buttons (roving focus, arrow keys). */}
@@ -194,13 +194,13 @@ export function Collection({ known, handle, onClose }: { known: number | null; h
                 onBlur={() => ctrl.current?.setHover(null)}
                 style={{ opacity: 0 }}
                 className={cn(
-                  "absolute top-0 left-0 flex cursor-pointer items-center gap-1 rounded-full px-2.5 py-1 text-[0.78rem] whitespace-nowrap outline-none transition-[color,font-weight] focus-visible:ring-2 focus-visible:ring-graphite/40",
-                  active === i ? "font-semibold text-graphite" : "text-taupe hover:text-graphite",
+                  "absolute top-0 left-0 flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.92rem] whitespace-nowrap outline-none transition-[color,font-weight] focus-visible:ring-2 focus-visible:ring-graphite/40",
+                  active === i ? "font-semibold text-graphite" : "text-graphite/75 hover:text-graphite",
                   active === i && glass,
                 )}
               >
                 <span className="relative">{st.label}</span>
-                {isUnlocked ? <Check className="relative size-3 text-cat-verify" aria-label={c.unlocked} /> : <Lock className="relative size-3" aria-label={c.locked} />}
+                {isUnlocked ? <Check className="relative size-3.5 text-cat-verify" aria-label={c.unlocked} /> : <Lock className="relative size-3.5" aria-label={c.locked} />}
               </button>
             );
           })}
@@ -216,8 +216,8 @@ export function Collection({ known, handle, onClose }: { known: number | null; h
 
       {/* One concise detail for the selected piece */}
       <p aria-live="polite" className="mt-3 min-h-[2.6rem] max-w-md text-center text-sm">
-        <span className="font-serif text-base font-semibold">{step.label}</span>
-        <span className="block text-taupe">
+        <span className="font-serif text-lg font-semibold">{step.label}</span>
+        <span className="block text-graphite/80">
           {known === null ? c.unavailableDetail : unlockedHere ? step.blurb : `${c.lockedDetail} ${need ? c.lockedNeed(need) + "." : ""}`}
         </span>
       </p>
@@ -230,11 +230,11 @@ export function Collection({ known, handle, onClose }: { known: number | null; h
           </p>
         ) : (
           <>
-            <p className="text-xs font-medium">{c.progress(known, total)}</p>
-            <div role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={known} aria-label={c.progress(known, total)} className="mx-auto mt-1.5 h-1 w-full overflow-hidden rounded-full bg-graphite/12">
-              <div className="h-full rounded-full bg-graphite/70 transition-[width] duration-500 motion-reduce:transition-none" style={{ width: `${(known / total) * 100}%` }} />
+            <p className="text-sm font-medium">{c.progress(known, total)}</p>
+            <div role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={known} aria-label={c.progress(known, total)} className="mx-auto mt-2 h-1.5 w-full overflow-hidden rounded-full bg-graphite/15">
+              <div className="h-full rounded-full bg-graphite transition-[width] duration-500 motion-reduce:transition-none" style={{ width: `${(known / total) * 100}%` }} />
             </div>
-            <p className="mt-1.5 text-[0.72rem] text-taupe">{next ? c.nextUnlock(next.label) : c.allDone}</p>
+            <p className="mt-2 text-xs text-graphite/75">{next ? c.nextUnlock(next.label) : c.allDone}</p>
           </>
         )}
       </div>

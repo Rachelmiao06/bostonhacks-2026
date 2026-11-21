@@ -16,7 +16,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 const FOV = 28;
 const DIST = 9;
 const FLOAT_PX = 6; // gentle vertical float, 4 to 8 px
-const MUTED = new THREE.Color('#bdb4a3');
+const MUTED = new THREE.Color('#d6cfbf'); // a lighter wash, so locked pieces stay bright and recognisable
 
 const ease = (u) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
 
@@ -40,15 +40,19 @@ export function createCollection(canvas, { sources, states, reveal = new Set() }
 	renderer.setClearColor(0x000000, 0);
 	renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 	renderer.toneMapping = THREE.NeutralToneMapping;
+	renderer.toneMappingExposure = 1.08; // brighter than the island: the pieces are the focus
 
 	const scene = new THREE.Scene();
 	const pmrem = new THREE.PMREMGenerator(renderer);
 	scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-	scene.environmentIntensity = 0.32;
-	const sun = new THREE.DirectionalLight('#ffe6c4', 3);
+	scene.environmentIntensity = 0.45;
+	const sun = new THREE.DirectionalLight('#fff0d8', 3.5);
 	sun.position.set(3, 5, 4);
 	scene.add(sun);
-	scene.add(new THREE.HemisphereLight('#fde8d2', '#7a6a5c', 0.8));
+	scene.add(new THREE.HemisphereLight('#fff3e4', '#9a8a7a', 1.0));
+	const fill = new THREE.DirectionalLight('#ffffff', 0.9); // soft light from the front, so no side is dull
+	fill.position.set(-3, 2, 6);
+	scene.add(fill);
 
 	const camera = new THREE.PerspectiveCamera(FOV, 1, 0.1, 50);
 	camera.position.set(0, 0.3, DIST);
@@ -65,9 +69,9 @@ export function createCollection(canvas, { sources, states, reveal = new Set() }
 			// keep the island's special shader hooks (wool fuzz) so a muted tree is still fuzzy
 			c.onBeforeCompile = m.onBeforeCompile;
 			c.customProgramCacheKey = m.customProgramCacheKey;
-			if (c.color) c.color.lerp(MUTED, 0.42);
+			if (c.color) c.color.lerp(MUTED, 0.3);
 			c.transparent = true;
-			c.opacity = 0.74;
+			c.opacity = 0.86;
 			mutedCache.set(m, c);
 			disposables.push(c);
 		}
@@ -146,7 +150,7 @@ export function createCollection(canvas, { sources, states, reveal = new Set() }
 		const worldW = worldH * (W / H);
 		visible = W < 700 ? 3 : 5;
 		spacing = worldW / visible;
-		itemSize = Math.min(spacing * (W < 700 ? 0.8 : 0.62), worldH * 0.46);
+		itemSize = Math.min(spacing * (W < 700 ? 0.82 : 0.7), worldH * 0.48);
 		pxToWorld = worldH / H;
 	}
 
