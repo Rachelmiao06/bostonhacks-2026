@@ -22,7 +22,8 @@ Issue: #2. Owner: Rachel. Only the owner edits this folder.
 - A link like `/?quest=<id>` opens that problem's ticket.
 
 ## The first visit: gate, dive, small world
-- `DiveGate.tsx` (in the first download): "Drop in where you are". Use my location, or pick Park Street / Kenmore / South / North Station, or skip to the whole map.
+- `DiveGate.tsx` (in the first download): the welcome. A small frosted-glass card (bottom-left on wide screens, a bottom sheet on phones): Use my location, Choose a station (search), or Just explore the map. Location errors say why (blocked, unavailable, timed out).
+- `onboarding.ts`: versioned local record of what was already shown (`welcomed`, `mapHint`, `ticketHint`). A welcomed browser skips the card and opens the map. `Hints.tsx`: the one-time map callout over a real pin, and the "Seen this too?" line inside a ticket.
   The map downloads behind it (`prefetch.ts` starts the subway and problem downloads at page load) and the gate shows what is ready.
 - `world.ts`: GSAP camera flight (`flyCamera`) from high over Boston down to one stop, the 3D building layer (real footprints raised, only inside an 800 m circle),
   and `chooseWorld` (nearest stop; if nothing is broken there, the closest problem; outside Boston: Park Street).

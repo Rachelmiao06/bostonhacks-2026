@@ -41,6 +41,7 @@ export function Celebration({ quest, tokens, already, handedOff, onHandOff, extr
   // The stamp count comes from the server (the same store the pins and the island read); nothing is counted here.
   const progress = useMyProgress();
   const stamps = progress.status === "ready" ? stampCount(progress.data) : null;
+  const firstOne = !already && stamps === 1;
   const piece = !already && stamps !== null && stamps >= 1 && stamps <= unlockTiers.length ? unlockTiers[stamps - 1] : null;
 
   // The panel may be scrolled down to the buttons: bring the stamp into view.
@@ -95,8 +96,9 @@ export function Celebration({ quest, tokens, already, handedOff, onHandOff, extr
 
       <div className="space-y-1.5">
         <h3 className="font-serif text-2xl leading-tight font-semibold tracking-tight">
-          {already ? content.celebrate.already : content.celebrate.title}
+          {already ? content.celebrate.already : firstOne ? content.celebrate.first.title : content.celebrate.title}
         </h3>
+        {firstOne && <p className="text-sm text-taupe">{content.celebrate.first.body}</p>}
         {!already && <p className="font-pixel text-[0.7rem] leading-relaxed text-graphite">{content.celebrate.tokens(tokens)}</p>}
         {!already && <p className="text-sm text-taupe">{content.celebrate.stamp(info.label)}</p>}
         {piece && stamps !== null && (
@@ -129,13 +131,29 @@ export function Celebration({ quest, tokens, already, handedOff, onHandOff, extr
 
       {/* Stays at the bottom of the panel while the rest scrolls, so both choices are always in view. */}
       <div className="sticky bottom-2 z-10 flex flex-wrap gap-2 rounded-xl border border-hairline bg-ivory/95 p-2 shadow-float backdrop-blur-sm">
-        <AtlasButton onClick={onDone}>{content.celebrate.another}</AtlasButton>
-        <Link
-          href="/island"
-          className="inline-flex h-10 items-center rounded-full border border-graphite/25 px-4 text-sm font-medium outline-none hover:bg-stone focus-visible:ring-4 focus-visible:ring-graphite/25"
-        >
-          {content.celebrate.collection}
-        </Link>
+        {firstOne ? (
+          <>
+            <Link
+              href="/island"
+              className="inline-flex h-10 items-center rounded-full bg-graphite px-4 text-sm font-medium text-ivory outline-none hover:opacity-90 focus-visible:ring-4 focus-visible:ring-graphite/25"
+            >
+              {content.celebrate.collection}
+            </Link>
+            <AtlasButton tone="outline" onClick={onDone}>
+              {content.celebrate.first.keep}
+            </AtlasButton>
+          </>
+        ) : (
+          <>
+            <AtlasButton onClick={onDone}>{content.celebrate.another}</AtlasButton>
+            <Link
+              href="/island"
+              className="inline-flex h-10 items-center rounded-full border border-graphite/25 px-4 text-sm font-medium outline-none hover:bg-stone focus-visible:ring-4 focus-visible:ring-graphite/25"
+            >
+              {content.celebrate.collection}
+            </Link>
+          </>
+        )}
       </div>
     </section>
   );

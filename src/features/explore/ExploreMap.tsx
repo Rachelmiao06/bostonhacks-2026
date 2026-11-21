@@ -25,10 +25,12 @@ import {
 } from "@/lib/map";
 import { categoryOf } from "./category";
 import { ContributePanel } from "./ContributePanel";
-import { categories, content, landmarks, world as worldText, type CategoryId } from "./content";
+import { categories, content, dive, landmarks, world as worldText, type CategoryId } from "./content";
 import type { LoadStatus } from "./DiveGate";
+import { MapHint } from "./Hints";
 import { LandmarkMarker } from "./LandmarkMarker";
-import { FilterBar, ProgressChip, StatusChip } from "./MapOverlays";
+import { FilterBar, PinLegend, ProgressChip, StatusChip } from "./MapOverlays";
+import { hasSeen } from "./onboarding";
 import { subwayDownload } from "./prefetch";
 import { ClusterPin, ProblemPin } from "./ProblemMarker";
 import { verifiedOf } from "./verified";
@@ -44,6 +46,7 @@ import { WorldQuest } from "./WorldQuest";
 import {
   overviewView,
   chooseWorld,
+  distanceM,
   flyCamera,
   insideWorld,
   leash,
@@ -120,9 +123,11 @@ type Props = {
   onStatus: (status: LoadStatus) => void;
   /** Called when the gate can lift because the camera is about to move. */
   onReveal: () => void;
+  /** This visit began with the welcome and a chosen starting place: the one-time map hint may show. */
+  guided?: boolean;
 };
 
-export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
+export default function ExploreMap({ entry, onStatus, onReveal, guided = false }: Props) {
   const mapRef = useRef<MapRef>(null);
   const wide = useWide();
   // intro = hidden behind the gate; world = the small 3D district; atlas = the whole city (the original map).
@@ -131,7 +136,9 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
   const [patient, setPatient] = useState(false);
   const [worldInfo, setWorldInfo] = useState<World | null>(null);
   const [arrived, setArrived] = useState(false);
-  const [coached, setCoached] = useState(false);
+  // The one-time map hint: decided when the rider arrives, put away on their first interaction.
+  const [hintGone, setHintGone] = useState(false);
+  const [hintAllowed] = useState(() => typeof window !== "undefined" && !hasSeen("mapHint"));
   const fogRef = useRef<HTMLDivElement>(null);
   const flight = useRef<gsap.core.Timeline | null>(null);
   const unleash = useRef<(() => void) | null>(null);
@@ -218,6 +225,19 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
     () => worldInfo ? landmarks.filter(l => insideWorld(worldInfo.center, [l.longitude, l.latitude], 1.05)) : [],
     [worldInfo],
   );
+  // The hint points at one open challenge pin near the middle of the little world. Only pins that are really
+  // open qualify: not one that is verified (it carries its own label) and not one the rider has finished.
+  // MapHint then keeps only a pin that is on screen and has a clear side to sit on.
+  const hintCandidates = useMemo(() => {
+    if (!worldInfo) return [];
+    return worldStops
+      .filter((stop) => !verifiedOf(stop) && !stop.quests.every((q) => done.has(q.id)))
+      .map((stop) => ({ stop, d: distanceM(worldInfo.center, [stop.station.longitude, stop.station.latitude]) }))
+      .sort((x, y) => x.d - y.d)
+      .map(({ stop }) => [stop.station.longitude, stop.station.latitude] as [number, number]);
+  }, [worldInfo, worldStops, done]);
+  const showHint = guided && hintAllowed && !hintGone && mode === "world" && arrived && !selected && !panelQuest && hintCandidates.length > 0;
+
   const worldProblemCount = worldStops.reduce((sum, stop) => sum + stop.quests.length, 0);
 
   // Counts per category ignore the filter, so every chip always says how many there are.
@@ -269,7 +289,6 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
       setSelected(station);
       setQuestIndex(index);
       saveView({ stationId: station.id, questIndex: index });
-      setCoached(true);
       focus(station);
     },
     [enterFromMarker, focus],
@@ -593,6 +612,7 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
                   onSelect={selectStop}
                 />
               ))}
+            {showHint && <MapHint candidates={hintCandidates} onGone={() => setHintGone(true)} onNone={() => setHintGone(true)} />}
             {mode === "world" && arrived && worldInfo?.you && (
               <Marker longitude={worldInfo.you[0]} latitude={worldInfo.you[1]} anchor="center" style={{ zIndex: 7 }}>
                 <span role="img" aria-label={worldText.you} title={worldText.you} className="relative block size-4">
@@ -635,7 +655,6 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
                 <Eyebrow>{worldText.near(worldInfo.station.name)}</Eyebrow>
                 <p className="font-ui text-sm font-medium text-graphite">{worldText.problems(worldProblemCount)}</p>
                 {worldInfo.note && <p className="mt-1 font-ui text-xs text-taupe">{worldInfo.note.kind === "far" ? worldText.far : worldText.quiet(worldInfo.note.from)}</p>}
-                {!selected && !coached && worldProblemCount > 0 && <p className="mt-1 font-ui text-xs font-medium text-graphite">{worldText.coach}</p>}
               </div>
             )}
           </div>
@@ -660,6 +679,8 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
               {live.source === "live" ? content.liveChip(live.trains.length) : content.sampleChip}
             </StatusChip>
           )}
+          {mode === "world" && !arrived && <StatusChip live>{dive.flying}</StatusChip>}
+          {mode !== "intro" && arrived && !selected && !panelQuest && !showHint && quests.status === "ready" && <PinLegend />}
           {quests.status === "ready" && quests.source === "snapshot" && <StatusChip live={false}>{content.questsSnapshot}</StatusChip>}
           {quests.status === "failed" && <StatusChip live={false}>{content.questsFailed}</StatusChip>}
         </div>

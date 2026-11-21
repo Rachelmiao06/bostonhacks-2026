@@ -2,7 +2,8 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
-import { DiveGate, type GatePhase, type LoadStatus } from "./DiveGate";
+import { DiveGate, type GatePhase, type LoadStatus, type LocateError } from "./DiveGate";
+import { markSeen, welcomedOnLoad } from "./onboarding";
 import { startPrefetch } from "./prefetch";
 import { clearReturnFromIsland, isReturningFromIsland } from "./viewMemory";
 import type { Entry } from "./world";
@@ -37,43 +38,52 @@ export function ExploreLoader() {
   useEffect(() => {
     if (returning) clearReturnFromIsland();
   }, [returning]);
-  const skipGate = deepLinked || flagged || returning;
+  // Someone who has already been welcomed on this browser goes straight to the map: no card, no dive.
+  const welcomed = useSyncExternalStore(nothingToWatch, welcomedOnLoad, () => false);
+  const skipGate = deepLinked || flagged || returning || welcomed;
+  // The welcome is drawn only once the browser is running the page. If the server drew it, a returning visitor would see it flash
+  // (the server cannot know they were welcomed) until the page woke up and removed it.
+  const hydrated = useSyncExternalStore(nothingToWatch, () => true, () => false);
   const entry = skipGate ? ATLAS : chosen;
   const [phase, setPhase] = useState<GatePhase | "gone">("gate");
   const [status, setStatus] = useState(NOTHING_READY);
-  const [denied, setDenied] = useState(false);
+  const [error, setError] = useState<LocateError | null>(null);
 
   const locate = useCallback(() => {
-    setDenied(false);
-    if (!("geolocation" in navigator)) return setDenied(true);
+    setError(null);
+    if (!("geolocation" in navigator)) return setError("unsupported");
     setPhase("locating");
+    const found = (pos: GeolocationPosition) => {
+      setEntry({ kind: "geo", lat: pos.coords.latitude, lng: pos.coords.longitude });
+      setPhase("waiting");
+      markSeen("welcomed");
+    };
+    const failed = (err: GeolocationPositionError) => {
+      setPhase("gate");
+      if (err.code === err.TIMEOUT) return setError("timeout");
+      if (err.code !== err.PERMISSION_DENIED) return setError("unavailable");
+      // "Denied" has two causes with different fixes: this site is blocked in the browser, or the computer itself
+      // will not share a location with the browser. The permission state tells them apart.
+      navigator.permissions
+        ?.query({ name: "geolocation" })
+        .then((permission) => setError(permission.state === "denied" ? "denied" : "system"))
+        .catch(() => setError("denied"));
+    };
+    // A coarse fix is quick, but some laptops cannot give one. If that fails (and it was not a refusal), try once more with the GPS-grade request and more time.
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setEntry({
-          kind: "geo",
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-        });
-        setPhase("waiting");
-      },
-      () => {
-        setDenied(true);
-        setPhase("gate");
+      found,
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) return failed(err);
+        navigator.geolocation.getCurrentPosition(found, failed, { enableHighAccuracy: true, timeout: 15000, maximumAge: 10 * 60 * 1000 });
       },
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 10 * 60 * 1000 },
     );
   }, []);
 
-  // At page load: start the downloads, skip the gate for shared links, and for riders who already
-  // said yes to location on an earlier visit, go straight in.
+  // At page load: start the downloads. Location is never requested here, only after the rider taps "Use my location".
   useEffect(() => {
     startPrefetch();
-    if (new URLSearchParams(window.location.search).has("quest")) return;
-    navigator.permissions
-      ?.query({ name: "geolocation" })
-      .then((permission) => permission.state === "granted" && locate())
-      .catch(() => {});
-  }, [locate]);
+  }, []);
 
   const onStatus = useCallback(
     (next: LoadStatus) =>
@@ -87,20 +97,24 @@ export function ExploreLoader() {
     <>
       {/* The paper under the map, so the first frame is never blank while the map code arrives. */}
       <div aria-hidden className="fixed inset-0 z-30 bg-stone" />
-      <ExploreMap entry={entry} onStatus={onStatus} onReveal={onReveal} />
-      {!skipGate && phase !== "gone" && (
+      {/* The first-map hint belongs only to a visit that began with the welcome and chose a starting place. */}
+      <ExploreMap entry={entry} onStatus={onStatus} onReveal={onReveal} guided={!skipGate && (chosen.kind === "geo" || chosen.kind === "spot")} />
+      {hydrated && !skipGate && phase !== "gone" && (
         <DiveGate
           phase={phase}
           status={status}
-          denied={denied}
+          error={error}
           onLocate={locate}
           onSpot={(stationId) => {
             setEntry({ kind: "spot", stationId });
             setPhase("waiting");
+            markSeen("welcomed");
           }}
           onSkip={() => {
+            // Skipping is complete in itself: the card leaves at once and the map takes over as it loads.
             setEntry({ kind: "atlas" });
-            setPhase("waiting");
+            setPhase("revealing");
+            markSeen("welcomed");
           }}
           onGone={onGone}
         />
