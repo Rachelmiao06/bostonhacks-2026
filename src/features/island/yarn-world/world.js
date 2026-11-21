@@ -1319,6 +1319,8 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 		items: [
 			{ obj: bridgeG, stage: 'bridge' },
 			{ obj: houseAnchor, stage: 'house' },
+			// the chimney smoke belongs to the cottage: it must not drift over an empty spot
+			{ obj: smoke.mesh, stage: 'house', base: houseAnchor.position },
 			...fenceRuns.map(({ group, base }) => ({ obj: group, stage: 'fence', base })),
 			...stones.map((g) => ({ obj: g, stage: 'stone' })),
 			...trees.map((tr) => ({ obj: tr.g, stage: 'tree' })),
@@ -1343,7 +1345,7 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 	});
 
 	// reset the other modules, then knit the world in again
-	function resetAll() {
+	function resetAll(skipIntro = false) {
 		weave.restore();
 		yarn.reset();
 		unravel.reset();
@@ -1355,7 +1357,8 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 		smoke.reset();
 		kite.reset();
 		meadow.reset();
-		weave.playIntro();
+		if (skipIntro) weave.skipIntro();
+		else weave.playIntro();
 	}
 
 	// the thread and the sheep are only grabbable while the world is fully there
@@ -1372,8 +1375,13 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 		},
 		// same array for the whole run: poke.js keeps a reference to it
 		grabbables: [...[yarn.grabbable, ...unravel.grabbables, ...sheepLife.grabbables, ...critters.grabbables].map(gate), weave.grabbable],
-		reset: resetAll,
-		playIntro: resetAll,
+		reset: () => resetAll(),
+		playIntro: () => resetAll(),
+		// the finished island at once (no opening), for a returning visitor
+		snapIsland: () => resetAll(true),
+		// a hidden piece (by stage names) that a loose thread on the quilt knits in when pulled
+		offerGift: (stages, label, onKnitted) => weave.offerGift(stages, label, onKnitted),
+		acceptGift: () => weave.acceptGift(),
 		setPullSpan: (v) => weave.setPullSpan(v),
 		get phase() {
 			return weave.phase;

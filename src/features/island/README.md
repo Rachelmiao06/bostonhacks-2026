@@ -14,8 +14,14 @@ Owner: Rachel. Only the owner edits this folder.
 ## Opening: pull the thread
 - Drag the loose thread (mouse or touch). The distance you drag sets how far the knit-in has gone (about half the window height = the whole island). It only moves forward; let go and the rest knits by itself.
 - "Knit the island for me" starts the same knit-in without dragging (keyboard and screen-reader alternative; progress is announced).
-- Testing tiers (dev server only): `/island?stamps=2` shows the island as if the rider had 2 stamps.
 - Code: `scrub` in `yarn-world/weave.js` (`pullSpan` is set from the camera distance in `mount.js`).
+
+## The journey: Explore -> stamp -> island
+- **Source of truth:** the server. A completed report or verification is stored by `/api/submissions` and `/api/verifications` (one row per rider per quest, so no duplicates). Stamps = `stampCount(useMyProgress())` in `features/explore/progress.ts`. Nothing on the island awards or counts points.
+- **Explore:** after a successful submission `Celebration` shows the server's `tokensAwarded`, the stamp, and which island piece the new stamp unlocks. Two buttons: "Continue exploring" (stays on the map, nothing moves) and "Visit my world" (`/island`). Reopening a finished quest shows "Already in your collection" with no fanfare.
+- **Map memory:** `features/explore/viewMemory.ts` keeps the camera and selected stop for the browser tab (sessionStorage). Next keeps pages mounted but hidden (`cacheComponents`), and a hidden map loses its camera, so `ExploreMap` puts it back when the page is shown again.
+- **Island visits:** `seen.ts` remembers how many tiers this browser has seen knitted (display memory only). First visit: the yarn-pull opening. Later visits: the island is simply there (`instant`). A stamp earned since the last visit leaves one red loose thread on the quilt (`offerGift` in `weave.js`); pulling it, or pressing "Knit it in for me", springs that tier's pieces into place. The tier is remembered only once it has really knitted in. If the server cannot be reached, the island shows what this browser last saw.
+- Every visit re-fetches stamps (`refreshProgress`) and re-plans, because the page stays mounted between visits.
 
 ## Notes
 - The yarn ball, the quilt and the river are always there. The unlock set is read when the thread is pulled.

@@ -10,6 +10,9 @@ Issue: #2. Owner: Rachel. Only the owner edits this folder.
 - `category.tsx` + `categories` in `content.ts`: four kinds built only from what MBTA alerts contain
   (Service changes, Accessibility, Escalators & station, Check it's fixed). No cleanliness or crowding: there is no data for them.
 - `ProblemMarker.tsx`: a pin per stop with problems (most urgent category, count) and a cluster bubble when pins would overlap.
+- `verified.ts` + `PinFace` in `ProblemMarker.tsx`: a pin turns a quiet green only when its source is named:
+  "MBTA marked this working again · <time>" (from `Quest.resolvedAt`) or "Riders report it is working · <n> riders"
+  (no live data yet). Preview at `/explore/verified`. Never says "fixed".
 - `ProblemTicket.tsx`: the printed ticket for a stop, pinned above it on wide screens, docked at the bottom on phones.
 - `ContributePanel.tsx`: contribute without leaving the map. `ReportFlow.tsx` draws PR #14's `useReport` hook;
   `VerifyFlow.tsx` uses PR #14's `api.ts`. The rules live in `features/challenge`, never here.
@@ -17,6 +20,15 @@ Issue: #2. Owner: Rachel. Only the owner edits this folder.
 - `progress.ts`: this rider's contributions from `/api/submissions`, shared by the map, My Journey and Collection.
 - `StationMarker.tsx`, `LandmarkMarker.tsx`, `TrainsLayer.tsx`: quiet stop rings, floating landmarks, live trains.
 - A link like `/?quest=<id>` opens that problem's ticket.
+
+## The first visit: gate, dive, small world
+- `DiveGate.tsx` (in the first download): "Drop in where you are". Use my location, or pick Park Street / Kenmore / South / North Station, or skip to the whole map.
+  The map downloads behind it (`prefetch.ts` starts the subway and problem downloads at page load) and the gate shows what is ready.
+- `world.ts`: GSAP camera flight (`flyCamera`) from high over Boston down to one stop, the 3D building layer (real footprints raised, only inside an 800 m circle),
+  and `chooseWorld` (nearest stop; if nothing is broken there, the closest problem; outside Boston: Park Street).
+- `ExploreMap.tsx` has three modes: `intro` (behind the gate), `world` (the small 3D district: fog edge, leash, only nearby pins) and `atlas` (the original whole-city map).
+- `WorldQuest.tsx`: the question in a speech bubble, answer by typing, AI coach replies, stamp. Uses PR #14's `useReport`; verify quests reuse `VerifyFlow`.
+- Location never leaves the browser and is not stored. A shared link `/?quest=<id>` skips the gate. Reduced Motion: no flight, no typing effect, no pulses.
 
 ## The look
 - Palette: `ATLAS` in `src/lib/map.ts` (stone land, sage-grey water, ivory roads, sandstone buildings, taupe outlines, sage parks).

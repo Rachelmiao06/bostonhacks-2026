@@ -20,7 +20,6 @@ export function setupGuide({ camera, dom, parent = document.body }) {
 	const ring = make('position:absolute;left:0;top:0;width:36px;height:36px;box-sizing:border-box;border-radius:50%;border:3px solid rgba(255,250,243,.95);box-shadow:0 2px 10px rgba(140,90,50,.35);will-change:transform,opacity');
 	const hand = make('position:absolute;left:0;top:0;width:0;height:0;will-change:transform,opacity', HAND_SVG);
 	const label = make('position:absolute;left:0;top:0;padding:4px 10px;border-radius:999px;background:rgba(255,250,243,.92);color:#3b2f28;font:14px/1.3 system-ui,sans-serif;white-space:nowrap', 'Pull the thread');
-	label.style.display = 'none'; // our change: the page shows "Pull the thread." as real text (Island.tsx), so no second label
 	root.append(ring, hand, label);
 	parent.appendChild(root);
 
@@ -70,7 +69,7 @@ export function setupGuide({ camera, dom, parent = document.body }) {
 
 			if (hint.kind !== kind) {
 				kind = hint.kind;
-				label.style.display = 'none';
+				label.style.display = kind === 'start' || kind === 'gift' ? '' : 'none';
 			}
 
 			const still = reduced.matches;
@@ -102,9 +101,11 @@ export function setupGuide({ camera, dom, parent = document.body }) {
 			}
 
 			// 标签放在拖动终点之外，沿方向退到标签盒子外缘再多留 10px
-			if (kind === 'start') {
+			if (kind === 'start' || kind === 'gift') {
 				const off = SLIDE + 10 + Math.min(34 / (Math.abs(dx) || 1e-3), 14 / (Math.abs(dy) || 1e-3));
-				label.style.transform = `translate(${p0.x + dx * off}px,${p0.y + dy * off}px) translate(-50%,-50%)`;
+				// keep the label on screen: a thread near the edge of a narrow phone would push it out of view
+				const lx = Math.min(Math.max(p0.x + dx * off, rect.left + 64), rect.right - 64);
+				label.style.transform = `translate(${lx}px,${p0.y + dy * off}px) translate(-50%,-50%)`;
 			}
 		},
 	};

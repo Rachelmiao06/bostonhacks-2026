@@ -3,22 +3,30 @@
 import { useEffect, useRef, useState } from "react";
 import { content } from "./content";
 
-type Handle = { dispose: () => void; replay: () => void };
+export type IslandHandle = {
+  dispose: () => void;
+  /** Play the opening (ball and thread) again with the pieces unlocked right now. */
+  replay: () => void;
+  /** Hide a piece (by stage names) and leave a loose thread that knits it in when pulled. */
+  offerGift: (stages: string[], label: string, onKnitted: () => void) => boolean;
+  /** Knit the waiting piece in without dragging. */
+  acceptGift: () => void;
+};
 
-// Mounts the three.js island into a div. `stages` is the set of pieces that may knit in.
-// The scene is built once; a change in `stages` shows the next time the thread is pulled.
-export default function IslandScene({
-  stages,
-  onReady,
-  onPhase,
-}: {
+type Props = {
+  /** The pieces that may knit in. Read when the thread is pulled, so a change shows on the next pull. */
   stages: Set<string>;
-  onReady?: (replay: () => void) => void;
+  /** Start with the finished island instead of the yarn-ball opening (returning visitors). */
+  instant?: boolean;
+  onReady?: (handle: IslandHandle) => void;
   onPhase?: (phase: string) => void;
-}) {
+};
+
+// Mounts the three.js island into a div and cleans it up when you leave.
+export default function IslandScene({ stages, instant = false, onReady, onPhase }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const stagesRef = useRef(stages);
-  const handle = useRef<Handle | null>(null);
+  const handle = useRef<IslandHandle | null>(null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
@@ -32,9 +40,13 @@ export default function IslandScene({
     import("./yarn-world/mount.js")
       .then(({ mountIsland }) => {
         if (cancelled) return;
-        const h = mountIsland(el, { isUnlocked: (stage: string) => stagesRef.current.has(stage), onPhase }) as Handle;
+        const h = mountIsland(el, {
+          isUnlocked: (stage: string) => stagesRef.current.has(stage),
+          onPhase,
+          instant,
+        }) as IslandHandle;
         handle.current = h;
-        onReady?.(h.replay);
+        onReady?.(h);
       })
       .catch(() => setFailed(true));
     return () => {
@@ -42,6 +54,7 @@ export default function IslandScene({
       handle.current?.dispose();
       handle.current = null;
     };
+    // The scene is built once per mount; the parent remounts it (key) when the plan changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
