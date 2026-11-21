@@ -24,7 +24,7 @@ export function MyChallenges() {
   const progress = useMyProgress();
 
   return (
-    <article className="rounded-3xl border border-hairline bg-stone p-5 font-ui text-graphite shadow-ticket sm:p-8">
+    <article className="font-ui text-graphite">
       <header className="space-y-1.5 border-b border-hairline pb-5">
         <p className="font-mono text-[0.65rem] tracking-[0.16em] text-taupe uppercase">{content.eyebrow}</p>
         <h1 className="font-serif text-3xl leading-tight font-semibold tracking-tight sm:text-4xl">{content.title}</h1>

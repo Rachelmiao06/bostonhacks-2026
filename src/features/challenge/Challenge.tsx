@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 // The quest comes from the URL (/challenge?id=...) so it works for live quests later too.
 export function Challenge() {
   return (
-    <Suspense fallback={<p className="font-pixel text-xs text-paper/70">Loading...</p>}>
+    <Suspense fallback={<p className="font-pixel text-xs text-foreground/70">Loading...</p>}>
       <ChallengeInner />
     </Suspense>
   );
@@ -25,7 +25,7 @@ function ChallengeInner() {
   const id = useSearchParams().get("id");
   const state = useAppState();
 
-  if (!state) return <p className="font-pixel text-xs text-paper/70">Loading...</p>;
+  if (!state) return <p className="font-pixel text-xs text-foreground/70">Loading...</p>;
 
   const quest = id ? findQuest(id) : null;
   return (
@@ -100,7 +100,7 @@ function QuestPicker({ state }: { state: AppState }) {
     <section className="space-y-5">
       <div>
         <h1 className="font-heading text-3xl font-bold">{content.pickerTitle}</h1>
-        <p className="text-paper/80">{content.pickerIntro}</p>
+        <p className="text-foreground/80">{content.pickerIntro}</p>
       </div>
       <ul className="grid gap-5">
         {sampleQuests.map((q) => {

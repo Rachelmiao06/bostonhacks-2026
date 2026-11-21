@@ -2,7 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/* One theme only (the game table). Keeps `dark:` classes inert so OS dark mode changes nothing. */
+/* One theme only (the stone atlas). Keeps `dark:` classes inert so OS dark mode changes nothing. */
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -106,7 +106,7 @@
   --wood: oklch(0.5 0.08 55); /* treasure-chest brown */
   --steel: oklch(0.78 0.012 250); /* chest metal */
   --shade: oklch(0 0 0 / 0.5); /* soft drop shadow */
-  --dot: oklch(1 0 0 / 0.07); /* table dots */
+  --dot: oklch(0.27 0.012 60 / 0.05); /* faint map-sheet grid */
 
   /* Atlas palette: matches the map's stone land and sage water (ATLAS in src/lib/map.ts) */
   --ivory: oklch(0.985 0.007 85); /* ticket paper */
@@ -123,8 +123,8 @@
   --cat-verify: oklch(0.5 0.09 155); /* MBTA says fixed: check it */
 
   /* shadcn tokens */
-  --background: var(--board);
-  --foreground: var(--paper);
+  --background: var(--stone); /* pages sit on the same stone as the map */
+  --foreground: var(--graphite);
   --card: var(--paper);
   --card-foreground: var(--ink);
   --popover: var(--paper);
@@ -147,8 +147,8 @@
   --chart-4: var(--leaf);
   --chart-5: var(--wood);
   --radius: 1rem;
-  --sidebar: var(--board);
-  --sidebar-foreground: var(--paper);
+  --sidebar: var(--stone);
+  --sidebar-foreground: var(--graphite);
   --sidebar-primary: var(--sun);
   --sidebar-primary-foreground: var(--ink);
   --sidebar-accent: var(--sky);
@@ -182,13 +182,15 @@
   }
   html {
     @apply font-sans;
-    background-color: var(--board);
+    background-color: var(--stone);
   }
   body {
     @apply overflow-x-clip bg-background text-foreground;
-    /* dotted game-table surface */
-    background-image: radial-gradient(circle, var(--dot) 2px, transparent 2.5px);
-    background-size: 32px 32px;
+    /* faint grid, like the sheet lines of a printed map */
+    background-image:
+      linear-gradient(var(--dot) 1px, transparent 1px),
+      linear-gradient(90deg, var(--dot) 1px, transparent 1px);
+    background-size: 48px 48px;
   }
   @media (prefers-reduced-motion: reduce) {
     *,
