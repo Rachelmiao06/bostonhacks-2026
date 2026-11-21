@@ -122,8 +122,10 @@ export function setupTrophies({ root, kit, terrain, count, avoid = [] }) {
 		g.rotation.y = Math.atan2(S(9) - spot.x, S(11) - spot.z) + (i % 2 ? 0.25 : -0.25);
 		root.add(g);
 		// the sheep walk around them
-		terrain.blockers.push([spot.x, spot.z, 0.55]);
-		return { obj: g, stage: `trophy${i + 1}` };
+		const blocker = [spot.x, spot.z, 0.55];
+		terrain.blockers.push(blocker);
+		// `blocker` is kept so trophyplay.js can move it when a trophy is dragged somewhere else
+		return { obj: g, stage: `trophy${i + 1}`, blocker };
 	});
 	return { items, spots };
 }

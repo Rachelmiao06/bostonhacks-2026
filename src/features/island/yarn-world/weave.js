@@ -1383,6 +1383,11 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 		skipIntro,
 		offerGift,
 		dropIn,
+		// T Party: is this piece on the island right now (shown, earned, not mid-animation)? Gates playing with it.
+		live(obj) {
+			const it = items.find((i) => i.obj === obj);
+			return state === 'idle' && !!it && it.w.visible && !it.locked;
+		},
 		// the no-drag way to knit the waiting piece in
 		acceptGift() {
 			if (state === 'idle' && gift && !gift.popping) startGift();

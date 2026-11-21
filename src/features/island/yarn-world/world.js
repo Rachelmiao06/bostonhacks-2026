@@ -20,6 +20,7 @@ import { setupMeadow } from './meadow.js';
 import { setupKite } from './kite.js';
 import { setupPortal } from './portal.js';
 import { setupTrophies } from './trophies.js';
+import { setupTrophyPlay } from './trophyplay.js';
 import { buildBlanket } from './blanket.js';
 import { LAYOUT, L, S, H, ROLL, HOUSE, BALL, FLOWER_CLUSTERS } from './layout.js';
 
@@ -1295,6 +1296,7 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 		meadow.update(t, dt);
 		weave.update(t, dt);
 		portal.update(dt);
+		trophyPlay.update(dt);
 		// the first gust sweeps over the island as soon as the knit-in finishes; cloud shadows fade in with it
 		const busy = weave.busy;
 		if (wasBusy && !busy) wind.gust(1.1);
@@ -1370,9 +1372,13 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 		smoke.reset();
 		kite.reset();
 		meadow.reset();
+		trophyPlay.reset();
 		if (skipIntro) weave.skipIntro();
 		else weave.playIntro();
 	}
+
+	// T Party: trophies can be poked and dragged (they check `weave.live` themselves)
+	const trophyPlay = setupTrophyPlay({ trophies, terrain, weave });
 
 	// the thread and the sheep are only grabbable while the world is fully there
 	const gate = (g) => ({ pick: (ray, camera) => (weave.busy ? null : g.pick(ray, camera)), grab: () => g.grab() });
@@ -1387,7 +1393,7 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 			return out.set(rq.nx, groundAt(rq.nx, rq.nz), rq.nz);
 		},
 		// same array for the whole run: poke.js keeps a reference to it
-		grabbables: [...[yarn.grabbable, ...unravel.grabbables, ...sheepLife.grabbables, ...critters.grabbables].map(gate), weave.grabbable],
+		grabbables: [...[yarn.grabbable, ...unravel.grabbables, ...sheepLife.grabbables, ...critters.grabbables].map(gate), ...trophyPlay.grabbables, weave.grabbable],
 		reset: () => resetAll(),
 		playIntro: () => resetAll(),
 		// the finished island at once (no opening), for a returning visitor
@@ -1408,6 +1414,7 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 		// for ?debug=1 inspection
 		sheep,
 		sheepLife,
+		trophies: trophies.items,
 		yarn,
 		wind,
 		critters,
