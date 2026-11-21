@@ -65,7 +65,7 @@ Handling always follows the README rules: reason plus next step, nothing uncheck
 ## Track and notify
 | ID | Case | Handling | State |
 |---|---|---|---|
-| T-01 | Case closed with "No violation", "Duplicate" or "Not our jurisdiction" | Show the city's actual words. Never call it "Fixed". | Decided |
+| T-01 | Case closed with "No violation", "Duplicate", "Noted", "Transitioned" or any note that is not a repair | Show "Closed by <team>", the city's words, and the closure reason verbatim. "Fixed" only when reason is Resolved and the note names a repair. | Decided |
 | T-02 | Closed with an empty note | Show team and date; no quote. | Decided |
 | T-03 | Status is not one we expect (Error, Needs Reallocation, Create) | Show as In progress. | Decided |
 | T-04 | Case not found in the data yet | "We are waiting for the city to list it." | Open |
@@ -106,3 +106,18 @@ Handling always follows the README rules: reason plus next step, nothing uncheck
 | B-05 | A saved draft after an AI failure is kept only for the session ("Try again" keeps the photo) | Leaving the tab loses it. | Open |
 | B-06 | Demo cases close about 50 seconds after sending | Labelled "Demo case: not sent to the city". Never shown as real. | Decided |
 | B-07 | Followed real cases show "In progress" until the first status answer arrives | Keeps the last known status if the data is unreachable. | Decided |
+
+## Redesign pass
+| ID | Case | Handling | State |
+|---|---|---|---|
+| X-01 | First visit: camera and location would be requested cold | A "Before we ask" note comes first; permissions are requested only after Continue. Never on page load. | Decided |
+| X-02 | Camera blocked or missing | A compact explanation with Try again, Close, and a link to Boston 311. No empty black rectangle. | Decided |
+| X-03 | Location blocked mid-capture | Explains that nothing was collected; Try again or Close. | Decided |
+| X-04 | AI unsure of the category | The issue must be confirmed (keep it, or pick an alternative) before Save is enabled. | Decided |
+| X-05 | Wrong spot on the draft | "Use my current location" (only if accurate to 50 m) or "Retake at the right spot". The pin is never free-typed. | Decided |
+| X-06 | Nearby case looks like the same problem | Shown as "possibly the same": same type, nearby, and no photo comparison is possible. User can follow it or say it is different. | Decided |
+| X-07 | The AI verdict looks wrong | No fake "we noted it" button. Offer another angle, or Boston 311 directly. | Decided |
+| X-08 | Keyboard only | Shutter is focused when the camera is ready; Escape closes the camera; every control is a real button, link or form field. | Decided |
+| X-09 | Reduced motion | Entrance animations and the checking pulse are motion-safe only; transitions are off under motion-reduce. Checked in code, not by device emulation. | Decided |
+| X-10 | Floating trolley chat covers the bottom-right corner on phones | Report leaves bottom padding so the last content can scroll clear of it. | Decided |
+| X-11 | Cases opened from "Update" | Opening a row clears its Update mark without re-sorting the list under the finger. | Decided |

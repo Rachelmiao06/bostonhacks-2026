@@ -4,7 +4,7 @@ What: the Report tab (route `/report`). Take a live photo of a city problem, hav
 Issue: see GitHub issues labelled `report`.
 Owner: TBD. Only the owner edits this folder.
 Status: v1 loop built (see docs/PRD-report.md). Send is simulated; duplicates, case status and closure wording use real Boston 311 data. Edge cases live in `EDGE-CASES.md`; log new ones there.
-Code: `Report.tsx` (screens), `Camera.tsx`, `CaseCard.tsx`, `MyReports.tsx`, `store.ts` (cases on the device), `demo-case.ts`, `api.ts`; server in `src/app/api/report/` (check, nearby, status, send).
+Code: `Report.tsx` (flow and screens), `Camera.tsx`, `Review.tsx` (AI review and duplicate card), `MyReports.tsx` and `CaseRow.tsx` (tracking), `closure.ts` (how a closed case is worded), `ui.tsx` (Tada-styled pieces), `store.ts` (cases on the device), `demo-case.ts`, `api.ts`; server in `src/app/api/report/` (check, nearby, status, send).
 
 ## Core value
 Reporting to a city usually feels like shouting into a void. Report promises that the city answers and you see it.

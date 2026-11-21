@@ -26,3 +26,5 @@ export function demoStage(c: SavedCase, now = Date.now()): Stage {
 
 export const demoNote = (serviceName: string) => NOTES[serviceName] ?? "The issue has been taken care of.";
 export const demoClosedAt = (c: SavedCase) => c.createdAt + CLOSED_AFTER_MS;
+
+export const demoInProgressAt = (c: SavedCase) => c.createdAt + IN_PROGRESS_AFTER_MS;

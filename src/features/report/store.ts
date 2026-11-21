@@ -2,7 +2,6 @@
 import type { SavedCase } from "./types";
 
 const KEY = "tada.report.cases";
-const INTRO = "tada.report.intro";
 
 export function loadCases(): SavedCase[] {
   try {
@@ -23,21 +22,24 @@ export function saveCase(c: SavedCase) {
   }
 }
 
-export function introSeen(): boolean {
+/** The clock, read when a case is saved (kept out of render code so components stay pure). */
+export const nowMs = () => Date.now();
+
+const PRIMER = "tada.report.primer";
+
+/** Whether the "before we ask for your camera and location" note has been read. */
+export function primerSeen(): boolean {
   try {
-    return localStorage.getItem(INTRO) === "1";
+    return localStorage.getItem(PRIMER) === "1";
   } catch {
-    return true;
+    return false;
   }
 }
 
-export function markIntroSeen() {
+export function markPrimerSeen() {
   try {
-    localStorage.setItem(INTRO, "1");
+    localStorage.setItem(PRIMER, "1");
   } catch {
     // ignore
   }
 }
-
-/** The clock, read when a case is saved (kept out of render code so components stay pure). */
-export const nowMs = () => Date.now();

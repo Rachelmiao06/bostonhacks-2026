@@ -10,6 +10,10 @@ export type CheckResult = {
   serviceName: string;
   /** Draft description, editable by the user. Only meaningful when fixable. */
   description: string;
+  /** "low" means the AI is unsure: the user must confirm the category before saving. */
+  confidence: "high" | "low";
+  /** Other plausible categories, offered as one-tap corrections. */
+  alternatives: string[];
 };
 
 export type NearbyCase = {
@@ -47,6 +51,8 @@ export type SavedCase = {
   /** Small JPEG data URL, for the list. */
   thumb: string | null;
   createdAt: number;
+  /** The stage the user last looked at. If the current stage differs, the case shows an "Update" dot. */
+  lastStage?: Stage;
 };
 
 export type ApiError = { error: string; code?: string };

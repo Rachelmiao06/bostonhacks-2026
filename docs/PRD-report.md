@@ -32,8 +32,8 @@ Non-goals (v1)
 2. **Check (AI)**: verdict `fixable | private | unclear | emergency`, a reason, a 311 category, and a draft description.
 3. **Duplicate check**: open 311 case of the same category within about 50 m. Follow it, or say "not the same".
 4. **Edit and send**: editable category and description; fixed pin; shows the team it goes to; anonymous.
-5. **Track**: three stages (Sent, In progress, Closed) from the city's data.
-6. **Closure card**: team, the city's own note, time taken. "Fixed by" only when the city's closure reason is `Resolved`.
+5. **Track**: three stages (Submitted, In progress, Closed) from the city's data. Cases whose stage changed since you last looked float to the top with an "Update" mark.
+6. **Closure card**: team, the city's own note, and the closure reason verbatim. Say "Closed by <team>" by default. Say "Fixed by <team>" only when the closure reason is `Resolved` AND the note names a repair (see `closure.ts`). Closed is not the same as Fixed.
 
 ## 6. Requirements
 
@@ -48,11 +48,20 @@ Non-goals (v1)
 | R7 | Editable draft; pin and photo are not editable | Must |
 | R8 | Send is idempotent, and "Sent" is shown only when it was | Must |
 | R9 | Case list stored on the device; status refreshed from 311 data | Must |
-| R10 | Closure card uses the city's words; "Fixed by" only for `Resolved` | Must |
+| R10 | Closure card uses the city's words; "Fixed" only when reason is `Resolved` and the note names a repair; otherwise "Closed" | Must |
 | R11 | If any check cannot run, nothing is sent and the draft is kept | Must |
 | R12 | Rate limit repeated tries per device | Should |
 | R13 | Warn when the description contains a phone number or email | Should |
 | R14 | Leaves awards | Later |
+
+## 6b. Experience principles (redesign)
+- Camera-first: Snap, Review, Follow. One primary action per screen.
+- Permissions are explained before they are requested, and never requested on page load.
+- The AI only suggests. The user can change the issue, the words and the spot; nothing is saved until they say so. When the AI is unsure, the user must confirm the issue.
+- The likely team is shown as a guess ("A guess from the issue type"), never as confirmed routing.
+- A nearby open case is shown as "possibly the same", never as proof of a duplicate.
+- Saving is labelled "Save demo report". Nothing is presented as filed with Boston 311. An official-311 handoff (copy the description, open 311) is offered instead.
+- Secondary detail (location details, privacy, official handoff) sits behind progressive disclosure.
 
 ## 7. Data (verified 2026-11-21)
 Source: Analyze Boston, "311 Service Requests – NEW SYSTEM", datastore API.
@@ -64,7 +73,7 @@ Source: Analyze Boston, "311 Service Requests – NEW SYSTEM", datastore API.
 
 ## 8. Honesty and privacy
 - **Sending is simulated in v1.** No outside-app submission route to Boston 311 was found (Open311 returned 503). A simulated case is labelled "Demo case: not sent to the city". Real data is used for duplicates, for the status of followed real cases, and for the wording of closures.
-- Location is sent to our server to look up nearby cases (this reverses the old "never sent" rule; logged in `DECISIONS.md`). It is not stored.
+- Location is sent to our server to look up nearby cases (this reverses the old "never sent" rule; logged in `DECISIONS.md`). Tada does not store it; the host may keep ordinary request logs. The photo is sent to Google's Gemini API for the check and is not saved by Tada. Saved cases (with their location and a small thumbnail) live in the browser only.
 - Reports are anonymous: photo, location, description only.
 - The app never claims the city received, reviewed or accepted something it did not.
 
