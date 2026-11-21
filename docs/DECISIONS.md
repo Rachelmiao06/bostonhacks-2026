@@ -43,4 +43,4 @@ One line each: date · what · why.
 - 2026-11-21 · GSAP only, no Lenis · Lenis smooths page scrolling, but the map owns the wheel (zoom) and the quest card scrolls natively; both would fight it. Revisit only if a scrolling landing page is added.
 - 2026-11-21 · 3D buildings use MapLibre `distance` (not `within`, which ignores building outlines), heights capped at 46 m, only inside the district · keeps the world light and stops towers hiding stops.
 - 2026-11-21 · Location is read once in the browser to pick the nearest stop; never sent, never stored · privacy, and the app needs nothing more.
-- 2026-11-21 · Two sheep join the island with the first stamp; the third sheep stays in tier 3 (`flock`) · riders with 1–2 stamps saw no animals at all, because every sheep was gated behind the third stamp.
+- 2026-11-21 · The island starts with one sheep; sheep 2, 3 and 4 fall through a purple portal at 3, 6 and 9 stamps (max four), and every stamp drops one trophy (up to 12) · riders with 1–2 stamps saw no animals because every sheep was gated behind stamp 3; more stamps now always bring something visible.
