@@ -14,13 +14,11 @@ export { Layer, Map, Marker, NavigationControl, Source } from "react-map-gl/mapl
 export const MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
 
 /** Downtown Boston, tilted like a game board. */
-export const INITIAL_VIEW = {
-  longitude: -71.0712,
-  latitude: 42.3522,
-  zoom: 12.3,
-  pitch: 55,
-  bearing: 0,
-};
+export function initialView() {
+  // Phones start zoomed out a little so the whole core of the T fits.
+  const isPhone = window.innerWidth < 640;
+  return { longitude: -71.0712, latitude: 42.3522, zoom: isPhone ? 11.4 : 12.3, pitch: 55, bearing: 0 };
+}
 
 export const MAX_PITCH = 70;
 export const MIN_ZOOM = 9.5;

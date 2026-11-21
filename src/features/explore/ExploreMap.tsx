@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  INITIAL_VIEW,
   Layer,
   MAP_STYLE,
   MAX_BOUNDS,
@@ -12,6 +11,7 @@ import {
   NavigationControl,
   Source,
   T_LINE_LAYER,
+  initialView,
   shapesToGeoJSON,
 } from "@/lib/map";
 import { content } from "./content";
@@ -55,7 +55,8 @@ export default function ExploreMap() {
   return (
     <div className="relative h-[70dvh] min-h-96 overflow-hidden rounded-2xl border-2 border-ink bg-paper shadow-tile">
       <Map
-        initialViewState={INITIAL_VIEW}
+        initialViewState={initialView()}
+        attributionControl={{ compact: true }}
         mapStyle={MAP_STYLE}
         maxBounds={MAX_BOUNDS}
         maxPitch={MAX_PITCH}
