@@ -81,8 +81,7 @@ export const content = {
   },
 
   /** Below this zoom the landmark models are hidden, so the far-out view stays clean. */
-  landmarkMinZoom: 11.5,
-  landmarkPlaceholder: "Model to come",
+  landmarkMinZoom: 11,
   landmarkProblems: (name: string, n: number, done: number) =>
     `${name}: ${n} ${n === 1 ? "problem" : "problems"} at this stop${done ? `, ${done} done by you` : ""}`,
   /** Problems within this many pixels of each other merge into one cluster. 0 = never. */
@@ -124,32 +123,45 @@ export const kindLabels: Record<QuestKind, string> = {
   suspension: "Service suspended",
 };
 
-/**
- * The miniature buildings. A small hand-picked set, never the whole city.
- * `art` is the picture to float over the map: a PNG with a see-through background in
- * public/assets/explore/landmarks/, drawn in three-quarter view, about 240px wide.
- * Until a landmark has `art`, a plain stand-in block shows where it will go.
- * `stationId` is the stop whose ticket opens when the landmark is tapped.
- */
+/** Landmarks tell local history at their real coordinates. */
 export type Landmark = {
-  id: string;
+  id: PixelArtId;
   name: string;
   longitude: number;
   latitude: number;
-  stationId: string;
-  art?: string;
-  /** PROTOTYPE: a cute pixel-art miniature drawn in code (PixelLandmark.tsx). Wins over `art`. */
-  pixel?: PixelArtId;
+  stationId?: string;
+  story: string;
 };
 
 export const landmarks: Landmark[] = [
-  // PROTOTYPE station: the Old State House stands right on top of State station.
-  { id: "old-state-house", name: "Old State House", longitude: -71.0575, latitude: 42.3587, stationId: "place-state", pixel: "old-state-house" },
-  { id: "state-house", name: "State House", longitude: -71.0638, latitude: 42.3588, stationId: "place-pktrm" },
-  { id: "fenway-park", name: "Fenway Park", longitude: -71.0972, latitude: 42.3467, stationId: "place-kencl" },
-  { id: "public-library", name: "Boston Public Library", longitude: -71.0782, latitude: 42.3493, stationId: "place-coecl" },
-  { id: "south-station", name: "South Station", longitude: -71.0552, latitude: 42.3519, stationId: "place-sstat" },
-  { id: "td-garden", name: "TD Garden", longitude: -71.0621, latitude: 42.3662, stationId: "place-north" },
+  {
+    id: "old-state-house", name: "Old State House", longitude: -71.0575, latitude: 42.3587, stationId: "place-state",
+    story: "On July 18, 1776, Bostonians gathered below this balcony for the city’s first public reading of the Declaration of Independence. Six years earlier, the Boston Massacre had taken place just outside.",
+  },
+  {
+    id: "state-house", name: "State House", longitude: -71.0638, latitude: 42.3588, stationId: "place-pktrm",
+    story: "Samuel Adams laid the cornerstone here in 1795. In 1802, Paul Revere covered the dome in copper.",
+  },
+  {
+    id: "fenway-park", name: "Fenway Park", longitude: -71.0972, latitude: 42.3467, stationId: "place-kencl",
+    story: "Rain twice delayed Fenway’s first regular-season game. On April 20, 1912, the Red Sox finally beat New York 7–6 in the eleventh inning.",
+  },
+  {
+    id: "public-library", name: "Boston Public Library", longitude: -71.0782, latitude: 42.3493, stationId: "place-coecl",
+    story: "When workers laid the cornerstone in 1888, Oliver Wendell Holmes dedicated a poem to this public library. On March 11, 1895, readers finally walked through its doors on Copley Square.",
+  },
+  {
+    id: "south-station", name: "South Station", longitude: -71.0552, latitude: 42.3519, stationId: "place-sstat",
+    story: "Boston’s railroads once dropped passengers at separate terminals across the city. On New Year’s Day in 1899, South Station opened to bring five rail lines under one roof.",
+  },
+  {
+    id: "td-garden", name: "TD Garden", longitude: -71.0621, latitude: 42.3662, stationId: "place-north",
+    story: "On June 17, 2008, Boston fans watched the Celtics defeat the Lakers in Game 6 here. The win gave the Celtics their seventeenth NBA championship.",
+  },
+  {
+    id: "tea-party-ships", name: "Boston Tea Party Ships & Museum", longitude: -71.0512, latitude: 42.3522,
+    story: "On December 16, 1773, protesters boarded three ships and threw their cargo of tea into Boston Harbor to protest a British tax. Today you can step aboard replica ships at the Congress Street Bridge.",
+  },
 ];
 
 /** The arrival gate: the first thing a new rider sees, while the map loads behind it. */
