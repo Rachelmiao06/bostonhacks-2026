@@ -17,4 +17,5 @@ Owner: TBD. Only the owner edits this folder.
 - Sample numbers are invented and must always show the "Sample data" banner.
 - "Resolved after a report" is timing, never a claim that T Party caused the fix.
 - Opening the official MBTA form is not proof a report was sent. The AI does not verify facts.
-- Not linked from the nav on purpose (`src/lib/config.ts` is a shared file). Add `{ href: "/stats", label: "Stats" }` there once the team agrees.
+- Linked from the nav (`src/lib/config.ts`, "Stats"). Tell the UI owner if the nav is rebuilt: it is driven by `site.nav`.
+- Shows every field the route returns, including open-outages-by-day, rider fix checks and the "left out as imprecise" note. Fields added to the route later are optional in `types.ts` and ignored until drawn.

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { content, fill } from "./content";
-import { barPercent, formatDate, formatHours, formatMonth, formatPercent, kindLabel } from "./format";
+import { barPercent, formatDate, formatDay, formatHours, formatMonth, formatPercent, kindLabel } from "./format";
 import { useStats } from "./useStats";
 import type { StatsResponse } from "./types";
 
@@ -69,6 +69,7 @@ function Dashboard({ data }: { data: StatsResponse }) {
   const windowDays = outages.timeToFix.windowDays;
   const monthMax = Math.max(0, ...outages.timeToFix.byMonth.map((m) => m.medianHours ?? 0));
   const medianMax = Math.max(0, ...outages.timeToFix.byKind.map((k) => k.medianHours ?? 0));
+  const days = outages.openOverTime?.byDay ?? [];
 
   return (
     <div className="space-y-8">
@@ -137,7 +138,18 @@ function Dashboard({ data }: { data: StatsResponse }) {
             ))}
           </ul>
         )}
+        {!!dataNotes.fixesExcludedAsImprecise && (
+          <p className="text-sm text-muted-foreground">
+            {fill(content.excludedNote, { n: dataNotes.fixesExcludedAsImprecise.toLocaleString("en-US") })}
+          </p>
+        )}
       </Section>
+
+      {days.length > 1 && (
+        <Section title={content.openDaysTitle} intro={fill(content.openDaysIntro, { days: windowDays })}>
+          <DayBars days={days} />
+        </Section>
+      )}
 
       <div className="grid gap-8 md:grid-cols-2">
         <Section title={content.repeatTitle} intro={fill(content.repeatIntro, { days: windowDays })}>
@@ -190,11 +202,19 @@ function Dashboard({ data }: { data: StatsResponse }) {
           <Stat label={content.improved} value={formatPercent(riders.improvedByAiPercent)} />
           <Stat label={content.handoff} value={formatPercent(riders.handoffPercent)} />
           <Stat label={content.resolvedAfter} value={String(riders.resolvedAfterReport)} />
+          {riders.verifications !== undefined && (
+            <>
+              <Stat label={content.verifications} value={String(riders.verifications)} />
+              <Stat label={content.confirmedWorking} value={formatPercent(riders.confirmedWorkingPercent ?? null)} />
+              <Stat label={content.disputedFixes} value={String(riders.disputedFixes ?? 0)} />
+            </>
+          )}
         </dl>
         <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
           <li>{content.correlationNote}</li>
           <li>{content.handoffNote}</li>
           <li>{content.aiNote}</li>
+          {riders.verifications !== undefined && <li>{content.verifyNote}</li>}
         </ul>
       </Section>
 
@@ -209,6 +229,25 @@ function Dashboard({ data }: { data: StatsResponse }) {
         </p>
       </Section>
     </div>
+  );
+}
+
+/** Tiny column chart. The numbers are written out underneath, so the bars are decoration. */
+function DayBars({ days }: { days: { day: string; open: number }[] }) {
+  const max = Math.max(1, ...days.map((d) => d.open));
+  const peak = days.reduce((a, b) => (b.open > a.open ? b : a), days[0]);
+  const latest = days[days.length - 1];
+  return (
+    <>
+      <div aria-hidden className="flex h-24 items-end gap-px rounded-xl border-2 border-ink bg-board/10 p-1">
+        {days.map((d) => (
+          <div key={d.day} className="flex-1 rounded-t-sm bg-sky" style={{ height: `${barPercent(d.open, max)}%` }} />
+        ))}
+      </div>
+      <p className="text-sm text-muted-foreground">
+        {fill(content.openDaysSummary, { latest: latest.open, peak: peak.open, peakDay: formatDay(peak.day) })}
+      </p>
+    </>
   );
 }
 

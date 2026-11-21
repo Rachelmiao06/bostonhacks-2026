@@ -28,6 +28,14 @@ export function formatMonth(month: string) {
   return name ? `${name} ${year}` : month;
 }
 
+/** "2026-10-03" -> "Oct 3". Built from the parts so the time zone cannot shift the day. */
+export function formatDay(day: string) {
+  const [year, m, d] = day.split("-").map(Number);
+  if (!year || !m || !d) return day;
+  const name = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][m - 1];
+  return name ? `${name} ${d}` : day;
+}
+
 export function formatDate(iso: string | null) {
   if (!iso) return "unknown";
   const d = new Date(iso);

@@ -24,6 +24,11 @@ export const content = {
   median: "Typical (median)",
   slowest: "9 in 10 fixed within",
   byMonthTitle: "Typical time to fix, by month",
+  excludedNote: "{n} closed outages are left out of these numbers because MBTA's end time for them was not exact.",
+
+  openDaysTitle: "Open outages, day by day",
+  openDaysIntro: "How many outages were open at the end of each of the last {days} days.",
+  openDaysSummary: "{latest} open on the latest day. The most was {peak}, on {peakDay}.",
 
   repeatTitle: "Keeps breaking",
   repeatIntro: "Units that broke 3 or more times in the last {days} days.",
@@ -39,12 +44,17 @@ export const content = {
   improved: "Reports improved after the AI check",
   handoff: "Opened the official MBTA form",
   resolvedAfter: "Outages resolved after a rider report",
+  verifications: "Fix checks by riders",
+  confirmedWorking: "Fix checks that said it works",
+  disputedFixes: "Outages a rider says are still broken",
 
   notesTitle: "About these numbers",
   correlationNote:
     "\"Resolved after a report\" shows timing only. MBTA may have fixed these anyway, and T Party does not claim credit.",
   handoffNote:
     "Opening the official MBTA form is not proof that a report was sent. T Party cannot see what happens on mbta.com.",
+  verifyNote:
+    "A fix check or a \"still broken\" is one rider's own report. T Party cannot verify it, and it does not overrule MBTA.",
   aiNote: "\"Improved\" means a rider revised their report at least once after the AI check. The AI does not verify facts.",
   sourcesLabel: "Sources",
   onRecord: "outages on record",

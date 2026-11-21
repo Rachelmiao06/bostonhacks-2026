@@ -36,6 +36,14 @@ export const sampleStats: StatsResponse = {
       { facilityId: "sample-f2", stationName: "Sample Station D", kind: "elevator", outages: 4 },
       { facilityId: "sample-f3", stationName: "Sample Station B", kind: "elevator", outages: 3 },
     ],
+    openOverTime: {
+      byHour: [],
+      // 91 points, like the real route: the end of each day for the last 90 days.
+      byDay: Array.from({ length: 91 }, (_, i) => ({
+        day: new Date(Date.UTC(2026, 7, 22 + i)).toISOString().slice(0, 10),
+        open: 30 + ((i * 7) % 15) + Math.floor(i / 6),
+      })),
+    },
     busiestStations: [
       { stationName: "Sample Station A", outages: 12 },
       { stationName: "Sample Station B", outages: 9 },
@@ -51,11 +59,15 @@ export const sampleStats: StatsResponse = {
     improvedByAiPercent: 60,
     handoffPercent: 40,
     resolvedAfterReport: 3,
+    verifications: 12,
+    confirmedWorkingPercent: 75,
+    disputedFixes: 2,
   },
   dataNotes: {
     totalOutagesOnRecord: 1000,
     archiveStartsAt: "2019-01-01T00:00:00.000Z",
     liveSyncs: 50,
+    fixesExcludedAsImprecise: 15,
     sources: ["Sample data only"],
   },
 };
