@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import gsap from "gsap";
 import { ArrowLeft, LoaderCircle, LocateFixed, Search } from "lucide-react";
 import stationData from "@/lib/data/stations.json";
@@ -25,20 +25,24 @@ type Props = {
   onGone: () => void;
 };
 
+const noSubscribe = () => () => {};
+const supportsBackdropRefraction = () => CSS.supports("backdrop-filter", "url(#tp-liquid)");
+
 const stationList = (stationData.stations as { id: string; name: string; lines: string[] }[])
   .map((s) => ({ id: s.id, name: s.name, lines: s.lines }))
   .sort((a, b) => a.name.localeCompare(b.name));
 
 /**
- * The welcome: a small liquid-glass card floating in the lower-left corner of the live map on wide screens (a bottom sheet on
- * phones), light enough that the stations and lines stay in view. The map loads behind it and stays visible. Three honest choices, location
+ * The welcome: a small liquid-glass card floating in the lower-left corner of the live map on wide screens (a sheet that sits above the
+ * trolley-chat button on phones), light enough that the stations and lines stay in view. The map loads behind it and stays visible. Three honest choices, location
  * optional. When the camera starts to move, the card fades away.
  */
 export function DiveGate({ phase, status, error, onLocate, onSpot, onSkip, onGone }: Props) {
   const card = useRef<HTMLDivElement>(null);
   const sheen = useRef<HTMLSpanElement>(null);
   // Real refraction (the map bends a little behind the glass) where the browser can filter a backdrop; a plain frosted blur elsewhere.
-  const [refract] = useState(() => typeof CSS !== "undefined" && CSS.supports("backdrop-filter", "url(#tp-liquid)"));
+  // Browser support is read through useSyncExternalStore: the server and the first client render agree (false), then it flips on.
+  const refract = useSyncExternalStore(noSubscribe, supportsBackdropRefraction, () => false);
   const [choosing, setChoosing] = useState(false);
   const [query, setQuery] = useState("");
 
@@ -79,7 +83,7 @@ export function DiveGate({ phase, status, error, onLocate, onSpot, onSkip, onGon
   const note = status.failed ? dive.failed : error ? dive.errors[error] : phase === "waiting" && ready < 3 ? dive.waiting : "";
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-[35] flex items-end justify-center px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:justify-start sm:px-6 sm:pb-6">
+    <div className="pointer-events-none fixed inset-0 z-[35] flex items-end justify-center px-3 pb-[calc(5.25rem+env(safe-area-inset-bottom))] sm:justify-start sm:px-6 sm:pb-6">
       <div
         ref={card}
         role="region"
