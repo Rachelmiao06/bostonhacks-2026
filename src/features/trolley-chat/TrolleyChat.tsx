@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import avatar from "../../../public/assets/chat/trolley.jpg";
 import { ArrowUp, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { HISTORY_LIMIT, QUESTION_LIMIT, type Message } from "./conversation";
@@ -11,7 +12,6 @@ type Props = {
   className?: string;
 };
 
-const avatar = "/assets/chat/trolley.jpg";
 const starters = ["How do I find a mission?", "Help me write a report", "Where are my rewards?"];
 
 export function TrolleyChat({ placement = "bottom-right", className = "" }: Props) {
