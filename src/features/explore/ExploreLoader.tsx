@@ -70,16 +70,10 @@ export function ExploreLoader() {
     );
   }, []);
 
-  // At page load: start the downloads, skip the gate for shared links, and for riders who already
-  // said yes to location on an earlier visit, go straight in.
+  // At page load: start the downloads. Location is never requested here, only after the rider taps "Use my location".
   useEffect(() => {
     startPrefetch();
-    if (new URLSearchParams(window.location.search).has("quest") || welcomedOnLoad()) return;
-    navigator.permissions
-      ?.query({ name: "geolocation" })
-      .then((permission) => permission.state === "granted" && locate())
-      .catch(() => {});
-  }, [locate]);
+  }, []);
 
   const onStatus = useCallback(
     (next: LoadStatus) =>
