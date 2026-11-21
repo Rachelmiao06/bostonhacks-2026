@@ -7,7 +7,7 @@ import { getRiderId } from "@/lib/rider";
 import { completeReport, loadMyProgress, reviewReport, saveHandOff } from "./api";
 import { metaFor, photoTypeProblem, shrinkPhoto, validatePhoto } from "./photo";
 import { settings } from "./content";
-import type { PhotoState } from "./useSubmission";
+import type { PhotoState } from "./photo";
 
 /**
  * Rules for a report quest on /challenges/[id]. The server is the source of truth

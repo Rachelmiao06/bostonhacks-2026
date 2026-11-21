@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { Camera, ImagePlus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { content, settings } from "./content";
-import type { PhotoState } from "./useSubmission";
+import type { PhotoState } from "./photo";
 
 type Props = {
   photo: PhotoState | null;

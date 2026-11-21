@@ -10,6 +10,9 @@ export type PhotoMeta = {
 
 const TYPE_PROBLEM = "That file type is not supported. Please choose a JPG, PNG or WebP photo.";
 
+/** A photo in the form: its details and a data URL for the on-screen preview. */
+export type PhotoState = { meta: PhotoMeta; previewUrl: string };
+
 /** Returns an error message when the file type is not accepted, or null. */
 export function photoTypeProblem(file: File): string | null {
   return settings.acceptedPhotoTypes.includes(file.type) ? null : TYPE_PROBLEM;
