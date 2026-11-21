@@ -170,7 +170,8 @@ export const dive = {
   back: "Back",
   /** Why location did not work, kept calm, always with a way forward. */
   errors: {
-    denied: "Location is blocked for this site. Choose a station, or allow it from the lock icon in the address bar.",
+    denied: "This site is blocked from your location. Click the lock icon in the address bar, set Location to Allow, then try again. Or choose a station.",
+    system: "Your computer is not letting the browser share a location. On a Mac: System Settings, Privacy & Security, Location Services, switch your browser on. Or choose a station.",
     unavailable: "We could not work out where you are. Choose a station, or just explore the map.",
     timeout: "That took too long. Try again, choose a station, or just explore the map.",
     unsupported: "This browser cannot share a location. Choose a station instead.",

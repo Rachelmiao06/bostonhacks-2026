@@ -56,8 +56,15 @@ export function ExploreLoader() {
       markSeen("welcomed");
     };
     const failed = (err: GeolocationPositionError) => {
-      setError(err.code === err.PERMISSION_DENIED ? "denied" : err.code === err.TIMEOUT ? "timeout" : "unavailable");
       setPhase("gate");
+      if (err.code === err.TIMEOUT) return setError("timeout");
+      if (err.code !== err.PERMISSION_DENIED) return setError("unavailable");
+      // "Denied" has two causes with different fixes: this site is blocked in the browser, or the computer itself
+      // will not share a location with the browser. The permission state tells them apart.
+      navigator.permissions
+        ?.query({ name: "geolocation" })
+        .then((permission) => setError(permission.state === "denied" ? "denied" : "system"))
+        .catch(() => setError("denied"));
     };
     // A coarse fix is quick, but some laptops cannot give one. If that fails (and it was not a refusal), try once more with the GPS-grade request and more time.
     navigator.geolocation.getCurrentPosition(

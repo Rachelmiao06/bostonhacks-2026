@@ -234,7 +234,8 @@ export default function ExploreMap({ entry, onStatus, onReveal, guided = false }
   // (landmark stops show a pixel building instead, so they are not a target).
   const hintTarget = useMemo(() => {
     if (!worldInfo) return null;
-    const pins = worldStops.filter((stop) => !pixelLandmarkStations.has(stop.station.id));
+    // Pins that already carry their own label (a verified green pin names its source) are not a target: the hint would sit on top of it.
+    const pins = worldStops.filter((stop) => !pixelLandmarkStations.has(stop.station.id) && !verifiedOf(stop));
     let best: ProblemStop | null = null;
     let bestD = Infinity;
     for (const stop of pins) {

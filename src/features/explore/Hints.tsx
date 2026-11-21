@@ -15,13 +15,25 @@ export function MapHint({ longitude, latitude, onGone }: { longitude: number; la
   const box = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion() ?? false;
   const { current: map } = useMap();
-  // Near the screen's left or right edge the callout grows inward, so it is never cut off.
-  const [side] = useState<"left" | "center" | "right">(() => {
-    if (!map) return "center";
+  // Beside the pin when there is room, so the pin and its neighbours' labels stay clear. Otherwise above it,
+  // growing inward from whichever edge it is near.
+  const [place] = useState<"right" | "left" | "above-left" | "above" | "above-right">(() => {
+    if (!map) return "above";
     const x = map.project([longitude, latitude]).x;
     const width = map.getContainer().clientWidth;
-    return x < 130 ? "left" : x > width - 130 ? "right" : "center";
+    if (x + 290 < width) return "right";
+    if (x - 290 > 0) return "left";
+    return x < 130 ? "above-left" : x > width - 130 ? "above-right" : "above";
   });
+  const anchor = { right: "left", left: "right", "above-left": "bottom-left", above: "bottom", "above-right": "bottom-right" }[place] as "left" | "right" | "bottom-left" | "bottom" | "bottom-right";
+  const offset: [number, number] =
+    place === "right" ? [30, -26] : place === "left" ? [-30, -26] : place === "above-left" ? [-20, -58] : place === "above-right" ? [20, -58] : [0, -58];
+  const tail =
+    place === "right"
+      ? "top-1/2 -left-1.5 -translate-y-1/2 border-b border-l"
+      : place === "left"
+        ? "top-1/2 -right-1.5 -translate-y-1/2 border-t border-r"
+        : `-bottom-1.5 border-r border-b ${place === "above" ? "left-1/2 -translate-x-1/2" : place === "above-left" ? "left-4" : "right-4"}`;
 
   useEffect(() => {
     markSeen("mapHint");
@@ -44,7 +56,7 @@ export function MapHint({ longitude, latitude, onGone }: { longitude: number; la
       <Marker longitude={longitude} latitude={latitude} anchor="bottom" offset={[0, -10]} style={{ zIndex: 3, pointerEvents: "none" }}>
         <span aria-hidden className="block size-12 rounded-full border-2 border-cat-service/50 motion-safe:animate-ping" />
       </Marker>
-      <Marker longitude={longitude} latitude={latitude} anchor={side === "center" ? "bottom" : side === "left" ? "bottom-left" : "bottom-right"} offset={[side === "left" ? -20 : side === "right" ? 20 : 0, -58]} style={{ zIndex: 8 }}>
+      <Marker longitude={longitude} latitude={latitude} anchor={anchor} offset={offset} style={{ zIndex: 8 }}>
         <motion.div
           ref={box}
           role="note"
@@ -62,7 +74,7 @@ export function MapHint({ longitude, latitude, onGone }: { longitude: number; la
           >
             {hints.map.dismiss}
           </button>
-          <span aria-hidden className={`absolute -bottom-1.5 size-3 rotate-45 border-r border-b border-ivory/70 bg-ivory/80 ${side === "center" ? "left-1/2 -translate-x-1/2" : side === "left" ? "left-4" : "right-4"}`} />
+          <span aria-hidden className={`absolute size-3 rotate-45 border-ivory/70 bg-ivory/80 ${tail}`} />
         </motion.div>
       </Marker>
     </>

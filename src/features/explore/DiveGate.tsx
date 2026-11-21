@@ -11,7 +11,7 @@ import { AtlasButton } from "./ui";
 
 export type LoadStatus = { streets: boolean; lines: boolean; problems: boolean; failed?: boolean };
 export type GatePhase = "gate" | "locating" | "waiting" | "revealing";
-export type LocateError = "denied" | "unavailable" | "timeout" | "unsupported";
+export type LocateError = "denied" | "system" | "unavailable" | "timeout" | "unsupported";
 
 type Props = {
   phase: GatePhase;
@@ -36,14 +36,24 @@ const stationList = (stationData.stations as { id: string; name: string; lines: 
  */
 export function DiveGate({ phase, status, error, onLocate, onSpot, onSkip, onGone }: Props) {
   const card = useRef<HTMLDivElement>(null);
+  const sheen = useRef<HTMLSpanElement>(null);
+  // Real refraction (the map bends a little behind the glass) where the browser can filter a backdrop; a plain frosted blur elsewhere.
+  const [refract] = useState(() => typeof CSS !== "undefined" && CSS.supports("backdrop-filter", "url(#tp-liquid)"));
   const [choosing, setChoosing] = useState(false);
   const [query, setQuery] = useState("");
 
   useEffect(() => {
     if (prefersReducedMotion()) return;
-    const tween = gsap.fromTo(card.current, { y: 14, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "power2.out", clearProps: "transform,opacity" });
+    // The card settles like a drop of glass: it rises, grows a touch and sharpens out of a blur, then one soft glint crosses it.
+    const tween = gsap.fromTo(
+      card.current,
+      { y: 22, scale: 0.94, opacity: 0, filter: "blur(10px)" },
+      { y: 0, scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.9, ease: "power3.out", clearProps: "transform,opacity,filter" },
+    );
+    const glint = gsap.fromTo(sheen.current, { xPercent: -130 }, { xPercent: 130, duration: 1.5, delay: 0.45, ease: "power2.inOut" });
     return () => {
       tween.kill();
+      glint.kill();
     };
   }, []);
 
@@ -75,10 +85,34 @@ export function DiveGate({ phase, status, error, onLocate, onSpot, onSkip, onGon
         role="region"
         aria-label={dive.title}
         className={cn(
-          "pointer-events-auto w-full max-w-[24rem] rounded-3xl border border-ivory/70 bg-ivory/75 p-4 font-ui text-graphite shadow-ticket backdrop-blur-xl backdrop-saturate-150 sm:p-5",
+          "pointer-events-auto relative isolate w-full max-w-[24rem] overflow-hidden rounded-[1.75rem] border border-ivory/80 bg-gradient-to-br from-ivory/55 via-ivory/30 to-ivory/18 p-4 font-ui text-graphite backdrop-blur-xl backdrop-saturate-[1.8] sm:p-5",
           phase === "revealing" && "pointer-events-none",
         )}
+        style={{
+          // Rim light on the top edge, a soft inner glow, and a long shadow that lifts the glass off the map.
+          boxShadow:
+            "inset 0 1.5px 0 var(--ivory), inset 0 -1px 0 color-mix(in oklab, var(--ivory) 40%, transparent), inset 0 0 24px color-mix(in oklab, var(--ivory) 35%, transparent), 0 24px 48px -20px color-mix(in oklab, var(--graphite) 38%, transparent), 0 2px 6px color-mix(in oklab, var(--graphite) 10%, transparent)",
+          ...(refract ? { backdropFilter: "blur(5px) saturate(1.9) brightness(1.04) url(#tp-liquid)" } : {}),
+        }}
       >
+        <svg aria-hidden width="0" height="0" className="absolute">
+          <filter id="tp-liquid" x="0" y="0" width="100%" height="100%" colorInterpolationFilters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.005 0.009" numOctaves="2" seed="7" result="warp" />
+            <feDisplacementMap in="SourceGraphic" in2="warp" scale="56" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+        </svg>
+        {/* highlights: a bright bloom in the top-left corner and a glint that crosses once on arrival */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 rounded-[inherit]"
+          style={{ background: "radial-gradient(120% 90% at 8% 0%, color-mix(in oklab, var(--ivory) 85%, transparent), transparent 55%)" }}
+        />
+        <span
+          ref={sheen}
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 -left-1/3 -z-10 w-2/3 -skew-x-12"
+          style={{ background: "linear-gradient(90deg, transparent, color-mix(in oklab, var(--ivory) 70%, transparent), transparent)", transform: "translateX(-130%)" }}
+        />
         <p className="font-mono text-[0.62rem] tracking-[0.14em] text-taupe uppercase">{dive.eyebrow}</p>
         <h2 className="mt-1 font-serif text-2xl leading-tight font-semibold tracking-tight">{dive.title}</h2>
         <p className="mt-1 text-sm text-taupe">{dive.intro}</p>
