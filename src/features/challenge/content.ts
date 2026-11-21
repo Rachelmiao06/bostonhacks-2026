@@ -9,7 +9,7 @@ export const content = {
   communityBadge: "Community mission · unofficial",
   sampleNote: "Sample data for testing. This is not a real MBTA alert.",
   honestyNote:
-    "T Party is not the MBTA. Finishing a quest here does not send anything to the MBTA. To report an issue officially, use the MBTA's own channels.",
+    "Tada is not the MBTA. Finishing a quest here does not send anything to the MBTA. To report an issue officially, use the MBTA's own channels.",
   officialLabel: "MBTA customer support (opens mbta.com)",
   officialUrl: "https://www.mbta.com/customer-support",
 
@@ -69,7 +69,7 @@ export const details = {
   backToExplore: "Back to Explore",
   communityLabel: "Community Mission · unofficial, not an MBTA request",
   communityNote:
-    "T Party builds missions from public MBTA alerts. The MBTA did not ask for this feedback, and completing it here sends nothing to the MBTA.",
+    "Tada builds missions from public MBTA alerts. The MBTA did not ask for this feedback, and completing it here sends nothing to the MBTA.",
   snapshotNote: "MBTA could not be reached, so this shows saved alert data.",
   stationLabel: "Station",
   linesLabel: "Lines",
@@ -154,16 +154,16 @@ export const flow = {
 
   doneTitle: "Quest complete!",
   tokensEarned: (n: number) => `+${n} tokens`,
-  doneBody: "Completed in T Party. This does not send anything to the MBTA.",
+  doneBody: "Completed in Tada. This does not send anything to the MBTA.",
   alreadyDone: "You already finished this quest.",
   tellMbta: "Also tell the MBTA",
-  tellMbtaHelp: "Optional. Opens the MBTA's official feedback page in a new tab. T Party does not send anything for you.",
+  tellMbtaHelp: "Optional. Opens the MBTA's official feedback page in a new tab. Tada does not send anything for you.",
   tellMbtaSaved: "Noted: you opened the MBTA's page.",
   mbtaUrl: "https://www.mbta.com/customer-support",
   backToExplore: "Find another quest",
 
   errors: {
-    network: "We could not reach T Party. Check your connection and try again. Your report is still here.",
+    network: "We could not reach Tada. Check your connection and try again. Your report is still here.",
     ai: "The AI coach could not answer just now. Your report is safe here. Please try again in a moment.",
     fallback: "Something went wrong. Your report is still here. Please try again.",
   },
