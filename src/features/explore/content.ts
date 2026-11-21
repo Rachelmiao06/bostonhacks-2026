@@ -30,7 +30,7 @@ export const content = {
   marker: (station: string, n: number, done: number) =>
     `${station}: ${n} ${n === 1 ? "problem" : "problems"}${done ? `, ${done} done by you` : ""}`,
 
-  /** Green marker: always says who the status comes from. Never "fixed", never "sent to MBTA". */
+  /** Green marker: always says who the status comes from. Never "fixed", never "sent to MBTA". Shown only when the data supports it (see verified.ts). */
   verified: {
     mbta: (ago: string) => `MBTA marked this working again · ${ago}`,
     riders: (n: number) => `Riders report it is working · ${n} ${n === 1 ? "rider" : "riders"}`,
@@ -44,7 +44,7 @@ export const content = {
     next: "Next problem",
     openFor: (days: number) => (days < 1 ? "Opened today" : days === 1 ? "Open 1 day" : `Open ${days} days`),
     failures: (n: number) => (n === 1 ? "First time out in 90 days" : `Out ${n} times in 90 days`),
-    fixedAgo: "MBTA marked this fixed",
+    fixedAgo: "MBTA alert resolved",
     reward: (n: number) => `+${n} tokens`,
     report: "Report what you see",
     verify: "Check it’s working",
@@ -93,12 +93,12 @@ export const categories = [
   { id: "service", label: "Service changes", short: "Service", stamp: "Service" },
   { id: "access", label: "Accessibility", short: "Access", stamp: "Access" },
   { id: "station", label: "Escalators & station", short: "Station", stamp: "Station" },
-  { id: "verify", label: "Check it’s fixed", short: "Fixed?", stamp: "Verify" },
+  { id: "verify", label: "Check if it’s working", short: "Working?", stamp: "Verify" },
 ] as const;
 
 export type CategoryId = (typeof categories)[number]["id"];
 
-/** Report quests are filed by kind. Verify quests (MBTA says fixed) always go under "verify". */
+/** Report quests are filed by kind. Verify quests (MBTA resolved the alert) always go under "verify". */
 export const categoryOfKind: Record<QuestKind, Exclude<CategoryId, "verify">> = {
   closure: "service",
   shuttle: "service",

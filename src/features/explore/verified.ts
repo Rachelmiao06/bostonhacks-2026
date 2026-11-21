@@ -11,11 +11,15 @@ export type Verified = { source: "mbta"; at: string } | { source: "riders"; coun
 /**
  * A stop is verified only when every problem on it is. One open problem keeps the warning colour.
  * MBTA closing an alert wins over rider reports. `riderCounts` (quest id -> riders who said it works)
- * has no live source yet, so without it only the MBTA path can show.
+ * has no live source yet and the map never passes it, so on the map only the MBTA path can show.
+ * The preview page builds its sample rider label by hand, outside this function.
  */
 export function verifiedOf(stop: ProblemStop, riderCounts?: ReadonlyMap<string, number>): Verified | null {
-  const resolvedAt = stop.quests.map((q) => (q.mode === "verify" ? q.resolvedAt : undefined));
-  if (resolvedAt.every((at): at is string => Boolean(at))) {
+  // MBTA path: every problem here must be a verify quest that MBTA closed, with a real closing time.
+  const resolvedAt = stop.quests.map((q) =>
+    q.mode === "verify" && q.status === "resolved" && q.resolvedAt && !Number.isNaN(Date.parse(q.resolvedAt)) ? q.resolvedAt : undefined,
+  );
+  if (resolvedAt.length > 0 && resolvedAt.every((at): at is string => Boolean(at))) {
     return { source: "mbta", at: resolvedAt.reduce((a, b) => (new Date(a) > new Date(b) ? a : b)) };
   }
   const counts = stop.quests.map((q) => riderCounts?.get(q.id) ?? 0);
