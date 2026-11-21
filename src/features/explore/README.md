@@ -10,6 +10,9 @@ Issue: #2. Owner: Rachel. Only the owner edits this folder.
 - `category.tsx` + `categories` in `content.ts`: four kinds built only from what MBTA alerts contain
   (Service changes, Accessibility, Escalators & station, Check it's fixed). No cleanliness or crowding: there is no data for them.
 - `ProblemMarker.tsx`: a pin per stop with problems (most urgent category, count) and a cluster bubble when pins would overlap.
+- `verified.ts` + `PinFace` in `ProblemMarker.tsx`: a pin turns a quiet green only when its source is named:
+  "MBTA marked this working again · <time>" (from `Quest.resolvedAt`) or "Riders report it is working · <n> riders"
+  (no live data yet). Preview at `/explore/verified`. Never says "fixed".
 - `ProblemTicket.tsx`: the printed ticket for a stop, pinned above it on wide screens, docked at the bottom on phones.
 - `ContributePanel.tsx`: contribute without leaving the map. `ReportFlow.tsx` draws PR #14's `useReport` hook;
   `VerifyFlow.tsx` uses PR #14's `api.ts`. The rules live in `features/challenge`, never here.

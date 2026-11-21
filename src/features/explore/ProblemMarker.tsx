@@ -33,10 +33,12 @@ type FaceProps = {
   verified?: Verified | null;
   /** Show the source label above the pin now (the map shows it on hover, focus and selection). */
   showLabel?: boolean;
+  /** Clock for the "ago" text. Only the preview sets it; the map uses the real time. */
+  now?: number;
 };
 
 /** The pin's looks, with no map around it, so the preview page can draw the same thing the map does. */
-export function PinFace({ category, count, doneCount, selected, compact, verified, showLabel }: FaceProps) {
+export function PinFace({ category, count, doneCount, selected, compact, verified, showLabel, now }: FaceProps) {
   const reduce = useReducedMotion() ?? false;
   const style = categoryStyle[category];
   const Icon = verified ? categoryStyle.verify.icon : style.icon;
@@ -51,11 +53,11 @@ export function PinFace({ category, count, doneCount, selected, compact, verifie
       {verified && (
         <span
           className={cn(
-            "pointer-events-none absolute bottom-full left-1/2 mb-1.5 w-max max-w-[15rem] -translate-x-1/2 rounded-full border border-hairline bg-ivory px-2.5 py-1 text-center font-ui text-[0.65rem] leading-tight font-medium text-graphite shadow-float",
+            "pointer-events-none absolute bottom-full left-1/2 mb-1.5 w-max max-w-[18rem] -translate-x-1/2 rounded-full border border-hairline bg-ivory px-2.5 py-1 text-center font-ui text-[0.65rem] leading-tight font-medium text-graphite shadow-float",
             showLabel || selected ? "opacity-100" : "opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100",
           )}
         >
-          {verifiedText(verified)}
+          {verifiedText(verified, now)}
         </span>
       )}
       <span
