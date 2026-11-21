@@ -4,7 +4,7 @@ export const content = {
   loading: "Opening your collection…",
   unavailable: "Your collection could not load right now. Please try again in a moment.",
   tokensLabel: "tokens",
-  tokensNote: "Counted by T Party’s server: one reward per completed report or checked fix, never twice for the same problem.",
+  tokensNote: "Counted by Tada’s server: one reward per completed report or checked fix, never twice for the same problem.",
   stampsTitle: "Your stamps",
   stampsCount: (n: number) => `${n} ${n === 1 ? "stamp" : "stamps"}`,
   byCategory: "By kind",
@@ -15,5 +15,5 @@ export const content = {
   cta: "Find a problem",
   journey: "See the details in My Journey",
   island: "See your island",
-  honest: "Stamps and tokens live in T Party only. They do not mean the MBTA received or fixed anything.",
+  honest: "Stamps and tokens live in Tada only. They do not mean the MBTA received or fixed anything.",
 };
