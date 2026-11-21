@@ -7,8 +7,7 @@ export const site = {
   // The map is the home page. `short` is the label on phone screens.
   nav: [
     { href: "/", label: "Explore", short: "Explore" },
-    { href: "/my-challenges", label: "My Journey", short: "Journey" },
-    { href: "/rewards", label: "Collection", short: "Collection" },
+    { href: "/passport", label: "Passport", short: "Passport" },
   ],
   /** Quieter pages, in the "more" menu. Quests is the list of every quest; Stats are the team's KPIs. */
   moreNav: [
