@@ -58,3 +58,48 @@ export function instructionsFor(kind: "elevator" | "escalator" | "access") {
   const thing = kind === "access" ? "access issue" : kind;
   return `Tell the MBTA how this ${thing} outage affects you. Be specific: which station, what time, what you had to do instead, and what you would like to see changed. A photo is optional.`;
 }
+
+// Text for the live quest page at /challenges/[id].
+export const details = {
+  loading: "Loading quest...",
+  loadFailed: "We could not load quests right now. Please refresh to try again.",
+  notFoundTitle: "Quest not found",
+  notFoundBody:
+    "This quest may have ended, or the link is wrong. MBTA alerts come and go, so pick a fresh one on the map.",
+  backToExplore: "Back to Explore",
+  communityLabel: "Community Mission · unofficial, not an MBTA request",
+  communityNote:
+    "T Party builds missions from public MBTA alerts. The MBTA did not ask for this feedback, and completing it here sends nothing to the MBTA.",
+  snapshotNote: "MBTA could not be reached, so this shows saved alert data.",
+  stationLabel: "Station",
+  linesLabel: "Lines",
+  kindLabel: "Kind",
+  openLabel: "Open for",
+  failuresLabel: "Broken in last 90 days",
+  rewardLabel: "Reward",
+  alertLabel: "MBTA's alert",
+  sourceLink: "See this alert on mbta.com",
+  noLines: "Bus or commuter rail",
+  reportMode: "Report quest",
+  verifyMode: "Verify quest",
+  resolvedNote: "MBTA marked this fixed. Is it really working again?",
+};
+
+export const kindLabels = {
+  elevator: "Elevator",
+  escalator: "Escalator",
+  access: "Accessibility",
+  station: "Station change",
+  closure: "Station closure",
+  shuttle: "Shuttle buses",
+  suspension: "Service suspended",
+} as const;
+
+export function daysOpenText(days: number) {
+  if (days < 1) return "Less than a day";
+  return days === 1 ? "1 day" : `${days} days`;
+}
+
+export function failuresText(n: number) {
+  return n === 1 ? "1 time" : `${n} times`;
+}
