@@ -6,8 +6,10 @@ import {
   deletePhoto,
   getPhoto,
   metaFor,
+  photoTypeProblem,
   putPhoto,
   readAsDataUrl,
+  shrinkPhoto,
   validatePhoto,
   type PhotoMeta,
 } from "./photo";
@@ -102,9 +104,17 @@ export function useSubmission(quest: Quest, state: AppState) {
     saveDraft(quest.id, { text: value, photo: photo?.meta ?? null });
   }
 
-  async function pickPhoto(file: File) {
+  async function pickPhoto(original: File, options?: { fromCamera?: boolean }) {
     if (completed) return;
     setPhotoError(null);
+    const typeProblem = photoTypeProblem(original);
+    if (typeProblem) {
+      setPhotoError(typeProblem);
+      return;
+    }
+    // Camera photos are always re-saved (smaller, no hidden location data). Any photo over the limit is shrunk once.
+    const file =
+      options?.fromCamera || original.size > settings.maxPhotoBytes ? await shrinkPhoto(original) : original;
     const problem = validatePhoto(file);
     if (problem) {
       setPhotoError(problem);

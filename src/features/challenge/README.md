@@ -45,6 +45,13 @@ Until then, after any UI change run `npm run lint && npx tsc --noEmit && npm run
 ## Rules (docs/SPEC.md)
 One form for every quest; AI never confirms facts or treats a photo as proof; "completed in app" never means "sent to the MBTA"; editing the draft makes the last AI check out of date; tokens once per quest.
 
+## Camera
+`PhotoField.tsx` has two hidden file inputs: **Add photo** (library or file picker) and **Take photo** (`capture="environment"`, opens the camera on phones; computers fall back to the file picker). Both feed the same `pickPhoto(file, { fromCamera? })` in `useSubmission.ts`, so validation, storage, the AI check and the "check is out of date" rule are shared.
+- A camera photo is always re-saved by `shrinkPhoto` in `photo.ts`: longest side 1600 px, JPEG. Phone photos are often over the size limit, and re-saving drops hidden EXIF data such as GPS location.
+- Any other photo over the size limit is shrunk once instead of rejected. If it is still too large, or the browser cannot re-save it, the player sees the "too large" message.
+- A small photo from the picker is stored exactly as given.
+- Not covered: HEIC files (the type check rejects them), and a live in-page camera preview (`getUserMedia`). Needs a real phone to confirm `capture` opens the camera app.
+
 ## Decisions made here (also belong in docs/DECISIONS.md, left out to avoid a merge conflict)
 - Quest page is `/challenge?id=<id>`, read on the client, not `/challenges/[id]`: live quests are unknown at build time and Cache Components rejects unknown dynamic params.
 - Sample quests and the offline practice reviewer stand in until `/api/quests` and `/api/review` are wired in.
