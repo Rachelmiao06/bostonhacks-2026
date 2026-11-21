@@ -41,7 +41,7 @@ export const LandmarkMarker = memo(function LandmarkMarker({ landmark, scale, se
         animate={selected ? "selected" : "rest"}
         whileHover={selected ? "selected" : "hover"}
         style={{ scale, transformOrigin: "bottom center" }}
-        className="relative grid cursor-pointer justify-items-center outline-none focus-visible:ring-4 focus-visible:ring-ring/60"
+        className="relative grid cursor-pointer justify-items-center outline-none focus-visible:ring-4 focus-visible:ring-graphite/30"
       >
         {/* The model: rises on hover, rises further and grows when selected. */}
         <motion.span
@@ -76,7 +76,7 @@ export const LandmarkMarker = memo(function LandmarkMarker({ landmark, scale, se
         {/* Name tab: only while selected, so the resting map stays uncluttered. */}
         <span
           className={cn(
-            "absolute -bottom-5 rounded-sm border border-ink/25 bg-paper px-1.5 py-0.5 font-mono text-[0.55rem] leading-none whitespace-nowrap text-ink uppercase shadow-[0_3px_6px_-2px_var(--shade)] transition-opacity duration-200",
+            "absolute -bottom-5 rounded-sm border border-hairline bg-ivory px-1.5 py-0.5 font-mono text-[0.55rem] leading-none whitespace-nowrap text-graphite uppercase shadow-float transition-opacity duration-200",
             selected ? "opacity-100" : "opacity-0",
           )}
         >
