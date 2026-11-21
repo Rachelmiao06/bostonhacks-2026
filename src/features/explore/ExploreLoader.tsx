@@ -67,7 +67,7 @@ export function ExploreLoader() {
 
   const onStatus = useCallback(
     (next: LoadStatus) =>
-      setStatus((prev) => (prev.streets === next.streets && prev.lines === next.lines && prev.problems === next.problems ? prev : next)),
+      setStatus((prev) => (prev.streets === next.streets && prev.lines === next.lines && prev.problems === next.problems && prev.failed === next.failed ? prev : next)),
     [],
   );
   const onReveal = useCallback(() => setPhase((p) => (p === "gone" ? p : "revealing")), []);
@@ -75,6 +75,8 @@ export function ExploreLoader() {
 
   return (
     <>
+      {/* The paper under the map, so the first frame is never blank while the map code arrives. */}
+      <div aria-hidden className="fixed inset-0 z-30 bg-stone" />
       <ExploreMap entry={entry} onStatus={onStatus} onReveal={onReveal} />
       {!deepLinked && phase !== "gone" && (
         <DiveGate

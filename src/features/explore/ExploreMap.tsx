@@ -39,7 +39,7 @@ import type { LiveData, SubwayData, SubwayStation } from "./types";
 import { AtlasButton, Eyebrow } from "./ui";
 import { WorldQuest } from "./WorldQuest";
 import {
-  OVERVIEW,
+  overviewView,
   chooseWorld,
   flyCamera,
   insideWorld,
@@ -68,6 +68,11 @@ const DIVE_SECONDS = 4.2;
 const landmarkOfStation = new globalThis.Map(landmarks.map((landmark) => [landmark.stationId, landmark]));
 const ALL = new Set<CategoryId>(categories.map((c) => c.id));
 const NOTHING_DONE: ReadonlySet<string> = new Set();
+/** The camera the map opens on behind the gate (Boston from high above). */
+function openingView() {
+  const view = overviewView(window.innerWidth < 640);
+  return { longitude: view.center[0], latitude: view.center[1], zoom: view.zoom, pitch: view.pitch, bearing: view.bearing };
+}
 type Mode = "intro" | "world" | "atlas";
 const lngLat = (s: SubwayStation): [number, number] => [s.longitude, s.latitude];
 
@@ -199,7 +204,8 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
           center: [station.longitude, station.latitude],
           zoom: wide ? 16.8 : 16.4,
           pitch: 64,
-          padding: wide ? { top: 0, bottom: 340, left: 0, right: 0 } : { top: 40, bottom: 430, left: 0, right: 0 },
+          // Top room keeps the pin clear of the floating nav.
+          padding: wide ? { top: 90, bottom: 340, left: 0, right: 0 } : { top: 120, bottom: 430, left: 0, right: 0 },
           duration: 1000,
         });
         return;
@@ -253,8 +259,13 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
   const clearSelection = useCallback(() => {
     setSelected(null);
     const map = mapRef.current?.getMap();
-    if (map) clearCameraPadding(map);
-  }, []);
+    if (!map) return;
+    if (mode === "world" && worldInfo) {
+      // Back out to the whole district instead of staying nose-to-glass with one building.
+      const view = worldView(worldInfo.center, !wide);
+      map.easeTo({ center: view.center, zoom: view.zoom, pitch: view.pitch, padding: { top: 0, right: 0, bottom: 0, left: 0 }, duration: 900 });
+    } else clearCameraPadding(map);
+  }, [mode, worldInfo, wide]);
 
   // A link like /?quest=<id> (from My Journey) opens that problem's ticket once everything has loaded.
   const deepLinked = useRef(false);
@@ -290,7 +301,7 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
     setPanelQuest(null);
     const map = mapRef.current?.getMap();
     // In the world the question card comes back for the same stop, so keep room for it.
-    if (map && wide) map.easeTo({ padding: mode === "world" ? { top: 0, right: 0, bottom: 340, left: 0 } : { top: 420, right: 0, bottom: 0, left: 0 }, duration: 600 });
+    if (map && wide) map.easeTo({ padding: mode === "world" ? { top: 90, right: 0, bottom: 340, left: 0 } : { top: 420, right: 0, bottom: 0, left: 0 }, duration: 600 });
   }, [wide, mode]);
 
   // ---- The dive: gate -> fall from above Boston -> a small 3D world around one stop ----
@@ -342,9 +353,7 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
       setArrived(false);
       setSelected(null);
       setPanelQuest(null);
-      setMode("atlas");
       map.setMinZoom(MIN_ZOOM);
-      map.setPadding({ top: 0, right: 0, bottom: 0, left: 0 });
       const buildings = { v: BUILDING_OPACITY };
       flight.current = flyCamera(map, atlasView(), {
         duration: 2.4,
@@ -356,6 +365,8 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
         onComplete: () => {
           gsap.set(fogRef.current, { opacity: 0 });
           setWorldBuildingsOpacity(map, 0);
+          // The city's markers appear only once the camera has settled, so nothing pops in mid-flight.
+          setMode("atlas");
         },
       });
     },
@@ -365,8 +376,8 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
   // The gate's checklist.
   const problemsReady = quests.status !== "loading";
   useEffect(() => {
-    onStatus({ streets: Boolean(style) && mapLoaded, lines: Boolean(data), problems: problemsReady });
-  }, [onStatus, style, mapLoaded, data, problemsReady]);
+    onStatus({ streets: Boolean(style) && mapLoaded, lines: Boolean(data), problems: problemsReady, failed });
+  }, [onStatus, style, mapLoaded, data, problemsReady, failed]);
 
   // If the problem list is slow, start without waiting for it forever.
   const chose = entry.kind !== "pending";
@@ -423,7 +434,7 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
         {style && (
           <Map
             ref={mapRef}
-            initialViewState={startsInAtlas ? initialView() : { longitude: OVERVIEW.center[0], latitude: OVERVIEW.center[1], zoom: OVERVIEW.zoom, pitch: OVERVIEW.pitch, bearing: OVERVIEW.bearing }}
+            initialViewState={startsInAtlas ? initialView() : openingView()}
             attributionControl={{ compact: true }}
             mapStyle={style}
             maxBounds={MAX_BOUNDS}
@@ -538,40 +549,32 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
           style={{ background: "radial-gradient(ellipse 64% 60% at 50% 52%, transparent 52%, color-mix(in oklab, var(--atlas-land) 60%, transparent) 76%, var(--atlas-land) 100%)" }}
         />
 
-        {/* Overlays: filters (or the world's name tag) and progress under the nav, status at the bottom. */}
+        {/* Overlays under the nav: the filters (city) or the name tag (world) on the left; the way out and progress on the right. */}
         <div className="pointer-events-none absolute inset-x-0 top-[3.75rem] flex flex-col gap-2 px-2 sm:top-[4.75rem] sm:flex-row sm:items-start sm:justify-between sm:px-4">
           <div className="pointer-events-auto min-w-0">
-            {mode === "atlas" && quests.status === "ready" && (
-              <div className="flex flex-col items-start gap-2">
-                <FilterBar counts={counts} show={show} onToggle={toggleFilter} />
-                {worldInfo && (
-                  <AtlasButton tone="outline" size="sm" className="shadow-float" onClick={backToBlock}>
-                    {worldText.backToBlock}
-                  </AtlasButton>
-                )}
-              </div>
-            )}
+            {mode === "atlas" && quests.status === "ready" && <FilterBar counts={counts} show={show} onToggle={toggleFilter} />}
             {mode === "world" && arrived && worldInfo && (
-              <div className="flex flex-col items-start gap-2" aria-live="polite">
-                <div className="rounded-2xl border border-hairline bg-ivory/92 px-3.5 py-2 shadow-float backdrop-blur-md">
-                  <Eyebrow>{worldText.near(worldInfo.station.name)}</Eyebrow>
-                  <p className="font-ui text-sm font-medium text-graphite">{worldText.problems(worldProblemCount)}</p>
-                  {worldInfo.note && (
-                    <p className="mt-1 max-w-64 font-ui text-xs text-taupe">
-                      {worldInfo.note.kind === "far" ? worldText.far : worldText.quiet(worldInfo.note.from)}
-                    </p>
-                  )}
-                </div>
-                <AtlasButton tone="outline" size="sm" className="shadow-float" onClick={seeCity}>
-                  {worldText.seeCity}
-                </AtlasButton>
-                {!selected && !coached && worldProblemCount > 0 && (
-                  <p className="max-w-64 rounded-2xl bg-graphite px-3.5 py-2 font-ui text-xs font-medium text-ivory shadow-float">{worldText.coach}</p>
-                )}
+              <div aria-live="polite" className="max-w-72 rounded-2xl border border-hairline bg-ivory/92 px-3.5 py-2 shadow-float backdrop-blur-md">
+                <Eyebrow>{worldText.near(worldInfo.station.name)}</Eyebrow>
+                <p className="font-ui text-sm font-medium text-graphite">{worldText.problems(worldProblemCount)}</p>
+                {worldInfo.note && <p className="mt-1 font-ui text-xs text-taupe">{worldInfo.note.kind === "far" ? worldText.far : worldText.quiet(worldInfo.note.from)}</p>}
+                {!selected && !coached && worldProblemCount > 0 && <p className="mt-1 font-ui text-xs font-medium text-graphite">{worldText.coach}</p>}
               </div>
             )}
           </div>
-          <div className="pointer-events-auto self-start">{mode !== "intro" && <ProgressChip />}</div>
+          <div className="pointer-events-auto flex items-center gap-2 self-start">
+            {mode === "atlas" && worldInfo && (
+              <AtlasButton tone="outline" size="sm" className="shadow-float" onClick={backToBlock}>
+                {worldText.backToBlock}
+              </AtlasButton>
+            )}
+            {mode === "world" && arrived && (
+              <AtlasButton tone="outline" size="sm" className="shadow-float" onClick={seeCity}>
+                {worldText.seeCity}
+              </AtlasButton>
+            )}
+            {mode !== "intro" && <ProgressChip />}
+          </div>
         </div>
 
         <div className="pointer-events-none absolute bottom-3 left-2 flex flex-col items-start gap-1.5 sm:left-4">

@@ -138,22 +138,17 @@ export const landmarks: Landmark[] = [
 
 /** The arrival gate: the first thing a new rider sees, while the map loads behind it. */
 export const dive = {
-  eyebrow: "T Party · Boston",
-  title: "Drop in where you are.",
-  intro:
-    "We zoom you down to the nearest T stop and show what is broken around you. Your location stays in your browser.",
+  title: "Where are you right now?",
+  intro: "We drop you into the nearest T stop. Your location stays in your browser.",
   useLocation: "Use my location",
   locating: "Finding the nearest stop…",
-  denied: "We could not get your location. Pick a place to start instead.",
+  denied: "We could not get your location. Pick a place instead.",
   orStart: "Or start at",
-  skip: "Skip, show me the whole map",
-  loading: {
-    label: "Getting the map ready",
-    streets: "Streets",
-    lines: "T lines",
-    problems: "Live problems",
-  },
-  waiting: "Almost there. The map is still arriving…",
+  skip: "Just show the map",
+  /** One quiet status line, so waiting never feels like nothing is happening. */
+  status: (ready: number, total: number) => (ready >= total ? "Map ready" : `Loading the map · ${ready} of ${total}`),
+  waiting: "Almost there…",
+  failed: "The map data did not load. Refresh to try again.",
   /** The starting places on the gate. Each is the stop of a landmark in `landmarks`. */
   spots: [
     { label: "Park Street", stationId: "place-pktrm" },

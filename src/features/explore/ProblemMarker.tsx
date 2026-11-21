@@ -54,7 +54,7 @@ export const ProblemPin = memo(function ProblemPin({ stop, doneCount, selected, 
         whileHover={{ y: selected ? -6 : -3 }}
         whileTap={{ scale: 0.95 }}
         transition={SPRING}
-        className="group flex cursor-pointer flex-col items-center rounded-full outline-none focus-visible:ring-4 focus-visible:ring-graphite/30"
+        className="group flex cursor-pointer touch-manipulation flex-col items-center rounded-full outline-none focus-visible:ring-4 focus-visible:ring-graphite/30"
       >
         {compact ? (
           <span className={cn("block size-3 rounded-full ring-2 ring-ivory shadow-float", allDone ? "bg-taupe" : style.bg)} />

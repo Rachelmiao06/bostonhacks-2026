@@ -70,7 +70,7 @@ export function WorldQuest({ quests, index, onIndex, onClose, onFullForm }: Prop
       <header className="flex shrink-0 items-center gap-2 border-b border-hairline px-3 py-2">
         <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[0.7rem] font-semibold", style.soft, style.text)}>
           <Icon className="size-3.5" aria-hidden />
-          {verify ? categoryInfo("verify").label : kindLabels[quest.kind]}
+          <span className="max-sm:sr-only">{verify ? categoryInfo("verify").label : kindLabels[quest.kind]}</span>
         </span>
         <h3 className="min-w-0 flex-1 truncate font-serif text-base font-semibold">{quest.stationName}</h3>
         {quests.length > 1 && (
@@ -108,7 +108,7 @@ export function WorldQuest({ quests, index, onIndex, onClose, onFullForm }: Prop
 
       <div className="flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4">
         <Bubble key={`ask-${quest.id}`} text={ask} />
-        <p className="line-clamp-2 font-mono text-[0.62rem] leading-relaxed tracking-wide text-taupe uppercase">
+        <p className="line-clamp-2 max-sm:line-clamp-1 font-mono text-[0.62rem] leading-relaxed tracking-wide text-taupe uppercase">
           {content.panel.alert}: {quest.header}
         </p>
 
@@ -148,7 +148,7 @@ function Bubble({ text }: { text: string }) {
       <Eyebrow className="mb-1">{world.question}</Eyebrow>
       {/* The full sentence is there for screen readers from the start; the typing is only for eyes. */}
       <p className="sr-only">{text}</p>
-      <p aria-hidden className="min-h-[3.2em] font-serif text-[1.05rem] leading-snug">
+      <p aria-hidden className="min-h-[3.2em] font-serif text-base leading-snug sm:text-[1.05rem]">
         {typed}
         <span className="ml-0.5 inline-block h-[1em] w-0.5 translate-y-0.5 bg-graphite/60 motion-safe:animate-pulse" />
       </p>
@@ -216,7 +216,7 @@ function ReportBody({ quest, onDone, onFullForm }: { quest: Quest; onDone: () =>
         <AtlasTextarea
           ref={textRef}
           id="world-answer"
-          rows={3}
+          rows={2}
           value={r.text}
           onChange={(e) => r.setText(e.target.value)}
           onKeyDown={(e) => {
@@ -240,7 +240,7 @@ function ReportBody({ quest, onDone, onFullForm }: { quest: Quest; onDone: () =>
           {r.checking ? flow.checking : world.send}
         </AtlasButton>
         <AtlasButton fill="bg-cat-verify" disabled={!r.canComplete} onClick={r.complete}>
-          {r.completing ? flow.completing : `${world.stamp} · ${content.ticket.reward(quest.rewardTokens)}`}
+          {r.completing ? flow.completing : (<>{world.stamp}<span className="max-sm:hidden"> · {content.ticket.reward(quest.rewardTokens)}</span></>)}
         </AtlasButton>
         <button
           type="button"

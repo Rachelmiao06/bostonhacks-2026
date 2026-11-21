@@ -32,13 +32,10 @@ export type CameraView = {
   bearing: number;
 };
 
-/** Greater Boston from high above: where every dive starts. */
-export const OVERVIEW: CameraView = {
-  center: [-71.07, 42.345],
-  zoom: 9.8,
-  pitch: 0,
-  bearing: 0,
-};
+/** Greater Boston from high above: where every dive starts. On phones Boston sits higher, clear of the card below. */
+export function overviewView(phone: boolean): CameraView {
+  return { center: [-71.07, phone ? 42.26 : 42.31], zoom: 9.8, pitch: 0, bearing: 0 };
+}
 
 export function worldView(center: LngLat, phone: boolean): CameraView {
   return { center, zoom: phone ? 15.6 : 16.1, pitch: 62, bearing: -28 };
@@ -125,7 +122,7 @@ export function showWorldBuildings(map: MapLibreMap, center: LngLat) {
   const filter = ["<=", ["distance", { type: "Point", coordinates: center }], WORLD_RADIUS_M * 1.05] as unknown as FilterSpecification;
   if (!map.getLayer(BUILDINGS)) {
     // Capped so a tower never hides the stop behind it; a diorama, not a skyline.
-    const height: unknown = ["min", 46, ["max", 6, ["coalesce", ["get", "render_height"], 9]]];
+    const height: unknown = ["min", 40, ["max", 6, ["coalesce", ["get", "render_height"], 9]]];
     map.addLayer(
       {
         id: BUILDINGS,
@@ -137,13 +134,13 @@ export function showWorldBuildings(map: MapLibreMap, center: LngLat) {
         paint: {
           "fill-extrusion-height": height as never,
           "fill-extrusion-base": ["coalesce", ["get", "render_min_height"], 0],
-          "fill-extrusion-color": ["interpolate", ["linear"], height as never, 6, ATLAS.building, 46, ATLAS.road] as never,
+          "fill-extrusion-color": ["interpolate", ["linear"], height as never, 6, ATLAS.building, 40, ATLAS.road] as never,
           "fill-extrusion-opacity": 0,
           "fill-extrusion-vertical-gradient": true,
         },
       },
-      // Under the T lines, so the lines stay readable over the buildings.
-      map.getLayer("t-lines-casing") ? "t-lines-casing" : undefined,
+      // Under every label and the T lines, so street names, stop names and routes always read on top of the buildings.
+      map.getStyle().layers.find((layer) => layer.type === "symbol")?.id,
     );
   } else {
     map.setFilter(BUILDINGS, filter);
@@ -196,14 +193,23 @@ export function flyCamera(map: MapLibreMap, to: CameraView, { duration, instant,
   const zoomingIn = to.zoom >= from.zoom;
   const [high, low] = zoomingIn ? [from, to] : [to, from];
 
+  // Room left for a card or panel eases away during the flight, so nothing jumps.
+  const padFrom = map.getPadding();
   const frame = (t: number) => {
     const e = zoomEase(t);
     const view = pathAt(high, low, zoomingIn ? e : 1 - e);
+    const keep = 1 - e;
     map.jumpTo({
       center: view.center,
       zoom: view.zoom,
       pitch: view.pitch,
       bearing: view.bearing,
+      padding: {
+        top: (padFrom.top ?? 0) * keep,
+        bottom: (padFrom.bottom ?? 0) * keep,
+        left: (padFrom.left ?? 0) * keep,
+        right: (padFrom.right ?? 0) * keep,
+      },
     });
   };
 
