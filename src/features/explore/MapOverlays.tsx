@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { CircleHelp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PixelTrain } from "@/components/shared/pixel-train";
 import { categoryStyle } from "./category";
-import { categories, content, type CategoryId } from "./content";
+import { categories, content, world, type CategoryId } from "./content";
 import { useMyProgress } from "./progress";
 
 type FilterProps = {
@@ -77,6 +79,49 @@ export function ProgressChip() {
         {content.progress.label}
       </span>
     </Link>
+  );
+}
+
+/** A small "what are these pins?" key, closed by default so it never covers the map. */
+export function PinLegend() {
+  const [open, setOpen] = useState(false);
+  const text = world.legend;
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="pointer-events-auto flex cursor-pointer items-center gap-1.5 rounded-full border border-hairline bg-ivory/92 px-2.5 py-1 font-ui text-[0.68rem] font-medium text-graphite shadow-float backdrop-blur-md outline-none hover:bg-ivory focus-visible:ring-2 focus-visible:ring-graphite/30"
+      >
+        <CircleHelp className="size-3.5" aria-hidden />
+        {text.open}
+      </button>
+    );
+  }
+  return (
+    <div role="region" aria-label={text.title} className="pointer-events-auto w-64 space-y-2 rounded-2xl border border-hairline bg-ivory/95 p-3 font-ui shadow-float backdrop-blur-md">
+      <div className="flex items-center justify-between">
+        <p className="font-mono text-[0.62rem] tracking-[0.14em] text-taupe uppercase">{text.title}</p>
+        <button type="button" onClick={() => setOpen(false)} className="cursor-pointer text-xs text-taupe underline underline-offset-4 outline-none hover:text-graphite focus-visible:ring-2 focus-visible:ring-graphite/30">
+          {text.close}
+        </button>
+      </div>
+      <ul className="space-y-1.5">
+        {categories.map((c) => {
+          const style = categoryStyle[c.id];
+          const Icon = style.icon;
+          return (
+            <li key={c.id} className="flex items-center gap-2 text-xs text-graphite">
+              <Icon className={cn("size-3.5 shrink-0", style.text)} aria-hidden />
+              {c.label}
+            </li>
+          );
+        })}
+      </ul>
+      <p className="text-xs text-taupe">{text.number}</p>
+      <p className="text-xs text-taupe">{text.landmark}</p>
+      <p className="text-xs text-taupe">{text.ring}</p>
+    </div>
   );
 }
 
