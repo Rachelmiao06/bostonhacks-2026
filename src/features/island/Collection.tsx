@@ -216,7 +216,11 @@ export function Collection({ known, handle, onClose }: { known: number | null; h
         }}
         onPointerLeave={() => ctrl.current?.setHover(null)}
         onPointerDown={(e) => {
-          e.currentTarget.setPointerCapture?.(e.pointerId);
+          try {
+            e.currentTarget.setPointerCapture(e.pointerId);
+          } catch {
+            // capture is only a convenience: the drag still works without it
+          }
           drag.current = { x: e.clientX, start: pos.current, moved: false, v: 0, lastX: e.clientX, lastT: performance.now() };
         }}
         onPointerCancel={() => {
