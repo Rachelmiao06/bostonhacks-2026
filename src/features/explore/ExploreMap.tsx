@@ -30,6 +30,7 @@ import { LandmarkMarker } from "./LandmarkMarker";
 import { FilterBar, ProgressChip, StatusChip } from "./MapOverlays";
 import { subwayDownload } from "./prefetch";
 import { ClusterPin, ProblemPin } from "./ProblemMarker";
+import { verifiedOf } from "./verified";
 import { ProblemTicket } from "./ProblemTicket";
 import { useMyProgress } from "./progress";
 import { clusterStops, problemStops, useQuests, type Cluster, type ProblemStop } from "./quests";
@@ -499,6 +500,7 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
                     doneCount={cluster.stops[0].quests.filter((q) => done.has(q.id)).length}
                     selected={selected?.id === cluster.id}
                     compact={zoom < 11.5}
+                    verified={verifiedOf(cluster.stops[0])}
                     onSelect={selectStop}
                   />
                 ),
@@ -513,6 +515,7 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
                   selected={selected?.id === stop.station.id}
                   compact={false}
                   beacon
+                  verified={verifiedOf(stop)}
                   onSelect={selectStop}
                 />
               ))}
