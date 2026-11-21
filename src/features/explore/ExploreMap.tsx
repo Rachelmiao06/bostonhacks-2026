@@ -202,7 +202,11 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
   const questList = useMemo(() => (quests.status === "ready" ? quests.quests : []), [quests]);
   const stops = useMemo(() => problemStops(questList, stationById, show), [questList, stationById, show]);
   const stopById = useMemo(() => new globalThis.Map(stops.map((stop) => [stop.station.id, stop])), [stops]);
-  const clusters = useMemo(() => clusterStops(stops, zoom), [stops, zoom]);
+  // A pixel landmark is its stop's own marker, so that stop never joins a cluster bubble (which would sit on top of the building).
+  const clusters = useMemo(
+    () => clusterStops(zoom >= content.landmarkMinZoom ? stops.filter((stop) => !pixelLandmarkStations.has(stop.station.id)) : stops, zoom),
+    [stops, zoom],
+  );
 
   // The small world only shows what is inside its circle: a handful of stops, not the whole T.
   const allStops = useMemo(() => problemStops(questList, stationById, ALL), [questList, stationById]);
