@@ -7,9 +7,6 @@ import { Marker } from "@/lib/map";
 import { Stamp } from "@/components/shared/stamp";
 import { cn } from "@/lib/utils";
 import { categoryInfo, categoryOf, categoryStyle } from "./category";
-import { Dialog } from "@base-ui/react/dialog";
-import { landmarks, stationLandmarks } from "@/features/landmarks/catalog";
-import { LandmarkDetail } from "@/features/landmarks/LandmarkDetail";
 import { content, kindLabels, type Landmark } from "./content";
 import type { SubwayLine, SubwayStation } from "./types";
 
@@ -61,7 +58,6 @@ export function ProblemTicket(props: Props) {
 const PIXEL_STEPS = (t: number) => Math.ceil(t * 9) / 9;
 
 function TicketCard({ station, lines, quests, index, onIndex, done, landmark, docked, onContribute, onClose }: Props) {
-  const sprite = stationLandmarks[station.id];
   const quest = quests[index];
   const stationLines = lines.filter((line) => station.lineIds.includes(line.id));
   // PROTOTYPE reveal: on the map, the ticket "prints" upward out of its stop in pixel-sized steps.
@@ -85,7 +81,7 @@ function TicketCard({ station, lines, quests, index, onIndex, done, landmark, do
       }
       onClick={(event) => event.stopPropagation()}
       className={cn(
-        "cloth-ticket cloth-seam relative cursor-default overflow-visible rounded-xl border border-hairline bg-ivory font-ui text-graphite shadow-ticket",
+        "relative cursor-default overflow-visible rounded-xl border border-hairline bg-ivory font-ui text-graphite shadow-ticket",
         docked ? "w-full" : "w-[19.5rem]",
       )}
     >
@@ -121,21 +117,6 @@ function TicketCard({ station, lines, quests, index, onIndex, done, landmark, do
             </span>
           ))}
           {landmark && <span>· {content.ticket.landmark(landmark.name)}</span>}
-          {sprite && (
-            <Dialog.Root>
-              <Dialog.Trigger className="cursor-pointer underline underline-offset-2">
-                {content.ticket.collectible(landmarks[sprite].label)}
-              </Dialog.Trigger>
-              <Dialog.Portal>
-                <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/30" />
-                <Dialog.Popup className="cloth-sheet fixed top-1/2 left-1/2 z-50 w-72 -translate-x-1/2 -translate-y-1/2 rounded-xl border p-4 text-graphite shadow-ticket">
-                  <Dialog.Title className="text-sm">{station.name}</Dialog.Title>
-                  <LandmarkDetail id={sprite} size={128} />
-                  <Dialog.Close className="mt-3 w-full cursor-pointer rounded-lg border py-1">{content.close}</Dialog.Close>
-                </Dialog.Popup>
-              </Dialog.Portal>
-            </Dialog.Root>
-          )}
         </div>
       </div>
 

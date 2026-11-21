@@ -15,7 +15,6 @@ import {
   NavigationControl,
   Source,
   addStickerLayers,
-  addKnitPatterns,
   atlasCssVars,
   clearCameraPadding,
   initialView,
@@ -24,7 +23,6 @@ import {
   tLineLayers,
   type MapRef,
 } from "@/lib/map";
-import { stationLandmarks } from "@/features/landmarks/catalog";
 import { categoryOf } from "./category";
 import { ContributePanel } from "./ContributePanel";
 import { categories, content, landmarks, world as worldText, type CategoryId, type Landmark } from "./content";
@@ -501,7 +499,6 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
   const selectedLineKey = selected?.lineIds.join(",") ?? "";
   const lineLayers = useMemo(() => tLineLayers(selectedLineKey ? selectedLineKey.split(",") : []), [selectedLineKey]);
 
-  const spriteSize = Math.min(34, Math.max(22, 22 + (zoom - 13) * 4));
   const landmarkScale = Math.min(1.4, Math.max(0.5, 0.55 + (zoom - 12) * 0.22));
   // PROTOTYPE: a pixel-art landmark is its stop's mission marker, so that stop's pin steps aside while landmarks show.
   const showLandmarks = zoom >= content.landmarkMinZoom;
@@ -518,7 +515,7 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="knit-map fixed inset-0 z-30" style={{ ...atlasCssVars, backgroundColor: "var(--atlas-land)" }}>
+      <div className="fixed inset-0 z-30" style={{ ...atlasCssVars, backgroundColor: "var(--atlas-land)" }}>
         {style && (
           <Map
             ref={mapRef}
@@ -533,7 +530,6 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
               addStickerLayers(event.target);
               setMapLoaded(true);
               addHaze(event.target);
-              void addKnitPatterns(event.target).catch((error) => console.warn("Map fabric unavailable", error));
             }}
             onZoom={(event) => setZoom(Math.round(event.viewState.zoom * 2) / 2)}
             onMoveEnd={(event) => {
@@ -553,7 +549,6 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
               <Source id="t-lines" type="geojson" data={lineGeoJSON}>
                 <Layer {...lineLayers.casing} />
                 <Layer {...lineLayers.line} />
-                <Layer {...lineLayers.stitches} />
               </Source>
             )}
             {data && (mode === "atlas" || arrived) && <TrainsLayer trains={live?.trains ?? []} lines={data.lines} />}
@@ -564,8 +559,6 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
                 kind={station.lineIds.length > 1 ? "hub" : "stop"}
                 color={colorOfLine.get(station.lineIds[0]) ?? ""}
                 selected={selected?.id === station.id}
-                landmark={zoom >= content.spriteMinZoom ? stationLandmarks[station.id] : undefined}
-                spriteSize={spriteSize}
                 compact={zoom < 12}
                 onSelect={(picked) => {
                   if (mode !== "world") return selectStation(picked);

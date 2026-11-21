@@ -55,7 +55,6 @@ export const content = {
     unofficial: "Community mission · not an MBTA request",
     nothingHere: "No open MBTA problems listed at this stop right now.",
     landmark: (name: string) => `Near ${name}`,
-    collectible: (name: string) => `Station collectible · ${name}`,
     stampDone: "Done",
     stampChecked: "Checked",
   },
@@ -83,7 +82,6 @@ export const content = {
 
   /** Below this zoom the landmark models are hidden, so the far-out view stays clean. */
   landmarkMinZoom: 11.5,
-  spriteMinZoom: 12.5,
   landmarkPlaceholder: "Model to come",
   landmarkProblems: (name: string, n: number, done: number) =>
     `${name}: ${n} ${n === 1 ? "problem" : "problems"} at this stop${done ? `, ${done} done by you` : ""}`,

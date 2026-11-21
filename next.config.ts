@@ -7,8 +7,6 @@ const nextConfig: NextConfig = {
   turbopack: {
     rules: {
       "*.css": {
-        // Preserve CSS Module class exports for component styles.
-        condition: { not: { path: /\.module\.css$/ } },
         loaders: ["@tailwindcss/turbopack"],
         as: "*.css",
       },

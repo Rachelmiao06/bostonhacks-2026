@@ -13,7 +13,7 @@ export function SiteNav() {
     <header className="pointer-events-none sticky top-0 z-40 px-2 pt-2 sm:px-4 sm:pt-3">
       <nav
         aria-label="Main"
-        className="cloth-nav relative pointer-events-auto mx-auto flex max-w-5xl items-center justify-between gap-1 rounded-2xl border border-hairline bg-ivory/92 py-1 pr-1 pl-2 font-ui text-graphite shadow-float backdrop-blur-md sm:gap-3 sm:pl-3"
+        className="pointer-events-auto mx-auto flex max-w-5xl items-center justify-between gap-1 rounded-2xl border border-hairline bg-ivory/92 py-1 pr-1 pl-2 font-ui text-graphite shadow-float backdrop-blur-md sm:gap-3 sm:pl-3"
       >
         <Link
           href="/"

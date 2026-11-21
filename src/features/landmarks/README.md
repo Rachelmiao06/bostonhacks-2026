@@ -1,8 +1,6 @@
 # 地图地标
 
-绿线 B 支线实景示例在 `/explore?sample=green-b`。8 个物件分配到不同站点，位置是游戏安排。地图直接复用站点按钮和实时坐标，缩远至 12.5 级以下隐藏图像，放大后显示 22 至 34 像素。
-
-单独查看美术素材时打开 `/explore/landmarks`。点击上方的物件，在下方查看放大图并切换 Front、Side、Back。地图开发者可以直接复用这两部分。
+启动项目后打开 `/explore/landmarks`。点击上方的物件，在下方查看放大图并切换 Front、Side、Back。地图开发者可以直接复用这两部分。
 
 ## 在站点上放物件
 
@@ -39,7 +37,7 @@ const [selected, setSelected] = useState<LandmarkId | null>(null);
 
 ## PixiJS 或 Canvas
 
-从 `catalog.ts` 导入 `landmarkSrc(id, view?)` 获得同一张透明 WebP 的公开 URL。PixiJS 可把纹理加载为 sprite，设置 `sprite.anchor.set(0.5, 1)`，按地图缩放策略设定显示尺寸，再放在 `(x, y - gap)`。Canvas 加载并复用 Image 后调用 `ctx.drawImage(image, x - size / 2, y - gap - size, size, size)`。每张图都是 40 × 40，含单像素轮廓，底部约有 1 个源像素的保护边距。Canvas 动画请读取系统的 reduced-motion 设置。
+从 `catalog.ts` 导入 `landmarkSrc(id, view?)` 获得同一张透明 WebP 的公开 URL。PixiJS 可把纹理加载为 sprite，设置 `sprite.anchor.set(0.5, 1)`，按地图缩放策略设定显示尺寸，再放在 `(x, y - gap)`。Canvas 加载并复用 Image 后调用 `ctx.drawImage(image, x - size / 2, y - gap - size, size, size)`。每张图都是 512 × 512，底部有 4 个源像素的保护边距。Canvas 动画请读取系统的 reduced-motion 设置。
 
 ## 调外观
 
@@ -47,9 +45,9 @@ const [selected, setSelected] = useState<LandmarkId | null>(null);
 
 ```css
 .station-map {
-  --landmark-size: 28px;
+  --landmark-size: 64px;
   --landmark-gap: 6px;
-  --landmark-lift: 2px;
+  --landmark-lift: 3px;
   --landmark-duration: 3s;
   --landmark-shadow: 0 2px 2px rgb(0 0 0 / 24%);
 }

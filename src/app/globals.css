@@ -95,22 +95,21 @@
 }
 
 :root {
-  /* Wool, felt and the dark thread used for lettering. */
-  --ink: #42382e;
-  --board: #625443;
-  --paper: #fff4df;
-  --sky: #a3c6cf;
-  --sun: #eebd66;
-  --cherry: #a3494b;
-  --leaf: #5b7557;
-  --wood: #977351;
-  --steel: #a6aea1;
-  --shade: rgb(65 43 29 / 24%);
-  --dot: rgb(255 244 220 / 10%);
-  --linen: url("/assets/textile/linen.png");
-  --thread: #9e8264;
-  --patch-shadow: 0 2px 1px #785f403d, 0 5px 13px #5a422b21;
+  /* Raw palette (the only place colours are typed in) */
+  --ink: oklch(0.2 0.06 285); /* navy outline and extruded edge */
+  --board: oklch(0.28 0.035 265); /* charcoal game table */
+  --paper: oklch(0.96 0.03 90); /* cream map paper */
+  --sky: oklch(0.76 0.12 238); /* cover-art blue */
+  --sun: oklch(0.87 0.17 92); /* START-button yellow */
+  --cherry: oklch(0.62 0.22 27); /* dice red */
+  --leaf: oklch(0.72 0.17 145); /* pipe green */
+  --wood: oklch(0.5 0.08 55); /* treasure-chest brown */
+  --steel: oklch(0.78 0.012 250); /* chest metal */
+  --shade: oklch(0 0 0 / 0.5); /* soft drop shadow */
+  --dot: oklch(0.27 0.012 60 / 0.05); /* faint map-sheet grid */
 
+  /* Atlas palette: matches the map's stone land and sage water (ATLAS in src/lib/map.ts) */
+  --ivory: oklch(0.985 0.007 85); /* ticket paper */
   --stone: oklch(0.951 0.007 85); /* map land */
   --stone-deep: oklch(0.89 0.012 80); /* pressed stone, quiet fills */
   --sage: oklch(0.912 0.014 170); /* map water */
@@ -187,8 +186,11 @@
   }
   body {
     @apply overflow-x-clip bg-background text-foreground;
-    background-image: var(--linen);
-    background-size: 130px 130px;
+    /* faint grid, like the sheet lines of a printed map */
+    background-image:
+      linear-gradient(var(--dot) 1px, transparent 1px),
+      linear-gradient(90deg, var(--dot) 1px, transparent 1px);
+    background-size: 48px 48px;
   }
   @media (prefers-reduced-motion: reduce) {
     *,
@@ -198,54 +200,4 @@
       transition-duration: 0.01ms !important;
     }
   }
-}
-
-/* Textile surfaces share the same small, seamless swatch at different scales. */
-.cloth-nav {
-  background: var(--paper) var(--linen) repeat center / 96px;
-  border-bottom: 1px solid var(--thread);
-  box-shadow: 0 3px 10px #59412824;
-}
-.cloth-nav::after {
-  content: ""; position: absolute; inset: auto 0 3px; pointer-events: none;
-  border-bottom: 1px dashed var(--thread); opacity: .65;
-}
-.thread-roundel {
-  display: grid; place-items: center; width: 37px; height: 37px;
-  border: 2px solid #365747; outline: 1px dashed var(--paper); outline-offset: -5px;
-  border-radius: 50%; color: var(--paper); background: #547460;
-  font: 800 24px/1 var(--font-heading), sans-serif; box-shadow: var(--patch-shadow);
-}
-.cloth-tab {
-  position: relative; padding: 8px clamp(6px, 1.25vw, 18px);
-  border-radius: 13px; color: var(--ink); font-weight: 650; font-size: clamp(12px, 1.5vw, 16px);
-}
-.cloth-tab:hover { background: #e5dac28c; }
-.cloth-tab-active, .cloth-tab-active:hover { background: #d8e1bd; box-shadow: var(--patch-shadow); }
-.cloth-tab-active::after, .cloth-seam::after, [data-slot="card"]::after {
-  content: ""; position: absolute; inset: 4px; border: 1px dashed var(--thread);
-  border-radius: inherit; pointer-events: none; opacity: .72;
-}
-.cloth-tab:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
-[data-slot="card"] { position: relative; border: 1px solid var(--thread); background: var(--paper) var(--linen) center / 170px; }
-.home-quilt { background: var(--sky) url("/assets/textile/meadow.png") repeat center / 240px; border-color: var(--thread); }
-.map-swatch {
-  position: absolute; z-index: 3; top: 76px; left: 16px; padding: 11px 16px;
-  border: 1px solid var(--thread); border-radius: 5px 15px 12px 6px;
-  background: var(--paper) var(--linen) center / 160px; color: var(--ink);
-  box-shadow: var(--patch-shadow); pointer-events: none;
-}
-.map-swatch h1 { font: 700 clamp(17px, 2vw, 24px)/1.15 var(--font-heading), sans-serif; }
-.map-swatch p { margin-top: 3px; font-size: 11px; color: #574c40; }
-.cloth-ticket, .cloth-sheet { background: var(--paper) var(--linen) center / 150px; border-color: var(--thread); }
-.cloth-ticket { border-radius: 12px; box-shadow: var(--patch-shadow); }
-.cloth-sheet { border-style: dashed; }
-.thread-eyelet { box-shadow: inset 0 1px 1px #ffffff90, 0 1px 2px #493e3070; }
-.knit-map .maplibregl-ctrl-group {
-  border: 1px solid var(--thread); border-radius: 12px;
-  background: var(--paper) var(--linen) center / 130px; box-shadow: var(--patch-shadow);
-}
-@media (max-width: 640px) {
-  .thread-roundel { width: 31px; height: 31px; font-size: 20px; }
-  .map-swatch { top: 64px; left: 10px; padding: 8px 12px; }
 }

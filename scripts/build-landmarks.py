@@ -7,8 +7,8 @@ from PIL import Image, ImageFilter
 
 ROOT = Path(__file__).resolve().parents[1]
 VIEWS = ("front", "side", "back")
-SIZE = 40
-PAD = 2
+SIZE = 512
+PAD = 4
 
 
 def cutout(path):
@@ -51,14 +51,7 @@ def build(source, destination):
             image.thumbnail((SIZE - 2 * PAD, SIZE - 2 * PAD), Image.Resampling.LANCZOS)
             sprite = Image.new("RGBA", (SIZE, SIZE))
             sprite.paste(image, ((SIZE - image.width) // 2, SIZE - PAD - image.height))
-            # A shared grid, solid silhouette and stepped tones stay legible at station size.
-            alpha = sprite.getchannel("A").point(lambda a: 255 if a >= 112 else 0)
-            colors = sprite.convert("RGB").quantize(colors=14, dither=Image.Dither.NONE).convert("RGBA")
-            colors.putalpha(alpha)
-            outline = Image.new("RGBA", sprite.size, (68, 63, 63))
-            outline.putalpha(alpha.filter(ImageFilter.MaxFilter(3)))
-            outline.alpha_composite(colors)
-            outline.save(destination / f"{slug}-{view}.webp", lossless=True)
+            sprite.save(destination / f"{slug}-{view}.webp", quality=90, method=6)
 
 
 if __name__ == "__main__":

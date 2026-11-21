@@ -1,11 +1,10 @@
 /* Set these custom properties on the map or its parent to theme every marker. */
 .art {
   display: block;
-  width: var(--landmark-size, 28px);
+  width: var(--landmark-size, 64px);
   max-width: none;
   height: auto;
   user-select: none;
-  image-rendering: pixelated;
 }
 .marker {
   position: absolute;
@@ -40,24 +39,6 @@ button.marker {
   .float { animation: hover-station var(--landmark-duration, 3s) ease-in-out infinite; }
   @keyframes hover-station {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(calc(-1 * var(--landmark-lift, 2px))); }
+    50% { transform: translateY(calc(-1 * var(--landmark-lift, 3px))); }
   }
-}
-
-.mapSprite {
-  position: absolute;
-  bottom: calc(50% + var(--landmark-gap, 8px));
-  left: 50%;
-  transform: translateX(-50%);
-}
-.mapSprite::after {
-  content: "";
-  position: absolute;
-  bottom: -4px;
-  left: 35%;
-  width: 30%;
-  height: 2px;
-  border-radius: 50%;
-  background: var(--atlas-outline);
-  opacity: .26;
 }
