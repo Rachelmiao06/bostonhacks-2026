@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { markLeftForIsland } from "@/features/explore/viewMemory";
 import { refreshProgress, stampCount, useMyProgress, type ProgressState } from "@/features/explore/progress";
-import { content, stagesFor, unlockTiers } from "./content";
+import { allowedFor, content, isIn, unlockSteps } from "./content";
 import { demoGift } from "./gifts";
 import { GiftTicket } from "./GiftTicket";
 import { IslandHelp } from "./IslandHelp";
@@ -11,13 +11,14 @@ import { IslandScene } from "./IslandLoader";
 import type { IslandHandle } from "./IslandScene";
 import { readParcelOpened, readSeen, writeParcelOpened, writeSeen } from "./seen";
 
-const total = unlockTiers.length;
+const total = unlockSteps.length;
 
-/** What this visit shows: the opening, or the finished island plus a thread for each piece earned since last time. */
+/** What this visit shows: the opening, or the island as it was plus the pieces earned since last time dropping in. */
 type Plan = { mode: "first" | "return"; known: number; earned: number; parcel: boolean };
 
 function makePlan(progress: ProgressState, preview: boolean): Plan {
-  if (preview) return { mode: "first", known: total, earned: total, parcel: false };
+  // The preview shows everything, including the (demo) gift, without touching the rider's real progress.
+  if (preview) return { mode: "first", known: total, earned: total, parcel: true };
   const seen = readSeen();
   const ready = progress.status === "ready";
   // The server's count is the truth. If it cannot be reached, show only what this browser last saw:
@@ -32,7 +33,7 @@ function makePlan(progress: ProgressState, preview: boolean): Plan {
 /**
  * My World: the rider's knitted island, grown from their real contributions (the server's count, via useMyProgress),
  * and the whole screen. First visit: the yarn-ball opening. Later visits: the island is simply there, and a piece
- * earned since the last visit leaves one loose thread on the quilt that knits it in. A small gift can wait
+ * earned since the last visit drops onto the island from above. A small gift can wait
  * somewhere on the island. Everything else is a few quiet controls at the edges.
  */
 export function Island() {
@@ -103,44 +104,54 @@ function IslandView({
   onTogglePreview: () => void;
 }) {
   const [phase, setPhase] = useState("ball");
-  const [known, setKnown] = useState(plan.known); // tiers knitted in right now
-  const [waiting, setWaiting] = useState<number | null>(null); // tier whose thread lies on the quilt
+  const [known, setKnown] = useState(plan.known); // journey steps on the island right now
   const [note, setNote] = useState("");
   const [ticket, setTicket] = useState(false);
   const handle = useRef<IslandHandle | null>(null);
-  const offerRef = useRef<(h: IslandHandle, index: number, more: boolean) => void>(() => {});
+  const dropRef = useRef<(h: IslandHandle, index: number) => void>(() => {});
 
-  // Leaves a loose thread for tier `index`; when it is pulled the piece knits in and is remembered.
+  // Drops the pieces of journey step `index` onto the island; when they have landed it is remembered,
+  // and the next waiting step follows a moment later.
+  const alive = useRef(true);
   useEffect(() => {
-    offerRef.current = (h, index, more) => {
-      const tier = unlockTiers[index];
-      if (!tier) return;
-      const ok = h.offerGift(tier.stages, tier.name, () => {
-        writeSeen(index + 1); // remembered only once the piece has really knitted in
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
+  }, []);
+  useEffect(() => {
+    dropRef.current = (h, index) => {
+      const step = unlockSteps[index];
+      if (!step || !alive.current) return;
+      const before = allowedFor(index);
+      const after = allowedFor(index + 1);
+      const wasThere = isIn(before);
+      const isThere = isIn(after);
+      const landed = () => {
+        if (!alive.current) return;
+        writeSeen(index + 1); // remembered only once the pieces have really landed
         setKnown(index + 1);
-        setWaiting(null);
-        setNote(content.giftKnitted);
-        if (index + 1 < plan.earned) window.setTimeout(() => offerRef.current(h, index + 1, true), 1600);
-      });
-      if (ok) {
-        setWaiting(index);
-        setNote(more ? content.giftMore : content.giftReady);
-      }
+        setNote(content.grew(step.name));
+        if (index + 1 < plan.earned) window.setTimeout(() => dropRef.current(h, index + 1), 1100);
+      };
+      // nothing new to show for this step (all its pieces are already there): move on
+      if (!h.dropIn((stage, k) => isThere(stage, k) && !wasThere(stage, k), landed)) landed();
     };
   }, [plan.earned]);
 
-  // "Your little world just grew!" is a passing message; a waiting thread keeps its own.
+  // "Your little world just grew: ..." is a passing message
   useEffect(() => {
-    if (!note || waiting !== null) return;
+    if (!note) return;
     const id = window.setTimeout(() => setNote(""), 5000);
     return () => window.clearTimeout(id);
-  }, [note, waiting]);
+  }, [note]);
 
   const onReady = useCallback(
     (h: IslandHandle) => {
       handle.current = h;
       if (plan.parcel) h.setParcelOpened(readParcelOpened(demoGift.id));
-      if (!preview && plan.mode === "return" && plan.earned > plan.known) offerRef.current(h, plan.known, false);
+      // pieces earned since the last visit fall onto the island, a beat after it appears
+      if (!preview && plan.mode === "return" && plan.earned > plan.known) window.setTimeout(() => dropRef.current(h, plan.known), 1200);
     },
     [preview, plan],
   );
@@ -155,7 +166,6 @@ function IslandView({
       if (p === "unravel") {
         writeSeen(plan.earned);
         setKnown(plan.earned);
-        setWaiting(null);
         setNote("");
       }
       // The first full opening has been seen: later visits skip it.
@@ -174,14 +184,14 @@ function IslandView({
     setTicket(false);
   }, []);
 
-  const stages = useMemo(() => stagesFor(known, plan.parcel), [known, plan.parcel]);
+  const unlocked = useMemo(() => isIn({ ...allowedFor(known), ...(plan.parcel ? { parcel: 1 } : {}) }), [known, plan.parcel]);
   const canKnit = phase === "ball" && plan.mode === "first";
   const parcelReady = plan.parcel && phase === "idle";
   const status = sceneFailed ? { text: content.sceneFailed } : unavailable ? { text: content.progressFailed, retry: onRetry } : null;
 
   return (
     <section className="fixed inset-0 z-30 bg-stone font-ui text-graphite">
-      <IslandScene stages={stages} instant={plan.mode === "return"} onReady={onReady} onPhase={onPhase} onParcel={openTicket} onFail={onSceneFailed} />
+      <IslandScene unlocked={unlocked} instant={plan.mode === "return"} onReady={onReady} onPhase={onPhase} onParcel={openTicket} onFail={onSceneFailed} />
 
       <header className="pointer-events-none absolute top-20 left-4 max-w-[min(20rem,calc(100%-2rem))] sm:left-6">
         <h1 className="font-serif text-2xl leading-tight font-semibold tracking-tight">{content.title}</h1>
@@ -215,11 +225,6 @@ function IslandView({
         {canKnit && (
           <button type="button" onClick={() => handle.current?.replay()} className={pill}>
             {content.knitButton}
-          </button>
-        )}
-        {waiting !== null && !preview && (
-          <button type="button" onClick={() => handle.current?.acceptGift()} className={pill}>
-            {content.giftButton}
           </button>
         )}
       </div>

@@ -9,10 +9,7 @@ export const content = {
   retry: "Retry",
 
   knitButton: "Knit it for me",
-  giftButton: "Knit it in for me",
-  giftReady: "A new piece is ready to knit.",
-  giftMore: "Another piece is ready to knit.",
-  giftKnitted: "Your little world just grew!",
+  grew: (name: string) => `Your little world just grew: ${name}.`,
 
   // Read aloud only
   waiting: "Pull the thread to start. You can also use the knit button.",
@@ -55,25 +52,35 @@ export const content = {
 };
 
 /**
- * What each contribution knits into the island. Stage names are the ones Yarn World uses.
- * 1 contribution unlocks the first tier, 2 the first two, and so on; 5 is the whole island.
- * The yarn ball (stage "ball") and the quilt with its river are always there: that is how you start.
- * More contributions are still recorded by the server; there are simply no more pieces to knit yet.
+ * The journey: what each contribution adds to the island, in order. A rider with no contributions has a bare quilt,
+ * a river and the yarn ball; every contribution after that drops one more thing onto the island. Stage names are
+ * the ones Yarn World uses. `add` is how many pieces of a stage exist after this step (Infinity = all of them).
+ * Only existing pieces are used, so there are 12 steps; more contributions are still recorded by the server,
+ * there is simply nothing more to add yet.
  */
-export const unlockTiers: { name: string; stages: string[] }[] = [
-  { name: "grass, trees and flowers", stages: ["grass", "flower", "tree", "pine"] },
-  { name: "the cottage and its garden", stages: ["house", "garden", "fence"] },
-  { name: "the sheep", stages: ["sheep"] },
-  { name: "ducks, the bridge and stepping stones", stages: ["water", "bridge", "stone"] },
-  { name: "kite, laundry, pinwheels and clouds", stages: ["prop", "cloud"] },
+export const unlockSteps: { name: string; add: Record<string, number> }[] = [
+  { name: "grass and the first flowers", add: { grass: Infinity, flower: 2 } },
+  { name: "a round tree", add: { tree: 1 } },
+  { name: "two pine trees", add: { pine: 2 } },
+  { name: "stones by the river", add: { stone: Infinity } },
+  { name: "the cottage", add: { house: Infinity } },
+  { name: "its garden and fence", add: { garden: Infinity, fence: Infinity } },
+  { name: "a sheep", add: { sheep: 1 } },
+  { name: "more trees and flowers", add: { tree: Infinity, pine: Infinity, flower: Infinity } },
+  { name: "the rest of the flock", add: { sheep: Infinity } },
+  { name: "the bridge and the river's little life", add: { bridge: Infinity, water: Infinity } },
+  { name: "a kite, laundry and pinwheels", add: { prop: Infinity } },
+  { name: "clouds", add: { cloud: Infinity } },
 ];
 
-export const alwaysStages = ["ball"];
-
-/** The pieces that may knit in. `parcel` is the little gift, present only when the server has confirmed one is available. */
-export function stagesFor(contributions: number, withParcel = false): Set<string> {
-  const stages = new Set(alwaysStages);
-  unlockTiers.slice(0, Math.max(0, contributions)).forEach((tier) => tier.stages.forEach((s) => stages.add(s)));
-  if (withParcel) stages.add("parcel");
-  return stages;
+/** How many pieces of each stage exist after `steps` contributions. The yarn ball is always there. */
+export function allowedFor(steps: number): Record<string, number> {
+  const allowed: Record<string, number> = { ball: Infinity };
+  unlockSteps.slice(0, Math.max(0, steps)).forEach((step) => {
+    for (const [stage, n] of Object.entries(step.add)) allowed[stage] = Math.max(allowed[stage] ?? 0, n);
+  });
+  return allowed;
 }
+
+/** Does piece number `k` of `stage` exist at this point of the journey? `parcel` is the little gift. */
+export const isIn = (allowed: Record<string, number>) => (stage: string, k: number) => (allowed[stage] ?? 0) > k;

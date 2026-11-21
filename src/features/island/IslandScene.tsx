@@ -8,6 +8,8 @@ export type IslandHandle = {
   replay: () => void;
   /** Hide a piece (by stage names) and leave a loose thread that knits it in when pulled. */
   offerGift: (stages: string[], label: string, onKnitted: () => void) => boolean;
+  /** New pieces fall onto the island from above, one after another. Returns false if none match. */
+  dropIn: (pick: (stage: string, k: number) => boolean, onDone: () => void) => boolean;
   /** Knit the waiting piece in without dragging. */
   acceptGift: () => void;
   /** The little gift: open it (lid lifts), or show it already opened. */
@@ -20,8 +22,8 @@ export type IslandHandle = {
 };
 
 type Props = {
-  /** The pieces that may knit in. Read when the thread is pulled, so a change shows on the next pull. */
-  stages: Set<string>;
+  /** Does piece number k of this stage exist yet? Read when the thread is pulled, so a change shows on the next pull. */
+  unlocked: (stage: string, k: number) => boolean;
   /** Start with the finished island instead of the yarn-ball opening (returning visitors). */
   instant?: boolean;
   onReady?: (handle: IslandHandle) => void;
@@ -33,15 +35,15 @@ type Props = {
 };
 
 // Mounts the three.js island into a div and cleans it up when you leave.
-export default function IslandScene({ stages, instant = false, onReady, onPhase, onParcel, onFail }: Props) {
+export default function IslandScene({ unlocked, instant = false, onReady, onPhase, onParcel, onFail }: Props) {
   const box = useRef<HTMLDivElement>(null);
-  const stagesRef = useRef(stages);
+  const unlockedRef = useRef(unlocked);
   const handle = useRef<IslandHandle | null>(null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    stagesRef.current = stages;
-  }, [stages]);
+    unlockedRef.current = unlocked;
+  }, [unlocked]);
 
   useEffect(() => {
     const el = box.current;
@@ -51,7 +53,7 @@ export default function IslandScene({ stages, instant = false, onReady, onPhase,
       .then(({ mountIsland }) => {
         if (cancelled) return;
         const h = mountIsland(el, {
-          isUnlocked: (stage: string) => stagesRef.current.has(stage),
+          isUnlocked: (stage: string, k: number) => unlockedRef.current(stage, k),
           onPhase,
           onParcel,
           instant,

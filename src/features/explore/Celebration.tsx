@@ -9,7 +9,7 @@ import { PixelTrain } from "@/components/shared/pixel-train";
 import { Stamp } from "@/components/shared/stamp";
 import { flow } from "@/features/challenge/content";
 import { cn } from "@/lib/utils";
-import { unlockTiers } from "@/features/island/content";
+import { unlockSteps } from "@/features/island/content";
 import { categoryInfo, categoryOf, categoryStyle } from "./category";
 import { content } from "./content";
 import { stampCount, useMyProgress } from "./progress";
@@ -42,7 +42,7 @@ export function Celebration({ quest, already, handedOff, onHandOff, extra, onDon
   // The stamp count comes from the server (the same store the pins and the island read); nothing is counted here.
   const progress = useMyProgress();
   const stamps = progress.status === "ready" ? stampCount(progress.data) : null;
-  const piece = !already && stamps !== null && stamps >= 1 && stamps <= unlockTiers.length ? unlockTiers[stamps - 1] : null;
+  const piece = !already && stamps !== null && stamps >= 1 && stamps <= unlockSteps.length ? unlockSteps[stamps - 1] : null;
 
   // The panel may be scrolled down to the buttons: bring the stamp into view.
   useEffect(() => {

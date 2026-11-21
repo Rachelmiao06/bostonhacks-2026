@@ -72,7 +72,7 @@ export const content = {
     honest: "Completed in T Party. This does not send anything to the MBTA.",
     collection: "Visit my world",
     another: "Continue exploring",
-    newPiece: (name: string) => `A new piece is ready to knit: ${name}.`,
+    newPiece: (name: string) => `Next time you visit, ${name} lands on your island.`,
   },
 
   /** Below this zoom the landmark models are hidden, so the far-out view stays clean. */

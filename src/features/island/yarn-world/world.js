@@ -1125,9 +1125,9 @@ export function buildWorld(scene, { isUnlocked, onParcel } = {}) {
 	const { posts, runs: fenceRuns } = buildFence(root);
 	const stones = buildStones(root);
 
-	// a little gift waiting under the mustard tree on the near side. Stage 'parcel' only knits in when the
+	// a little gift waiting on the near side, in front of the river bend. Stage 'parcel' only knits in when the
 	// page says a gift is available (isUnlocked('parcel')); poking it opens it and tells the page.
-	const [parcelX, parcelZ] = settle(...L(4.55, -0.35), 1.0);
+	const [parcelX, parcelZ] = settle(...L(2.3, 2.1), 1.1);
 	const parcel = buildParcel({
 		parent: root,
 		kit: { mat, P },
@@ -1137,7 +1137,7 @@ export function buildWorld(scene, { isUnlocked, onParcel } = {}) {
 		yaw: -0.6,
 	});
 	parcel.group.userData.onPoke = () => {
-		if (weave.busy || !isUnlocked?.('parcel')) return;
+		if (weave.busy || !isUnlocked?.('parcel', 0)) return;
 		parcel.open();
 		onParcel?.();
 	};
@@ -1401,6 +1401,8 @@ export function buildWorld(scene, { isUnlocked, onParcel } = {}) {
 		snapIsland: () => resetAll(true),
 		// a hidden piece (by stage names) that a loose thread on the quilt knits in when pulled
 		offerGift: (stages, label, onKnitted) => weave.offerGift(stages, label, onKnitted),
+		// new pieces fall onto the island from above
+		dropIn: (pick, onDone) => weave.dropIn(pick, onDone),
 		acceptGift: () => weave.acceptGift(),
 		setPullSpan: (v) => weave.setPullSpan(v),
 		parcel,

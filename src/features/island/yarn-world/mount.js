@@ -23,7 +23,7 @@ const BACKGROUND = '#ebe5d9'; // warm stone
 
 /**
  * @param {HTMLElement} container
- * @param {{ isUnlocked: (stage: string) => boolean, onPhase?: (phase: string) => void, instant?: boolean, onParcel?: () => void }} options
+ * @param {{ isUnlocked: (stage: string, k: number) => boolean, onPhase?: (phase: string) => void, instant?: boolean, onParcel?: () => void }} options
  */
 export function mountIsland(container, { isUnlocked, onPhase, onParcel, instant = false }) {
 	const size = () => ({ w: Math.max(1, container.clientWidth), h: Math.max(1, container.clientHeight) });
@@ -209,6 +209,8 @@ export function mountIsland(container, { isUnlocked, onPhase, onParcel, instant 
 		/** Replay the knit-in with whatever is unlocked right now. */
 		replay: () => world.playIntro(),
 		offerGift: (stages, label, onKnitted) => world.offerGift(stages, label, onKnitted),
+		/** New pieces fall onto the island from above. pick(stage, k) chooses which. */
+		dropIn: (pick, onDone) => world.dropIn(pick, onDone),
 		acceptGift: () => world.acceptGift(),
 		/** The little gift: open it (lid lifts), or show it already opened. */
 		openParcel: () => world.parcel.open(),
