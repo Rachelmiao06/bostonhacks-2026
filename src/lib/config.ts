@@ -9,6 +9,7 @@ export const site = {
     { href: "/challenge", label: "Quests" },
     { href: "/my-challenges", label: "Mine" },
     { href: "/rewards", label: "Rewards" },
+    { href: "/stats", label: "Stats" },
     { href: "/about", label: "About" },
   ],
 };
