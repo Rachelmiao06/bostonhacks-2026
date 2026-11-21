@@ -6,6 +6,7 @@ export const site = {
     "T Party turns feedback on Boston's public transit into a game. Explore a pixel-art MBTA map, take on real transit challenges, and get rewarded for feedback worth reading.",
   nav: [
     { href: "/explore", label: "Explore" },
+    { href: "/challenge", label: "Quests" },
     { href: "/my-challenges", label: "Mine" },
     { href: "/rewards", label: "Rewards" },
     { href: "/stats", label: "Stats" },

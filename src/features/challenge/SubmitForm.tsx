@@ -4,6 +4,7 @@ import Link from "next/link";
 import { PartyPopper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { content } from "./content";
+import { challengeHref } from "./links";
 import { PhotoField } from "./PhotoField";
 import { ReviewPanel } from "./ReviewPanel";
 import type { Quest } from "./sample-quests";
@@ -92,7 +93,7 @@ export function SubmitForm({ quest, state }: { quest: Quest; state: AppState }) 
       {s.rewarded && !s.completed && <p className="text-sm text-paper/80">{content.alreadyRewarded}</p>}
 
       <p className="text-sm">
-        <Link href="/challenge" className="font-bold text-sky underline-offset-4 hover:underline">
+        <Link href={challengeHref()} className="font-bold text-sky underline-offset-4 hover:underline">
           ← {content.backToList}
         </Link>
       </p>
