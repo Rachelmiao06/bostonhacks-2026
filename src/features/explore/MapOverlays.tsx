@@ -68,7 +68,7 @@ export function ProgressChip() {
   if (progress.status !== "ready") return null;
   return (
     <Link
-      href="/rewards"
+      href="/world"
       aria-label={`${content.progress.title}: ${content.progress.label(stampCount(progress.data), progress.data.tokenBalance)}`}
       className="flex items-center gap-2 rounded-2xl border border-hairline bg-ivory/92 py-1.5 pr-3 pl-2 font-ui text-xs font-medium text-graphite shadow-float backdrop-blur-md outline-none hover:bg-ivory focus-visible:ring-2 focus-visible:ring-graphite/30"
     >

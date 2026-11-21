@@ -1,6 +1,6 @@
 # Island
 
-What: a knitted island you can play with that grows as the rider earns stamps. Route `/island`, linked from Rewards.
+What: a knitted island you can play with that grows as the rider earns stamps. Shown inside My World (`/world`, see `features/world`) as `<Island embedded />`; `/island` redirects there. Without `embedded` it is still a full-screen page.
 Owner: Rachel. Only the owner edits this folder.
 
 ## How it fits together
@@ -18,7 +18,7 @@ Owner: Rachel. Only the owner edits this folder.
 
 ## The journey: Explore -> stamp -> island
 - **Source of truth:** the server. A completed report or verification is stored by `/api/submissions` and `/api/verifications` (one row per rider per quest, so no duplicates). Stamps = `stampCount(useMyProgress())` in `features/explore/progress.ts`. Nothing on the island awards or counts points.
-- **Explore:** after a successful submission `Celebration` shows the server's `tokensAwarded`, the stamp, and which island piece the new stamp unlocks. Two buttons: "Continue exploring" (stays on the map, nothing moves) and "Visit my world" (`/island`). Reopening a finished quest shows "Already in your collection" with no fanfare.
+- **Explore:** after a successful submission `Celebration` shows the server's `tokensAwarded`, the stamp, and which island piece the new stamp unlocks. Two buttons: "Continue exploring" (stays on the map, nothing moves) and "Visit my world" (`/world`). Reopening a finished quest shows "Already in your collection" with no fanfare.
 - **Map memory:** `features/explore/viewMemory.ts` keeps the camera and selected stop for the browser tab (sessionStorage). Next keeps pages mounted but hidden (`cacheComponents`), and a hidden map loses its camera, so `ExploreMap` puts it back when the page is shown again.
 - **Island visits:** `seen.ts` remembers how many tiers this browser has seen knitted (display memory only). First visit: the yarn-pull opening. Later visits: the island is simply there (`instant`). A stamp earned since the last visit leaves one red loose thread on the quilt (`offerGift` in `weave.js`); pulling it, or pressing "Knit it in for me", springs that tier's pieces into place. The tier is remembered only once it has really knitted in. If the server cannot be reached, the island shows what this browser last saw.
 - Every visit re-fetches stamps (`refreshProgress`) and re-plans, because the page stays mounted between visits.
@@ -27,4 +27,4 @@ Owner: Rachel. Only the owner edits this folder.
 - The yarn ball, the quilt and the river are always there. The unlock set is read when the thread is pulled.
 - "Preview the full island" shows everything without touching real stamps (good for the demo).
 - Keys: `M` mutes. Sound starts after the first touch on the scene (browsers require it).
-- The scene is about 480 KB of JavaScript, loaded only on `/island`.
+- The scene is about 480 KB of JavaScript, loaded only on `/world`.

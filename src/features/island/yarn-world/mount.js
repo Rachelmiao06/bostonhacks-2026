@@ -23,9 +23,9 @@ const BACKGROUND = '#ebe5d9'; // warm stone
 
 /**
  * @param {HTMLElement} container
- * @param {{ isUnlocked: (stage: string) => boolean, onPhase?: (phase: string) => void, instant?: boolean }} options
+ * @param {{ isUnlocked: (stage: string) => boolean, onPhase?: (phase: string) => void, instant?: boolean, embedded?: boolean }} options
  */
-export function mountIsland(container, { isUnlocked, onPhase, instant = false }) {
+export function mountIsland(container, { isUnlocked, onPhase, instant = false, embedded = false }) {
 	const size = () => ({ w: Math.max(1, container.clientWidth), h: Math.max(1, container.clientHeight) });
 	let { w, h } = size();
 
@@ -85,6 +85,8 @@ export function mountIsland(container, { isUnlocked, onPhase, instant = false })
 	controls.autoRotateSpeed = 0.35;
 	controls.maxPolarAngle = Math.PI * 0.47;
 	controls.minDistance = 4;
+	// inside a scrolling page the wheel must keep scrolling the page
+	if (embedded) controls.enableZoom = false;
 	controls.maxDistance = S(30) * Math.max(1, 1.1 / camera.aspect);
 
 	const pr = renderer.getPixelRatio();

@@ -87,6 +87,8 @@ const ALERT_URLS = [
 export const ACCESS_SOURCE_URL = "https://www.mbta.com/alerts/access";
 const SUBWAY_SOURCE_URL = "https://www.mbta.com/alerts/subway";
 export const REWARD_TOKENS = 10;
+/** Tokens the author earns for each like stamp another rider presses on their completed report. */
+export const LIKE_REWARD_TOKENS = 1;
 export const VERIFY_REWARD_TOKENS = 5;
 /** When src/lib/data/mbta-alerts-snapshot.json was saved. */
 export const snapshotTakenAt = "2026-11-21T17:36:00Z";

@@ -75,3 +75,13 @@ CREATE TABLE IF NOT EXISTS verifications (
   created_at timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (alert_id, user_id)
 );
+
+-- A "like stamp": one rider presses one stamp on another rider's completed report. One per rider per report, never removed.
+-- The author earns LIKE_REWARD_TOKENS per stamp; tokens are counted from this table, never stored.
+CREATE TABLE IF NOT EXISTS likes (
+  submission_id uuid NOT NULL REFERENCES submissions (id) ON DELETE CASCADE,
+  user_id       text NOT NULL,
+  created_at    timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (submission_id, user_id)
+);
+CREATE INDEX IF NOT EXISTS likes_user_idx ON likes (user_id);

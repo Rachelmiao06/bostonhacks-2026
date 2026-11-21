@@ -5,7 +5,7 @@ import type { Review } from "@/lib/ai";
 import { getRiderId } from "@/lib/rider";
 
 // This rider's contributions, from the existing GET /api/submissions route.
-// One shared store, so the map pins, the progress chip, My Journey and Collection always agree.
+// One shared store, so the map pins, the progress chip and My World always agree.
 // The server counts tokens (one reward per completed or verified quest); nothing is counted here.
 
 export type MySubmission = {
@@ -23,6 +23,8 @@ export type MySubmission = {
   header?: string;
   kind?: string;
   resolved_at?: string | null;
+  /** Like stamps other riders pressed on this report. */
+  likes?: number;
 };
 
 export type MyVerification = {
@@ -39,6 +41,8 @@ export type MyProgress = {
   completedQuestIds: string[];
   verifiedQuestIds: string[];
   tokenBalance: number;
+  /** Like stamps received on all of this rider's reports. */
+  likesReceived?: number;
 };
 
 export type ProgressState =

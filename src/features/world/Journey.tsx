@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Stamp as StampIcon } from "lucide-react";
 import type { QuestKind } from "@/lib/mbta";
 import { PixelTrain } from "@/components/shared/pixel-train";
 import { Stamp } from "@/components/shared/stamp";
 import { cn } from "@/lib/utils";
 import { categoryInfo, categoryStyle } from "@/features/explore/category";
 import { categoryOfKind, kindLabels, type CategoryId } from "@/features/explore/content";
-import { useMyProgress, type MySubmission, type MyVerification } from "@/features/explore/progress";
+import type { MyProgress, MySubmission } from "@/features/explore/progress";
 import { content } from "./content";
 
 const day = (iso: string | null | undefined) =>
@@ -17,42 +17,17 @@ const day = (iso: string | null | undefined) =>
 const categoryOfSubmission = (s: MySubmission): CategoryId => categoryOfKind[(s.kind ?? "station") as QuestKind] ?? "station";
 
 /**
- * Everything this rider has done, as a stack of travel tickets: drafts to finish, completed reports, checked fixes.
- * All of it comes from GET /api/submissions; nothing is counted or invented here.
+ * Everything this rider has done, as a stack of travel tickets: drafts to finish, completed reports (with the
+ * like stamps other riders pressed on them), checked fixes. All of it comes from GET /api/submissions.
  */
-export function MyChallenges() {
-  const progress = useMyProgress();
-
-  return (
-    <article className="font-ui text-graphite">
-      <header className="space-y-1.5 border-b border-hairline pb-5">
-        <p className="font-mono text-[0.65rem] tracking-[0.16em] text-taupe uppercase">{content.eyebrow}</p>
-        <h1 className="font-serif text-3xl leading-tight font-semibold tracking-tight sm:text-4xl">{content.title}</h1>
-        {progress.status === "ready" && (
-          <p className="text-sm text-taupe">
-            {content.summary(progress.data.completedQuestIds.length, progress.data.verifiedQuestIds.length, progress.data.tokenBalance)}
-          </p>
-        )}
-      </header>
-
-      {progress.status === "loading" && <p className="pt-6 text-sm text-taupe">{content.loading}</p>}
-      {progress.status === "unavailable" && (
-        <p role="alert" className="pt-6 text-sm text-taupe">
-          {content.unavailable}
-        </p>
-      )}
-      {progress.status === "ready" && <Journey submissions={progress.data.submissions} verifications={progress.data.verifications} />}
-    </article>
-  );
-}
-
-function Journey({ submissions, verifications }: { submissions: MySubmission[]; verifications: MyVerification[] }) {
+export function Journey({ data }: { data: MyProgress }) {
+  const { submissions, verifications } = data;
   const drafts = submissions.filter((s) => s.status !== "completed");
   const completed = submissions.filter((s) => s.status === "completed");
 
   if (submissions.length === 0 && verifications.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-4 px-4 py-12 text-center">
+      <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-graphite/20 px-4 py-12 text-center">
         <PixelTrain size={72} />
         <h2 className="font-serif text-2xl font-semibold">{content.emptyTitle}</h2>
         <p className="max-w-sm text-sm text-taupe">{content.emptyBody}</p>
@@ -64,7 +39,7 @@ function Journey({ submissions, verifications }: { submissions: MySubmission[]; 
   }
 
   return (
-    <div className="space-y-9 pt-6">
+    <div className="space-y-9">
       {drafts.length > 0 && (
         <Section title={content.inProgress} note={content.inProgressNote} count={drafts.length}>
           {drafts.map((s) => (
@@ -94,6 +69,7 @@ function Journey({ submissions, verifications }: { submissions: MySubmission[]; 
               status={`${content.completedInApp} ${content.on(day(s.completed_at))}`}
               notes={[...(s.handed_off ? [content.handedOff] : []), ...(s.resolved_at ? [content.nowFixed] : [])]}
               quote={s.text}
+              likes={s.likes ?? 0}
               stamped
               action={s.resolved_at ? undefined : { href: `/?quest=${encodeURIComponent(s.alert_id)}`, label: content.viewOnMap }}
             />
@@ -116,8 +92,6 @@ function Journey({ submissions, verifications }: { submissions: MySubmission[]; 
           ))}
         </Section>
       )}
-
-      <p className="border-t border-hairline pt-4 text-xs text-taupe">{content.honest}</p>
     </div>
   );
 }
@@ -143,19 +117,19 @@ type RowProps = {
   status: string;
   notes: string[];
   quote?: string;
+  likes?: number;
   stamped?: boolean;
   action?: { href: string; label: string };
 };
 
 /** One contribution as a printed ticket: a coloured stub on the left, the details, and a stamp once done. */
-function TicketRow({ category, kindLabel, station, header, status, notes, quote, stamped, action }: RowProps) {
+function TicketRow({ category, kindLabel, station, header, status, notes, quote, likes = 0, stamped, action }: RowProps) {
   const style = categoryStyle[category];
   const Icon = style.icon;
   const info = categoryInfo(category);
 
   return (
     <li className="relative flex overflow-hidden rounded-xl border border-hairline bg-ivory shadow-float">
-      {/* Stub */}
       <div className={cn("flex w-11 shrink-0 flex-col items-center justify-center gap-1 border-r border-dashed border-graphite/15 sm:w-14", style.soft)}>
         <Icon className={cn("size-4", style.text)} aria-hidden />
       </div>
@@ -166,8 +140,13 @@ function TicketRow({ category, kindLabel, station, header, status, notes, quote,
           {header && <p className="line-clamp-2 text-sm text-graphite/80">{header}</p>}
           {quote && <blockquote className="line-clamp-3 border-l-2 border-graphite/15 pl-2.5 font-serif text-sm text-graphite/75 italic">“{quote}”</blockquote>}
           <p className="pt-0.5 font-mono text-[0.62rem] tracking-wide text-taupe uppercase">{status}</p>
-          {notes.length > 0 && (
+          {(notes.length > 0 || likes > 0) && (
             <ul className="flex flex-wrap gap-1.5">
+              {likes > 0 && (
+                <li className="flex items-center gap-1 rounded-full bg-cat-verify/10 px-2 py-0.5 text-[0.68rem] font-medium text-cat-verify">
+                  <StampIcon className="size-3" aria-hidden /> {content.likeCount(likes)}
+                </li>
+              )}
               {notes.map((note) => (
                 <li key={note} className="rounded-full bg-stone px-2 py-0.5 text-[0.68rem] text-taupe">
                   {note}

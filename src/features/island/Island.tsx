@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 import { markLeftForIsland } from "@/features/explore/viewMemory";
 import { refreshProgress, stampCount, useMyProgress, type ProgressState } from "@/features/explore/progress";
 import { content, stagesFor, unlockTiers } from "./content";
@@ -9,6 +10,12 @@ import type { IslandHandle } from "./IslandScene";
 import { readSeen, writeSeen } from "./seen";
 
 const total = unlockTiers.length;
+
+/** Full screen under the nav on its own, or a rounded card inside a page (My World). */
+const frame = (embedded: boolean) =>
+  embedded
+    ? "relative h-[30rem] max-h-[78svh] overflow-hidden rounded-3xl border border-hairline bg-stone text-graphite shadow-float"
+    : "fixed inset-0 z-30 bg-stone text-graphite";
 
 /** What this visit shows: the opening, or the finished island plus a thread for each stamp earned since last time. */
 type Plan = { mode: "first" | "return"; known: number; earned: number };
@@ -27,7 +34,7 @@ function makePlan(progress: ProgressState, preview: boolean): Plan {
  * First visit: the yarn-ball opening. Later visits: the island is simply there, and a stamp earned since
  * the last visit leaves one loose thread on the quilt that knits its piece in. Full screen under the nav, like the map.
  */
-export function Island() {
+export function Island({ embedded = false }: { embedded?: boolean } = {}) {
   const progress = useMyProgress();
   const [preview, setPreview] = useState(false);
   // Next keeps a page mounted (hidden) after you leave it, and runs its effects again when you come back.
@@ -50,7 +57,7 @@ export function Island() {
 
   if (!plan) {
     return (
-      <section className="fixed inset-0 z-30 grid place-items-center bg-stone font-pixel text-[0.6rem] text-graphite">
+      <section className={cn(frame(embedded), "grid place-items-center font-pixel text-[0.6rem]")}>
         {content.loading}
       </section>
     );
@@ -60,6 +67,7 @@ export function Island() {
       key={`${preview}-${visit}`}
       plan={plan}
       preview={preview}
+      embedded={embedded}
       unavailable={progress.status === "unavailable"}
       onTogglePreview={() => setPreview((p) => !p)}
     />
@@ -69,11 +77,13 @@ export function Island() {
 function IslandView({
   plan,
   preview,
+  embedded,
   unavailable,
   onTogglePreview,
 }: {
   plan: Plan;
   preview: boolean;
+  embedded: boolean;
   unavailable: boolean;
   onTogglePreview: () => void;
 }) {
@@ -139,15 +149,20 @@ function IslandView({
       : note || (plan.mode === "return" ? content.welcomeBack(known, total) : allKnown ? (opening ? content.allReady : content.allUnlocked) : content.nextUnlock(next.name));
 
   return (
-    <section className="fixed inset-0 z-30 bg-stone font-ui text-graphite">
-      <IslandScene stages={stagesFor(known)} instant={plan.mode === "return"} onReady={onReady} onPhase={onPhase} />
+    <section className={cn(frame(embedded), "font-ui")}>
+      <IslandScene stages={stagesFor(known)} instant={plan.mode === "return"} embedded={embedded} onReady={onReady} onPhase={onPhase} />
 
-      <div className="pointer-events-none absolute top-20 left-3 max-w-[18rem] sm:left-4">
-        <div className="pointer-events-auto space-y-1 rounded-2xl border border-hairline bg-ivory/92 p-4 shadow-float backdrop-blur-md">
-          <p className="font-mono text-[0.65rem] tracking-[0.16em] text-taupe uppercase">{content.eyebrow}</p>
-          <h1 className="font-serif text-xl leading-tight font-semibold">{content.title}</h1>
+      <div className={cn("pointer-events-none absolute left-3 max-w-[18rem] sm:left-4", embedded ? "top-3" : "top-20")}>
+        <div className={cn("pointer-events-auto space-y-1 rounded-2xl border border-hairline bg-ivory/92 p-4 shadow-float backdrop-blur-md", embedded && "max-sm:p-3")}>
+          {/* On its own page the island names itself; inside My World the page already does. */}
+          {!embedded && (
+            <>
+              <p className="font-mono text-[0.65rem] tracking-[0.16em] text-taupe uppercase">{content.eyebrow}</p>
+              <h1 className="font-serif text-xl leading-tight font-semibold">{content.title}</h1>
+            </>
+          )}
           <p className="text-sm">{content.progress(plan.earned, total)}</p>
-          <p className="text-xs text-taupe">{line}</p>
+          <p className={cn("text-xs text-taupe", embedded && "max-sm:line-clamp-2")}>{line}</p>
           {unavailable && <p className="text-xs text-taupe">{content.unavailable}</p>}
 
           {/* Keyboard and no-drag alternatives to pulling a thread */}

@@ -1,0 +1,53 @@
+export const content = {
+  eyebrow: "My World",
+  title: "Your world",
+  loading: "Opening your world…",
+  unavailable: "Your world could not load right now. Please try again in a moment.",
+
+  tokens: "tokens",
+  tokensNote: "Counted by T Party’s server: one reward per completed report, checked fix or like stamp received, never twice for the same thing.",
+  stamps: (n: number) => `${n} ${n === 1 ? "stamp" : "stamps"}`,
+  likesReceived: (n: number) => `${n} like ${n === 1 ? "stamp" : "stamps"} from riders`,
+  summary: (reports: number, checks: number) =>
+    `${reports} ${reports === 1 ? "report" : "reports"} completed · ${checks} ${checks === 1 ? "fix" : "fixes"} checked`,
+
+  tabs: { journey: "My journey", community: "Community" },
+
+  // My journey
+  inProgress: "In progress",
+  inProgressNote: "Saved drafts. Finish them on the map.",
+  completed: "Completed reports",
+  checked: "Fixes you checked",
+  continue: "Continue on the map",
+  viewOnMap: "View on the map",
+  draft: "Draft",
+  needsRevision: "Coach has suggestions",
+  passed: "Passed the check",
+  completedInApp: "Completed in T Party",
+  handedOff: "You also opened the MBTA’s page",
+  nowFixed: "MBTA has since marked this fixed",
+  working: "You said it is working again",
+  stillBroken: "You said it is still broken",
+  likeCount: (n: number) => `${n} like ${n === 1 ? "stamp" : "stamps"}`,
+  on: (date: string) => `on ${date}`,
+  emptyTitle: "Your journey starts on the map",
+  emptyBody: "Pick a problem pin, read its ticket, and add what you see. Each finished mission earns a stamp, grows your island and lands here.",
+  emptyCta: "Open the map",
+
+  // Community
+  communityTitle: "What riders are saying",
+  communityNote: "Completed reports that passed the coach’s check. Press a stamp on the ones that helped you; the author earns a token.",
+  communityLoading: "Loading what riders wrote…",
+  communityUnavailable: "The community could not load right now. Please try again in a moment.",
+  communityEmpty: "No reports to read yet. Complete one on the map and it shows up here.",
+  author: (handle: string) => `Rider ${handle}`,
+  you: "You",
+  fixed: "MBTA has marked this fixed",
+  stampIt: "Stamp it",
+  stamped: "Stamped",
+  stampLabel: (station: string) => `Press a like stamp on the report about ${station}`,
+  stampedLabel: (station: string) => `You stamped the report about ${station}`,
+  stampFailed: "That stamp did not save. Try again.",
+
+  honest: "Stamps and tokens live in T Party only. Completing a mission here does not send anything to the MBTA, and it does not mean the MBTA received or fixed anything. To report officially, use the MBTA’s own channels.",
+};

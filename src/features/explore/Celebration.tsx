@@ -131,7 +131,7 @@ export function Celebration({ quest, tokens, already, handedOff, onHandOff, extr
       <div className="sticky bottom-2 z-10 flex flex-wrap gap-2 rounded-xl border border-hairline bg-ivory/95 p-2 shadow-float backdrop-blur-sm">
         <AtlasButton onClick={onDone}>{content.celebrate.another}</AtlasButton>
         <Link
-          href="/island"
+          href="/world"
           className="inline-flex h-10 items-center rounded-full border border-graphite/25 px-4 text-sm font-medium outline-none hover:bg-stone focus-visible:ring-4 focus-visible:ring-graphite/25"
         >
           {content.celebrate.collection}
