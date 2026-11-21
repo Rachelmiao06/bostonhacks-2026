@@ -1,0 +1,19 @@
+=== A6: Success badge ===
+STEP 1. Upload these 2 images in ONE message (they are in this same folder, numbered in the order to attach):
+   1-style-anchor.jpg
+   2-page-15-saved-success-mobile.png
+STEP 2. In the same message, paste everything BELOW the line of equals signs.
+STEP 3. Download the PNG and save it as: a06-success-badge.png  into the incoming/ folder.
+==========================================================
+
+REFERENCE IMAGES: I attached two kinds of images.
+Image 1 is the STYLE reference. Copy it exactly: the chunky knit and crochet look, the yarn thickness, the stitch size, the colours, the soft top-left lighting, the puffy stuffed volume.
+The other image(s) are screenshots of the app screen where each item will be placed. Magenta dashed boxes mark the slots; each label (A1, A2, ...) is the item ID. Use them ONLY to judge the size, proportion and placement of each item. Do NOT draw the screen, the interface, the magenta boxes, the labels or any text. Output only the knitted items.
+STYLE: chunky hand-knitted and crocheted wool objects, clearly visible stitches, soft fuzzy fibres, slightly puffy stuffed volume, macro studio-render look, soft diffused light from the top-left, gentle shading only on the object itself. Palette only: cream yarn #F3EAD3, olive green #4A7A3A, light sage green #A9C57A, tomato red #E4573D, mustard yellow #F0B429, sky blue #8CC3D9, dark brown yarn #4A3B2A for stitched line icons. The same yarn thickness and stitch size across every item. Flat front view unless told otherwise.
+
+OUTPUT: PNG with a TRANSPARENT background (alpha). If transparency is not possible, use a perfectly flat solid #FF00FF magenta background with no gradient, no vignette, no glow and no floor shadow.
+
+HARD RULES: no text, no letters, no numbers, no logos, no watermark, no baked drop shadow on the background, no glow or bokeh behind objects, no extra props, no hands, no people, no photo background. Each item sits fully inside its own grid cell with at least 15 percent empty margin on every side; items never touch or overlap.
+ITEM A6. Single item, centered: a knitted olive-green round badge with a thick cream yarn check mark, a small cream knitted daisy and a small mustard knitted flower attached at the upper right, and three tiny mustard dash sparkles.
+
+OUTPUT SIZE: 1024x1024 (square). The pixel sizes mentioned above are only proportions between items; scale them to fit this output size and keep the same layout (grid and spacing). Generate ONE image only.

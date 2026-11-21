@@ -1,0 +1,24 @@
+=== A11: Landscape strips (three) ===
+STEP 1. Upload these 4 images in ONE message (they are in this same folder, numbered in the order to attach):
+   1-style-anchor.jpg
+   2-page-02-entry-bottom-mobile.png
+   3-page-07-analyzing-mobile.png
+   4-page-03-entry-desktop.png
+STEP 2. In the same message, paste everything BELOW the line of equals signs.
+STEP 3. Download the PNG and save it as: a11-landscape-strips.png  into the incoming/ folder.
+==========================================================
+
+REFERENCE IMAGES: I attached two kinds of images.
+Image 1 is the STYLE reference. Copy it exactly: the chunky knit and crochet look, the yarn thickness, the stitch size, the colours, the soft top-left lighting, the puffy stuffed volume.
+The other image(s) are screenshots of the app screen where each item will be placed. Magenta dashed boxes mark the slots; each label (A1, A2, ...) is the item ID. Use them ONLY to judge the size, proportion and placement of each item. Do NOT draw the screen, the interface, the magenta boxes, the labels or any text. Output only the knitted items.
+STYLE: chunky hand-knitted and crocheted wool objects, clearly visible stitches, soft fuzzy fibres, slightly puffy stuffed volume, macro studio-render look, soft diffused light from the top-left, gentle shading only on the object itself. Palette only: cream yarn #F3EAD3, olive green #4A7A3A, light sage green #A9C57A, tomato red #E4573D, mustard yellow #F0B429, sky blue #8CC3D9, dark brown yarn #4A3B2A for stitched line icons. The same yarn thickness and stitch size across every item. Flat front view unless told otherwise.
+
+OUTPUT: PNG with a TRANSPARENT background (alpha). If transparency is not possible, use a perfectly flat solid #FF00FF magenta background with no gradient, no vignette, no glow and no floor shadow.
+
+HARD RULES: no text, no letters, no numbers, no logos, no watermark, no baked drop shadow on the background, no glow or bokeh behind objects, no extra props, no hands, no people, no photo background. Each item sits fully inside its own grid cell with at least 15 percent empty margin on every side; items never touch or overlap.
+ITEM A11. Three wide knitted landscape strips stacked vertically with large gaps, each 1600 x 520 px, flat front view, flat bottom edge, each with a different wave shape:
+1) gentle rolling olive-green hills with a white knitted daisy and a mustard knitted flower on stems
+2) low sage-green hills with a thin sky-blue knitted river winding through and two tiny red knitted flowers
+3) one smooth olive-green hill with three small mustard knitted flowers in a row
+
+OUTPUT SIZE: 1024x1024 (square). The pixel sizes mentioned above are only proportions between items; scale them to fit this output size and keep the same layout (grid and spacing). Generate ONE image only.
