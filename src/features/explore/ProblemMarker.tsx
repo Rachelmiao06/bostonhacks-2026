@@ -18,6 +18,8 @@ type PinProps = {
   selected: boolean;
   /** Zoomed far out: a small coloured dot instead of the full pin. */
   compact: boolean;
+  /** In the small world: a soft ring pulses around the pin so a first-time rider knows where to tap. */
+  beacon?: boolean;
   onSelect: (stop: ProblemStop) => void;
 };
 
@@ -25,7 +27,7 @@ type PinProps = {
  * A stop with open problems: a small round tag on a short stem, in the colour of its most urgent category.
  * A number shows when there is more than one problem. Once the rider has done them all, the tag gets a check.
  */
-export const ProblemPin = memo(function ProblemPin({ stop, doneCount, selected, compact, onSelect }: PinProps) {
+export const ProblemPin = memo(function ProblemPin({ stop, doneCount, selected, compact, beacon = false, onSelect }: PinProps) {
   const style = categoryStyle[stop.top];
   const Icon = style.icon;
   const count = stop.quests.length;
@@ -52,12 +54,14 @@ export const ProblemPin = memo(function ProblemPin({ stop, doneCount, selected, 
         whileHover={{ y: selected ? -6 : -3 }}
         whileTap={{ scale: 0.95 }}
         transition={SPRING}
-        className="group flex cursor-pointer flex-col items-center rounded-full outline-none focus-visible:ring-4 focus-visible:ring-graphite/30"
+        className="group flex cursor-pointer touch-manipulation flex-col items-center rounded-full outline-none focus-visible:ring-4 focus-visible:ring-graphite/30"
       >
         {compact ? (
           <span className={cn("block size-3 rounded-full ring-2 ring-ivory shadow-float", allDone ? "bg-taupe" : style.bg)} />
         ) : (
           <>
+            <span className="relative block">
+              {beacon && !allDone && !selected && <span aria-hidden className={cn("absolute inset-0 rounded-full opacity-40 motion-safe:animate-ping", style.bg)} />}
             <span
               className={cn(
                 "relative grid size-8 place-items-center rounded-full border-2 bg-ivory shadow-float transition-colors",
@@ -76,6 +80,7 @@ export const ProblemPin = memo(function ProblemPin({ stop, doneCount, selected, 
                   <Check className="size-2.5" strokeWidth={4} aria-hidden />
                 </span>
               )}
+            </span>
             </span>
             {/* Stem down to the stop itself */}
             <span aria-hidden className={cn("h-2 w-0.5 rounded-full", allDone ? "bg-taupe/50" : style.bg)} />
