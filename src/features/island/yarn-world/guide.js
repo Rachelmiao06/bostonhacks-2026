@@ -20,6 +20,7 @@ export function setupGuide({ camera, dom, parent = document.body }) {
 	const ring = make('position:absolute;left:0;top:0;width:36px;height:36px;box-sizing:border-box;border-radius:50%;border:3px solid rgba(255,250,243,.95);box-shadow:0 2px 10px rgba(140,90,50,.35);will-change:transform,opacity');
 	const hand = make('position:absolute;left:0;top:0;width:0;height:0;will-change:transform,opacity', HAND_SVG);
 	const label = make('position:absolute;left:0;top:0;padding:4px 10px;border-radius:999px;background:rgba(255,250,243,.92);color:#3b2f28;font:14px/1.3 system-ui,sans-serif;white-space:nowrap', 'Pull the thread');
+	label.style.display = 'none'; // our change: the page around the scene shows the instruction as real text (Island.tsx)
 	root.append(ring, hand, label);
 	parent.appendChild(root);
 
@@ -69,7 +70,7 @@ export function setupGuide({ camera, dom, parent = document.body }) {
 
 			if (hint.kind !== kind) {
 				kind = hint.kind;
-				label.style.display = kind === 'start' ? '' : 'none';
+				label.style.display = 'none';
 			}
 
 			const still = reduced.matches;

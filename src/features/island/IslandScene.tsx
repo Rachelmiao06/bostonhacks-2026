@@ -3,19 +3,30 @@
 import { useEffect, useRef, useState } from "react";
 import { content } from "./content";
 
-type Handle = { dispose: () => void; replay: () => void };
+export type Status = { phase: "ball" | "knitting" | "ready" | "unraveling" | ""; progress: number };
+type Handle = { dispose: () => void; replay: () => void; knit: () => void };
 
 // Mounts the three.js island into a div. `stages` is the set of pieces that may knit in.
 // The scene is built once; a change in `stages` shows the next time the thread is pulled.
-export default function IslandScene({ stages, onReady }: { stages: Set<string>; onReady?: (replay: () => void) => void }) {
+export default function IslandScene({
+  stages,
+  onReady,
+  onStatus,
+}: {
+  stages: Set<string>;
+  onReady?: (controls: { replay: () => void; knit: () => void }) => void;
+  onStatus?: (status: Status) => void;
+}) {
   const box = useRef<HTMLDivElement>(null);
   const stagesRef = useRef(stages);
+  const statusRef = useRef(onStatus);
   const handle = useRef<Handle | null>(null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     stagesRef.current = stages;
-  }, [stages]);
+    statusRef.current = onStatus;
+  }, [stages, onStatus]);
 
   useEffect(() => {
     const el = box.current;
@@ -24,9 +35,12 @@ export default function IslandScene({ stages, onReady }: { stages: Set<string>; 
     import("./yarn-world/mount.js")
       .then(({ mountIsland }) => {
         if (cancelled) return;
-        const h = mountIsland(el, { isUnlocked: (stage: string) => stagesRef.current.has(stage) }) as Handle;
+        const h = mountIsland(el, {
+          isUnlocked: (stage: string) => stagesRef.current.has(stage),
+          onStatus: (st: { phase: string; progress: number }) => statusRef.current?.(st as Status),
+        }) as Handle;
         handle.current = h;
-        onReady?.(h.replay);
+        onReady?.({ replay: h.replay, knit: h.knit });
       })
       .catch(() => setFailed(true));
     return () => {

@@ -19,6 +19,12 @@
 // and plays the intro; the thread reels into the ball while the ball shrinks away). The unravel ends in
 // the same state, so the loop is: ball -> intro -> idle -> unravel -> ball.
 //
+// Pull-driven intro (our change): when the ball thread is dragged, the intro does not run on a timer. The thread
+// feeds out of the ball as the hand pulls it, and the intro clock chases the length of yarn drawn out
+// (PULL_RANGE = the whole island), easing in and out so the knitting follows the hand with a little lag.
+// Progress only moves forward; letting go pauses it and the loose thread can be picked up again.
+// knit() runs the same thing without a hand (the accessible alternative to dragging).
+//
 // `hint` tells the DOM guide overlay where to point: { kind, point, dir } or null (see the return value).
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
@@ -46,6 +52,15 @@ const CLOUD_LAND_T = 1.3; // s a cloud takes to drop in
 const WARM_FRAMES = 2; // frames the hidden world renders at page load to compile its shaders
 
 const PULL_TRIGGER = 0.3; // thread pull beyond its reach that starts the unravel / the intro
+
+const PULL_RANGE = 11; // world length of yarn that has to leave the ball to knit the whole island
+const DRIVE_FOLLOW = 2.6; // 1/s, how tightly the knit clock chases the yarn drawn out (lower = lazier)
+const DRIVE_MAX_RATE = 3; // the knit clock never runs faster than this multiple of real time
+const THREAD_CAP = 150; // rope particles (7.5 units): the thread stops growing here so the hand can always reach its end
+const FEED_MAX = 2; // yarn particles that may leave the ball per frame; a harder pull stretches the thread instead
+const BALL_GRAB_FOLLOW = 26; // 1/s, how softly the pompom follows the hand (the rope default is 80)
+const AUTO_PULL_T = 5.5; // s the no-hand knit takes
+const AUTO_PULL_T_REDUCED = 2.5;
 
 const THREAD_RADIUS = 0.06;
 const POMPOM_R = 0.09; // yarn pompom at the free tip of both threads
@@ -295,6 +310,7 @@ function buildMat(kit) {
 export function setupWeave({ root, ground, items: specs, kit, H, groundAt, thread, floorY, onStart, isUnlocked = () => true }) {
 	const { mat, sphereRep, P } = kit;
 	let state = 'ball'; // intro | idle | unravel | ball
+	const autoSeconds = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? AUTO_PULL_T_REDUCED : AUTO_PULL_T;
 	let clock = 0;
 
 	const group = new THREE.Group();
@@ -599,8 +615,8 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 	const pomMat = mat(P.mustard, 'boucle', sphereRep(POMPOM_R));
 	const threadMat = mat(P.mustard, 'strand', [1, 1]);
 
-	function makeHandle(groundFn, anchor, colliders) {
-		const rope = new Rope({ groundAt: groundFn, material: threadMat, maxPoints: 120, radius: THREAD_RADIUS, colliders });
+	function makeHandle(groundFn, anchor, colliders, opts = {}) {
+		const rope = new Rope({ groundAt: groundFn, material: threadMat, maxPoints: 120, radius: THREAD_RADIUS, colliders, ...opts });
 		rope.mesh.visible = false;
 		group.add(rope.mesh);
 		const pom = new THREE.Mesh(pomGeo, pomMat);
@@ -609,10 +625,11 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 		pom.raycast = () => {};
 		pom.visible = false;
 		group.add(pom);
-		return { rope, pom, anchor, live: false, held: false, reel: false, idleT: 0, wiggleT: -1, wiggleSign: 1 };
+		return { rope, pom, anchor, live: false, held: false, reel: false, reelAt: 0, idleT: 0, wiggleT: -1, wiggleSign: 1 };
 	}
 	const edgeH = makeHandle(groundAt, thread.path[0].clone(), []);
-	const ballH = makeHandle(matTop, new THREE.Vector3(), [ballCollider]);
+	// the ball thread can grow while it is pulled, so it gets room for PULL_RANGE more yarn and a softer hand
+	const ballH = makeHandle(matTop, new THREE.Vector3(), [ballCollider], { maxPoints: 200, grabFollow: BALL_GRAB_FOLLOW });
 	const pullDir = new THREE.Vector3();
 	const pickSphere = new THREE.Sphere();
 	const pickPt = new THREE.Vector3();
@@ -654,11 +671,12 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 		h.held = false;
 		h.wiggleT = -1;
 		h.reel = true;
+		h.reelAt = clock;
 	}
 	function stepReel(h, dt, until) {
 		let ok = true;
 		for (let i = 0; i < 3 && ok; i++) ok = h.rope.reel();
-		if (!ok || clock > until) {
+		if (!ok || clock - h.reelAt > until) {
 			hideHandle(h);
 			return;
 		}
@@ -717,7 +735,7 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 	// pick covers whichever thread is live in the current state; a ray near the pompom grabs the tip
 	const grabbable = {
 		pick(ray, camera) {
-			const h = state === 'idle' ? edgeH : state === 'ball' ? ballH : null;
+			const h = state === 'idle' ? edgeH : state === 'ball' || (state === 'intro' && driven) ? ballH : null;
 			if (!h || !h.live) return null;
 			pickHandle = h;
 			pickSphere.center.copy(h.pom.position);
@@ -801,7 +819,10 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 	};
 	function stepBall(dt) {
 		stepHandle(ballH, dt);
-		if (ballH.rope.pullExcess(pullDir) > PULL_TRIGGER) onStart?.();
+		if (ballH.rope.pullExcess(pullDir) > PULL_TRIGGER) {
+			startedByPull = true;
+			onStart?.();
+		}
 	}
 
 	// ---- intro: the outro played backwards ----------------------------------------------------------------
@@ -810,7 +831,23 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 	let ballGone = false;
 	const introRho = []; // per unknownHidden child: radius where the front gives it back
 
+	// pull-driven intro state (see the header); `driven` is false for the timed replay
+	let driven = false;
+	let startedByPull = false; // set by stepBall / knit just before onStart, read once by playIntro
+	let wantAuto = false;
+	let autoPull = false;
+	let pulled = 0; // world length of yarn that has left the ball
+	let fedLen = 0; // length of yarn already fed into the rope
+	let handDist = -1; // last horizontal distance from the ball to the hand, -1 while nothing is held
+	let knitDone = false;
+
 	function playIntro() {
+		driven = startedByPull || wantAuto;
+		autoPull = wantAuto;
+		startedByPull = wantAuto = false;
+		pulled = fedLen = 0;
+		handDist = -1;
+		knitDone = false;
 		state = 'intro';
 		clock = 0;
 		popCount = 0;
@@ -839,7 +876,9 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 
 		clearStreaks();
 		hideHandle(edgeH);
-		if (ballH.live) startReel(ballH);
+		// a driven intro keeps the thread in the hand; it is wound into the ball when the knitting is done
+		if (driven && ballH.live) ballH.idleT = 0;
+		else if (ballH.live) startReel(ballH);
 		else if (!ballH.reel) hideHandle(ballH);
 
 		// start from the finished ball on its mat (a no-op when coming from the ball state)
@@ -913,7 +952,35 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 		}
 	}
 
+	// driven intro: draw yarn out of the ball (held thread, or by itself for knit()) and return the time the
+	// knit clock may advance this frame
+	function stepDrive(dt) {
+		const rope = ballH.rope;
+		const hand = ballH.live && ballH.held ? rope.grabs.find((g) => g.active) : null;
+		if (autoPull) {
+			pulled = Math.min(PULL_RANGE, pulled + (PULL_RANGE / autoSeconds) * dt);
+			if (ballH.live) while (rope.count < THREAD_CAP && fedLen + rope.segment <= pulled * 0.5 && rope.feed()) fedLen += rope.segment;
+		} else if (hand && !knitDone) {
+			// progress = how far the hand has moved away from the ball (only outward movement counts, so pull,
+			// bring the hand back, pull again works). The thread lengthens as it is pulled, up to THREAD_CAP.
+			const d = Math.hypot(hand.target.x - rope.anchor.x, hand.target.z - rope.anchor.z);
+			if (handDist >= 0) pulled = Math.min(PULL_RANGE, pulled + Math.max(0, d - handDist));
+			handDist = d;
+			const e = rope.pullExcess(pullDir);
+			const n = Math.min(FEED_MAX, Math.floor(e / rope.segment), THREAD_CAP - rope.count);
+			for (let i = 0; i < n && rope.feed(); i++) fedLen += rope.segment;
+		}
+		if (!hand) handDist = -1;
+		const target = clamp01(pulled / PULL_RANGE) * (INTRO_START + INTRO_T);
+		let rate = Math.min(DRIVE_MAX_RATE, (target - clock) * DRIVE_FOLLOW); // eases out as it catches up
+		if (pulled >= PULL_RANGE - 1e-6) rate = Math.max(rate, 1); // fully pulled: finish at normal speed
+		return dt * Math.max(0, rate);
+	}
+
 	function stepIntro(dt) {
+		// dtK moves the front, the notch and the streaks; landings and flights keep real time
+		const dtK = driven ? stepDrive(dt) : dt;
+		if (driven) clock += dtK;
 		if (clock >= LIFT_AT && drop.target !== 0) {
 			// the ball lifts off its mat to the island's center height
 			drop.target = 0;
@@ -927,7 +994,7 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 		const rhoF = lerp(RHO1, RHO0, 1 - easeUnravel(1 - p));
 		if (moving && p < 1) {
 			// front: steady radius plus a notch that circles and leads; only ever grows
-			thS += dt * SCAN_SPEED;
+			thS += dtK * SCAN_SPEED;
 			for (let i = 0; i < NB; i++) {
 				let d = binA[i] - thS;
 				d -= TAU * Math.round(d / TAU);
@@ -936,7 +1003,7 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 				if (v > edge[i]) edge[i] = v;
 			}
 			// yarn streaks from the ball to where the notch will be when they land
-			spawnAcc += dt * STREAK_RATE;
+			spawnAcc += dtK * STREAK_RATE;
 			while (spawnAcc >= 1) {
 				spawnAcc -= 1;
 				spawnStreak(thS + 1.2 + (Math.random() - 0.5) * 1.6, Math.max(0.5, rhoF + 0.5), true);
@@ -946,6 +1013,8 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 			if (p < 1) ballR.target = radiusFor(removedFrac(Math.max(0, rhoF)));
 			else if (!ballGone) {
 				ballGone = true;
+				knitDone = true;
+				if (driven && ballH.live) startReel(ballH);
 				edge.fill(99);
 				ballR.target = 0;
 				kick.kick(4);
@@ -972,6 +1041,7 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 	}
 
 	function finishIntro() {
+		driven = autoPull = false;
 		state = 'idle';
 		clock = 0;
 		for (const it of items) if (!it.locked) resetItem(it);
@@ -1139,7 +1209,7 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 	function update(t, dt = 1 / 60) {
 		dt = Math.min(dt, 0.05);
 		if (dt <= 0) return;
-		clock += dt;
+		if (!(state === 'intro' && driven)) clock += dt; // a driven intro advances the clock itself
 		if (warm > 0 && --warm === 0) endWarm();
 		// critters respawn by setting visible themselves; keep them out until the world is there
 		if (state === 'ball' || state === 'intro') {
@@ -1156,6 +1226,7 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 			ballAnchor(ballH.anchor);
 			if (ballH.reel) stepReel(ballH, dt, BALL_REEL_T);
 			else if (state === 'ball') stepBall(dt);
+			else if (state === 'intro' && driven) stepHandle(ballH, dt); // the thread keeps following the hand while it knits
 		}
 	}
 
@@ -1177,11 +1248,28 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 		playIntro,
 		restore,
 		grabbable,
+		/** Knit the island without a hand: the accessible alternative to dragging the thread. */
+		knit() {
+			if (state === 'ball') {
+				wantAuto = true;
+				onStart?.();
+			} else if (state === 'intro' && driven) {
+				autoPull = true;
+			}
+		},
+		/** { phase: 'ball' | 'knitting' | 'ready' | 'unraveling', progress: 0..1 } for the page around the scene */
+		get status() {
+			if (state === 'intro') {
+				return { phase: 'knitting', progress: clamp01(clock / (INTRO_START + INTRO_T)) };
+			}
+			return { phase: state === 'idle' ? 'ready' : state === 'unravel' ? 'unraveling' : 'ball', progress: state === 'idle' ? 1 : 0 };
+		},
 		get busy() {
 			return state !== 'idle';
 		},
 		get hint() {
 			if (state === 'ball' && ballH.live && !ballH.held) return fillHint('start', ballH);
+			if (state === 'intro' && driven && !autoPull && ballH.live && !ballH.held && !knitDone) return fillHint('start', ballH);
 			if (state === 'idle' && edgeH.live && !edgeH.held && clock < COLLAPSE_HINT_T) return fillHint('collapse', edgeH);
 			return null;
 		},

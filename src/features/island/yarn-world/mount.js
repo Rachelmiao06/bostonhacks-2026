@@ -23,9 +23,9 @@ const BACKGROUND = '#ebe5d9'; // warm stone
 
 /**
  * @param {HTMLElement} container
- * @param {{ isUnlocked: (stage: string) => boolean }} options
+ * @param {{ isUnlocked: (stage: string) => boolean, onStatus?: (s: { phase: string, progress: number }) => void }} options
  */
-export function mountIsland(container, { isUnlocked }) {
+export function mountIsland(container, { isUnlocked, onStatus }) {
 	const size = () => ({ w: Math.max(1, container.clientWidth), h: Math.max(1, container.clientHeight) });
 	let { w, h } = size();
 
@@ -134,6 +134,7 @@ export function mountIsland(container, { isUnlocked }) {
 	const screenCenter = new THREE.Vector2(0, 0);
 	let focusDist = camera.position.distanceTo(controls.target);
 
+	let lastStatus = { phase: '', progress: -1 };
 	const timer = new THREE.Timer();
 	const FOCUS_HOLD = 4;
 	const focusLock = { point: new THREE.Vector3(), until: -1 };
@@ -178,6 +179,12 @@ export function mountIsland(container, { isUnlocked }) {
 		}
 		bokeh.uniforms.focus.value += (focusDist - bokeh.uniforms.focus.value) * Math.min(1, dt * 6);
 		world.update?.(t, dt);
+		// tell the page around the scene how the opening is going (phase changes and every ~2% of progress)
+		const st = world.status;
+		if (onStatus && (st.phase !== lastStatus.phase || Math.abs(st.progress - lastStatus.progress) >= 0.02)) {
+			lastStatus = { phase: st.phase, progress: st.progress };
+			onStatus(lastStatus);
+		}
 		guide.update(world.hint, dt);
 		ambience(dt);
 		composer.render(dt);
@@ -189,6 +196,8 @@ export function mountIsland(container, { isUnlocked }) {
 		world,
 		/** Replay the knit-in with whatever is unlocked right now. */
 		replay: () => world.playIntro(),
+		/** Knit the island without dragging the thread. */
+		knit: () => world.knit(),
 		dispose() {
 			renderer.setAnimationLoop(null);
 			observer.disconnect();
