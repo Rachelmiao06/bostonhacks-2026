@@ -53,12 +53,16 @@ One form for every quest; AI never confirms facts or treats a photo as proof; "c
 - Not covered: HEIC files (the type check rejects them), and a live in-page camera preview (`getUserMedia`). Needs a real phone to confirm `capture` opens the camera app.
 
 ## How other screens link here
-Always use `challengeHref(quest.id)` from `links.ts` (no id gives the quest list). It is the only place that knows the URL (`/challenge?id=<quest id>`), so the route can change without breaking links. The page is also in the nav (`src/lib/config.ts`, "Quests").
+Always use `challengeHref` from `links.ts`. It is the only place that builds these URLs:
+- `challengeHref(quest.id)` gives `/challenges/<id>`, the live one-quest page (report or verify). `quest.id` is the MBTA alert id from `/api/quests`.
+- `challengeHref()` with no id gives `/challenge`, the quest hub (the list). The "Quests" tab in the nav (`src/lib/config.ts`) points there.
 
-**For the map (`features/explore`, Rachel's folder):** the mission ticket / station sheet still uses its own placeholder challenges and a "Mark as completed" stand-in (`challengeFor` in `explore/content.ts`). To send a rider from a station to a quest, fetch `/api/quests`, pick the quests whose `stationId` matches the tapped station, and render `<Link href={challengeHref(quest.id)}>` in place of the stand-in. Quest ids are MBTA alert ids, so the map and this page agree as long as both use `quest.id` from `/api/quests`. The page currently only knows the three sample quests in `sample-quests.ts`; once it reads live quests, any `quest.id` from the map will open.
+**For the map (`features/explore`):** link a station's quest with `<Link href={challengeHref(quest.id)}>`, using quests from `/api/quests` whose `stationId` matches the tapped station. Do not embed the report or verify form in the map, and do not write `/challenges/...` by hand.
+
+**Temporary:** the old practice page at `/challenge` still opens its made-up sample quests in place (`?id=`), through `practiceHref` in `links.ts`. Both go away when the hub moves to live quests.
 
 ## Decisions made here (also belong in docs/DECISIONS.md, left out to avoid a merge conflict)
-- Quest page is `/challenge?id=<id>`, read on the client, not `/challenges/[id]`: live quests are unknown at build time and Cache Components rejects unknown dynamic params.
+- `/challenge` is the quest hub and `/challenges/<id>` is one quest. The old practice page still lives at `/challenge?id=<sample id>` until the hub moves to live quests (see "Temporary" above).
 - Sample quests and the offline practice reviewer stand in until `/api/quests` and `/api/review` are wired in.
 - Complete unlocks only after a current AI check passes (`requirePassToComplete` in `content.ts`). [TBD] confirm with team.
 - Photos stay in IndexedDB on the device. Limit is 4 MB, matching the server review route (`src/app/api/review/route.ts`).
