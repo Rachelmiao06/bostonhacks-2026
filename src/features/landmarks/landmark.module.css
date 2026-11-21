@@ -1,0 +1,44 @@
+/* Set these custom properties on the map or its parent to theme every marker. */
+.art {
+  display: block;
+  width: var(--landmark-size, 64px);
+  max-width: none;
+  height: auto;
+  user-select: none;
+}
+.marker {
+  position: absolute;
+  left: 0;
+  bottom: var(--landmark-gap, 6px);
+  transform: translateX(-50%);
+  display: grid;
+  justify-items: center;
+  align-items: end;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  line-height: 0;
+  pointer-events: none;
+}
+button.marker {
+  min-width: 44px;
+  min-height: 44px;
+  cursor: pointer;
+  pointer-events: auto;
+  border-radius: var(--radius);
+}
+.marker:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+}
+.float {
+  display: block;
+  filter: drop-shadow(var(--landmark-shadow, 0 2px 2px rgb(0 0 0 / 24%)));
+}
+@media (prefers-reduced-motion: no-preference) {
+  .float { animation: hover-station var(--landmark-duration, 3s) ease-in-out infinite; }
+  @keyframes hover-station {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(calc(-1 * var(--landmark-lift, 3px))); }
+  }
+}
