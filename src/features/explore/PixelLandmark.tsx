@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 // Cute pixel-art miniatures for the map, drawn from character grids (like the pixel train),
 // so they stay crisp at any size and every colour is a theme token.
-// p rose brick, c shaded masonry, m mint, v dark green, l blue glass.
+// p brick red, c shaded masonry, m green, v dark green, l blue glass, r orange roof.
 //
 // o outline   w window   d door
 // t tower     r roof          g gold                    . empty
@@ -163,17 +163,19 @@ const ART = {
 
 export type PixelArtId = keyof typeof ART;
 
+// Deep, saturated palette so the buildings read as solid objects on the pale map.
+// Each colour can still be overridden with a --landmark-* CSS variable.
 const FILL: Record<string, string> = {
-  p: "fill-[var(--landmark-brick,#dc988d)]",
-  c: "fill-[var(--landmark-masonry-shadow,#ac827e)]",
-  m: "fill-[var(--landmark-mint,#a1d1b5)]",
-  v: "fill-[var(--landmark-green,#426b5b)]",
-  l: "fill-[var(--landmark-glass,#9bbfc9)]",
+  p: "fill-[var(--landmark-brick,#d9453b)]",
+  c: "fill-[var(--landmark-masonry-shadow,#8a2f2c)]",
+  m: "fill-[var(--landmark-mint,#2f9d6b)]",
+  v: "fill-[var(--landmark-green,#17503b)]",
+  l: "fill-[var(--landmark-glass,#2a7fd0)]",
   o: "fill-graphite",
   w: "fill-ivory",
   d: "fill-graphite",
   t: "fill-ivory",
-  r: "fill-stone-deep",
+  r: "fill-[var(--landmark-roof,#e9732a)]",
   g: "fill-sun",
 };
 

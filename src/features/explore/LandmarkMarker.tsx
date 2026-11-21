@@ -7,6 +7,9 @@ import { Marker } from "@/lib/map";
 import type { Landmark } from "./content";
 import { landmarkWidth, PixelLandmark } from "./PixelLandmark";
 
+/** How high a building floats above its spot on the map, in px at scale 1. */
+const LIFT = 30;
+
 export const LandmarkMarker = memo(function LandmarkMarker({ landmark, scale }: {
   landmark: Landmark;
   scale: number;
@@ -14,13 +17,25 @@ export const LandmarkMarker = memo(function LandmarkMarker({ landmark, scale }: 
   // The Old State House stands over State station; leave the problem sign its own hit target.
   const aboveState = landmark.id === "old-state-house";
   const width = (aboveState ? landmarkWidth.station : landmarkWidth.scenic) * scale;
+  const lift = LIFT * scale;
   return (
     <Marker longitude={landmark.longitude} latitude={landmark.latitude} anchor="bottom"
       offset={[aboveState ? width / 2 + 20 : 0, -6]} style={{ zIndex: 2 }}>
       <Popover.Root>
-        <Popover.Trigger aria-label={`History of ${landmark.name}`}
-          className="block cursor-pointer rounded-sm drop-shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-graphite motion-safe:transition-transform motion-safe:hover:-translate-y-1">
-          <PixelLandmark art={landmark.id} size={width} />
+        <Popover.Trigger aria-label={`History of ${landmark.name}`} style={{ paddingBottom: lift }}
+          className="group relative block cursor-pointer rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-graphite">
+          {/* The ground shadow sits far below the building, so it reads as hovering over the map. */}
+          <span aria-hidden style={{ width: width * 0.8, height: 7 * scale }}
+            className="absolute bottom-0 left-[55%] -translate-x-1/2 rounded-[50%] bg-graphite/45 blur-[3px] motion-safe:transition-transform motion-safe:duration-200 motion-safe:group-hover:scale-90" />
+          {/* Two thin stilts hold it up. */}
+          <span aria-hidden style={{ height: lift + 2, bottom: 2 * scale }}
+            className="absolute left-[24%] w-[2px] bg-graphite/80" />
+          <span aria-hidden style={{ height: lift + 2, bottom: 2 * scale }}
+            className="absolute right-[24%] w-[2px] bg-graphite/80" />
+          {/* The building itself, lifted, with a soft shadow underneath. */}
+          <span className="relative block drop-shadow-[0_3px_2px_rgba(0,0,0,0.25)] motion-safe:transition-transform motion-safe:duration-200 motion-safe:group-hover:-translate-y-1.5">
+            <PixelLandmark art={landmark.id} size={width} />
+          </span>
         </Popover.Trigger>
         <Popover.Portal>
           <Popover.Positioner side="top" sideOffset={6} collisionPadding={12}
