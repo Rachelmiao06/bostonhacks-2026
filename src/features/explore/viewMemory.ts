@@ -38,3 +38,33 @@ export function saveView(patch: Partial<SavedView>) {
     // storage blocked: the map just starts fresh next time
   }
 }
+
+// The explicit "rider is coming back from the island" signal. The island sets it when it is shown; the map
+// reads it once on load. Together with a saved camera it skips the arrival gate. It is cleared as soon as the
+// map has used it, so a later fresh visit still gets the gate and the dive. Session only.
+const FROM_ISLAND_KEY = "tparty.explore.fromIsland";
+
+export function markLeftForIsland() {
+  try {
+    window.sessionStorage.setItem(FROM_ISLAND_KEY, "1");
+  } catch {
+    // storage blocked: the rider simply sees the gate again
+  }
+}
+
+/** True only when the island was visited this tab AND there is a camera to put back. */
+export function isReturningFromIsland(): boolean {
+  try {
+    return window.sessionStorage.getItem(FROM_ISLAND_KEY) === "1" && loadView() !== null;
+  } catch {
+    return false;
+  }
+}
+
+export function clearReturnFromIsland() {
+  try {
+    window.sessionStorage.removeItem(FROM_ISLAND_KEY);
+  } catch {
+    // nothing to clear
+  }
+}

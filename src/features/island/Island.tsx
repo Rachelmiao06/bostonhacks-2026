@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { markLeftForIsland } from "@/features/explore/viewMemory";
 import { refreshProgress, stampCount, useMyProgress, type ProgressState } from "@/features/explore/progress";
 import { content, stagesFor, unlockTiers } from "./content";
 import { IslandScene } from "./IslandLoader";
@@ -33,6 +34,8 @@ export function Island() {
   // So every visit starts here: fetch the latest stamps from the server, then plan the visit.
   const [visit, setVisit] = useState(0);
   useEffect(() => {
+    // Tell the map the rider is on the island, so coming back resumes the map instead of replaying the gate.
+    markLeftForIsland();
     let live = true;
     void refreshProgress().finally(() => live && setVisit((n) => n + 1));
     return () => {
