@@ -10,6 +10,14 @@ export const content = {
   undo: "Undo",
   doneNote: "Completed in the app. Saved in this browser only.",
   close: "Close",
+  /** How often train positions and elevator outages refresh, in milliseconds. */
+  liveRefreshMs: 15000,
+  liveChip: (trains: number) => `Live · ${trains} trains`,
+  sampleChip: "Saved sample · not live",
+  outageLabel: "Elevator out",
+  outageSourceLive: "From the MBTA's live alerts.",
+  outageSourceSample: "From a saved sample of MBTA alerts. It may be out of date.",
+  outageBadge: "elevator out",
   /** Browser storage key for completed station ids. */
   storageKey: "tparty.explore.completed",
   /** Sprite files live in public/assets/explore/, one per line id (lowercase). */
@@ -41,8 +49,9 @@ export const challenges = [
   },
 ];
 
-/** Same station always gets the same challenge. */
-export function challengeFor(stationId: string) {
+/** Same station always gets the same challenge. A station with an elevator out gets the elevator check. */
+export function challengeFor(stationId: string, hasOutage = false) {
+  if (hasOutage) return challenges[0];
   let sum = 0;
   for (const char of stationId) sum += char.charCodeAt(0);
   return challenges[sum % challenges.length];

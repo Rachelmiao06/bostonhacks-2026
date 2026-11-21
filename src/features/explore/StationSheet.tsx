@@ -16,6 +16,9 @@ type Props = {
   lines: SubwayLine[];
   stations: SubwayStation[];
   completed: ReadonlySet<string>;
+  /** MBTA alert texts for elevators out at this station. */
+  outages: string[];
+  liveSource: "live" | "snapshot";
 };
 
 /**
@@ -23,9 +26,9 @@ type Props = {
  * Built on the Base UI dialog (same library as components/ui) and kept in this folder for now;
  * move it to components/ui/sheet.tsx when another feature needs a sheet.
  */
-export function StationSheet({ station, open, onOpenChange, lines, stations, completed }: Props) {
+export function StationSheet({ station, open, onOpenChange, lines, stations, completed, outages, liveSource }: Props) {
   if (!station) return null;
-  const challenge = challengeFor(station.id);
+  const challenge = challengeFor(station.id, outages.length > 0);
   const isDone = completed.has(station.id);
 
   return (
@@ -34,7 +37,7 @@ export function StationSheet({ station, open, onOpenChange, lines, stations, com
         <Dialog.Backdrop className="fixed inset-0 z-40 bg-shade transition-opacity duration-200 data-ending-style:opacity-0 data-starting-style:opacity-0" />
         <Dialog.Popup
           className={
-            "fixed inset-x-0 bottom-0 z-50 flex max-h-[85dvh] flex-col gap-5 overflow-y-auto rounded-t-3xl border-2 border-ink bg-popover p-6 text-popover-foreground shadow-tile outline-none " +
+            "fixed inset-x-0 bottom-0 z-50 flex max-h-[62dvh] flex-col gap-5 overflow-y-auto rounded-t-3xl border-2 border-ink bg-popover p-6 text-popover-foreground shadow-tile outline-none " +
             "transition-transform duration-300 ease-out data-ending-style:translate-y-full data-starting-style:translate-y-full " +
             "sm:inset-x-auto sm:inset-y-0 sm:right-0 sm:max-h-none sm:w-96 sm:rounded-t-none sm:rounded-l-3xl " +
             "sm:data-ending-style:translate-x-full sm:data-ending-style:translate-y-0 sm:data-starting-style:translate-x-full sm:data-starting-style:translate-y-0"
@@ -46,6 +49,22 @@ export function StationSheet({ station, open, onOpenChange, lines, stations, com
               <X />
             </Dialog.Close>
           </div>
+
+          {outages.length > 0 && (
+            <section className="flex flex-col gap-2 rounded-2xl border-2 border-ink bg-paper p-4">
+              <Ribbon tone="cherry" className="self-start">
+                {content.outageLabel}
+              </Ribbon>
+              {outages.map((header) => (
+                <p key={header} className="text-base">
+                  {header}
+                </p>
+              ))}
+              <p className="text-sm text-muted-foreground">
+                {liveSource === "live" ? content.outageSourceLive : content.outageSourceSample}
+              </p>
+            </section>
+          )}
 
           <section className="flex flex-col gap-3 rounded-2xl border-2 border-ink bg-muted p-4">
             <Ribbon tone="sky" className="self-start">

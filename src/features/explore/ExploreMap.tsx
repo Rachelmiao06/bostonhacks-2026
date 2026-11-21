@@ -1,9 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Layer,
-  MAP_STYLE,
   MAX_BOUNDS,
   MAX_PITCH,
   MIN_ZOOM,
@@ -11,31 +10,65 @@ import {
   NavigationControl,
   Source,
   T_LINE_LAYER,
+  clearCameraPadding,
+  flyToStation,
   initialView,
+  loadMapStyle,
   shapesToGeoJSON,
+  tLineCasingLayer,
+  type MapRef,
 } from "@/lib/map";
+import { cn } from "@/lib/utils";
 import { content } from "./content";
 import { useCompleted } from "./progress";
 import { StationMarker } from "./StationMarker";
 import { StationSheet } from "./StationSheet";
-import type { SubwayData, SubwayStation } from "./types";
+import { TrainsLayer } from "./TrainsLayer";
+import type { LiveData, SubwayData, SubwayStation } from "./types";
 
-/** The real map of Boston with T lines and one floating marker per station. Browser only. */
+type MapStyle = Awaited<ReturnType<typeof loadMapStyle>>;
+
+const getJson = <T,>(url: string): Promise<T> =>
+  fetch(url).then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))));
+
+/** The real map of Boston with T lines, live trains and one floating marker per station. Browser only. */
 export default function ExploreMap() {
+  const mapRef = useRef<MapRef>(null);
+  const [style, setStyle] = useState<MapStyle | null>(null);
   const [data, setData] = useState<SubwayData | null>(null);
+  const [live, setLive] = useState<LiveData | null>(null);
   const [failed, setFailed] = useState(false);
   const [selected, setSelected] = useState<SubwayStation | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const completed = useCompleted();
 
+  // Streets (repainted in our tokens) and the T itself: loaded once.
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/subway")
-      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
-      .then((json: SubwayData) => !cancelled && setData(json))
+    Promise.all([loadMapStyle(), getJson<SubwayData>("/api/subway")])
+      .then(([mapStyle, subway]) => {
+        if (cancelled) return;
+        setStyle(mapStyle);
+        setData(subway);
+      })
       .catch(() => !cancelled && setFailed(true));
     return () => {
       cancelled = true;
+    };
+  }, []);
+
+  // Trains and elevator outages: refreshed every few seconds. If a refresh fails we keep the last one.
+  useEffect(() => {
+    let cancelled = false;
+    const load = () =>
+      getJson<LiveData>("/api/subway/live")
+        .then((json) => !cancelled && setLive(json))
+        .catch(() => {});
+    load();
+    const timer = window.setInterval(load, content.liveRefreshMs);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
     };
   }, []);
 
@@ -47,38 +80,72 @@ export default function ExploreMap() {
     );
   }, [data]);
 
+  const casingLayer = useMemo(() => tLineCasingLayer(), []);
+
+  const outagesByStation = useMemo(() => {
+    const byStation = new globalThis.Map<string, string[]>();
+    for (const outage of live?.outages ?? []) {
+      byStation.set(outage.stationId, [...(byStation.get(outage.stationId) ?? []), outage.header]);
+    }
+    return byStation;
+  }, [live]);
+
   const openStation = useCallback((station: SubwayStation) => {
     setSelected(station);
     setSheetOpen(true);
+    const map = mapRef.current?.getMap();
+    if (map) flyToStation(map, station);
+  }, []);
+
+  const onSheetOpenChange = useCallback((open: boolean) => {
+    setSheetOpen(open);
+    const map = mapRef.current?.getMap();
+    if (!open && map) clearCameraPadding(map);
   }, []);
 
   return (
     <div className="relative h-[70dvh] min-h-96 overflow-hidden rounded-2xl border-2 border-ink bg-paper shadow-tile">
-      <Map
-        initialViewState={initialView()}
-        attributionControl={{ compact: true }}
-        mapStyle={MAP_STYLE}
-        maxBounds={MAX_BOUNDS}
-        maxPitch={MAX_PITCH}
-        minZoom={MIN_ZOOM}
-        style={{ width: "100%", height: "100%" }}
-      >
-        <NavigationControl position="top-right" visualizePitch />
-        {lineGeoJSON && (
+      {style && data && lineGeoJSON && (
+        <Map
+          ref={mapRef}
+          initialViewState={initialView()}
+          attributionControl={{ compact: true }}
+          mapStyle={style}
+          maxBounds={MAX_BOUNDS}
+          maxPitch={MAX_PITCH}
+          minZoom={MIN_ZOOM}
+          style={{ width: "100%", height: "100%" }}
+        >
+          <NavigationControl position="top-right" visualizePitch />
           <Source id="t-lines" type="geojson" data={lineGeoJSON}>
+            <Layer {...casingLayer} />
             <Layer {...T_LINE_LAYER} />
           </Source>
-        )}
-        {data?.stations.map((station, index) => (
-          <StationMarker
-            key={station.id}
-            station={station}
-            index={index}
-            completed={completed.has(station.id)}
-            onSelect={openStation}
+          <TrainsLayer trains={live?.trains ?? []} lines={data.lines} />
+          {data.stations.map((station, index) => (
+            <StationMarker
+              key={station.id}
+              station={station}
+              index={index}
+              completed={completed.has(station.id)}
+              outage={outagesByStation.has(station.id)}
+              onSelect={openStation}
+            />
+          ))}
+        </Map>
+      )}
+
+      {live && data && (
+        <p className="absolute top-3 left-3 flex items-center gap-2 rounded-full border-2 border-ink bg-popover px-3 py-1.5 font-pixel text-[0.55rem] text-popover-foreground shadow-chip">
+          <span
+            className={cn(
+              "size-2 rounded-full border border-ink",
+              live.source === "live" ? "animate-pulse bg-leaf" : "bg-steel",
+            )}
           />
-        ))}
-      </Map>
+          {live.source === "live" ? content.liveChip(live.trains.length) : content.sampleChip}
+        </p>
+      )}
 
       {!data && (
         <p className="absolute inset-x-0 bottom-4 mx-auto w-fit rounded-full border-2 border-ink bg-popover px-4 py-2 font-pixel text-[0.6rem] text-popover-foreground shadow-chip">
@@ -89,10 +156,12 @@ export default function ExploreMap() {
       <StationSheet
         station={selected}
         open={sheetOpen}
-        onOpenChange={setSheetOpen}
+        onOpenChange={onSheetOpenChange}
         lines={data?.lines ?? []}
         stations={data?.stations ?? []}
         completed={completed}
+        outages={selected ? (outagesByStation.get(selected.id) ?? []) : []}
+        liveSource={live?.source ?? "snapshot"}
       />
     </div>
   );

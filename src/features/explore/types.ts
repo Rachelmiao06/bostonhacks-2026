@@ -31,3 +31,26 @@ export type SubwayData = {
   stations: SubwayStation[];
   shapes: SubwayShape[];
 };
+
+// Shape of the data served by /api/subway/live (changes every few seconds).
+
+export type LiveTrain = {
+  id: string;
+  lineId: string;
+  longitude: number;
+  latitude: number;
+};
+
+export type ElevatorOutage = {
+  /** MBTA parent station id, matches SubwayStation.id. */
+  stationId: string;
+  /** The MBTA's own alert text, unedited. */
+  header: string;
+};
+
+export type LiveData = {
+  /** "snapshot" means saved sample data, not what is happening now. */
+  source: "live" | "snapshot";
+  trains: LiveTrain[];
+  outages: ElevatorOutage[];
+};

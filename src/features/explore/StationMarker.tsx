@@ -12,24 +12,26 @@ type Props = {
   /** Position in the list, used to stagger the bob so markers do not move in sync. */
   index: number;
   completed: boolean;
+  /** True when the MBTA reports an elevator out at this station. */
+  outage: boolean;
   onSelect: (station: SubwayStation) => void;
 };
 
 /** One pixel sprite floating over a station. Greyed until the station is completed. */
-export const StationMarker = memo(function StationMarker({ station, index, completed, onSelect }: Props) {
+export const StationMarker = memo(function StationMarker({ station, index, completed, outage, onSelect }: Props) {
   const reduceMotion = useReducedMotion();
 
   return (
     <Marker longitude={station.longitude} latitude={station.latitude} anchor="bottom">
       <motion.button
         type="button"
-        aria-label={`${station.name}${completed ? ", completed" : ""}`}
+        aria-label={`${station.name}${completed ? ", completed" : ""}${outage ? `, ${content.outageBadge}` : ""}`}
         onClick={() => onSelect(station)}
         initial="rest"
         whileHover="lift"
         whileFocus="lift"
         whileTap={{ scale: 0.9 }}
-        className="block cursor-pointer p-1.5 outline-none focus-visible:ring-4 focus-visible:ring-ring/60"
+        className="relative block cursor-pointer p-1.5 outline-none focus-visible:ring-4 focus-visible:ring-ring/60"
       >
         {/* Spring lift on hover */}
         <motion.span
@@ -52,6 +54,9 @@ export const StationMarker = memo(function StationMarker({ station, index, compl
             )}
           />
         </motion.span>
+        {outage && (
+          <span className="absolute top-0 right-0 size-3 rounded-full border-2 border-ink bg-destructive" />
+        )}
       </motion.button>
     </Marker>
   );
