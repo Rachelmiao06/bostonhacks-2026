@@ -296,7 +296,9 @@ export function mountIsland(container, { isUnlocked, onPhase, onHotspot, onHover
 		/** New pieces fall onto the island from above. pick(stage, k) chooses which. */
 		dropIn: (pick, onDone) => world.dropIn(pick, onDone),
 		acceptGift: () => world.acceptGift(),
-		/** The three gifts. States: 'locked' | 'ready' | 'opened'. */
+		/** Set a gift box's state ('locked' | 'ready' | 'opened'), e.g. to close the lid of the unlock box again. */
+		setHotspotState: (id, state, instant) => hotspot(id)?.setState?.(state, instant),
+		/** The local-treat gift. States: 'locked' | 'ready' | 'opened'. */
 		setGiftStates: (states, instant) => states.forEach((st, i) => hotspot(`gift-${i}`)?.setState?.(st, instant)),
 		/** Open a hotspot (journal or a gift) with its little animation; returns the state it ends in. */
 		openHotspot: (id) => hotspot(id)?.open(),

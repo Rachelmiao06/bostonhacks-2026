@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { BookOpen, Gift as GiftIcon, Lock } from "lucide-react";
+import { BookOpen, Gift as GiftIcon, Lock, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { glass } from "./glass";
 import type { IslandHandle } from "./IslandScene";
@@ -10,7 +10,7 @@ const MARGIN = 8;
 const TOP_MIN = 84; // under the nav and the title
 const ABOVE = 44; // px between the label and the object: well above it, so it never covers it
 
-export type TagIcon = "book" | "gift" | "lock";
+export type TagIcon = "book" | "gift" | "lock" | "spark";
 
 /**
  * A small translucent glass tag that stays attached to ONE object, so you can tell what it is at a glance:
@@ -36,7 +36,7 @@ export function HotspotLabel({
   expanded: boolean;
   handle: React.RefObject<IslandHandle | null>;
 }) {
-  const Icon = icon === "book" ? BookOpen : icon === "lock" ? Lock : GiftIcon;
+  const Icon = icon === "book" ? BookOpen : icon === "lock" ? Lock : icon === "spark" ? Sparkles : GiftIcon;
   const el = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

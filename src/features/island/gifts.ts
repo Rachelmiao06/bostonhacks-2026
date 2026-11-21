@@ -12,6 +12,10 @@
 
 export type Gift = {
   id: string;
+  /** The merchant's name alone (the full `merchant` adds the "not a real place" note). */
+  name: string;
+  /** Which little illustration tops the voucher. */
+  art: "cafe" | "bakery" | "ride";
   /** True for the placeholders. The ticket labels demo gifts and says their code works nowhere. */
   demo: boolean;
   /** A few words for the floating label next to the gift in the scene. */
@@ -27,8 +31,10 @@ export type Gift = {
   instructions?: string;
 };
 
-const demo = (id: string, short: string, merchant: string, benefit: string, code: string): Gift => ({
+const demo = (id: string, art: Gift["art"], short: string, merchant: string, benefit: string, code: string): Gift => ({
   id,
+  name: merchant,
+  art,
   demo: true,
   short,
   merchant: `${merchant} (not a real place)`,
@@ -41,7 +47,7 @@ const demo = (id: string, short: string, merchant: string, benefit: string, code
 
 /** One per gift, in the same order as `giftMilestones`. Fictional on purpose: never put a real shop's name on an invented discount. */
 export const demoGifts: Gift[] = [
-  demo("demo-surprise", "A free cookie", "Example Café", "A free cookie with any hot drink", "EXAMPLE-ONLY-1"),
-  demo("demo-pastry", "A free pastry", "Example Bakery", "A free pastry with a coffee", "EXAMPLE-ONLY-2"),
-  demo("demo-ride", "A free tyre check", "Example Bike Shop", "A free tyre check", "EXAMPLE-ONLY-3"),
+  demo("demo-surprise", "cafe", "A free cookie", "Example Café", "A free cookie with any hot drink", "EXAMPLE-ONLY-1"),
+  demo("demo-pastry", "bakery", "A free pastry", "Example Bakery", "A free pastry with a coffee", "EXAMPLE-ONLY-2"),
+  demo("demo-ride", "ride", "A free tyre check", "Example Bike Shop", "A free tyre check", "EXAMPLE-ONLY-3"),
 ];

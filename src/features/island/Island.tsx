@@ -6,11 +6,8 @@ import { refreshProgress, stampCount, useMyProgress, type ProgressState } from "
 import { allowedFor, content, giftMilestones, giftStatesFor, isIn, unlockSteps, type GiftState } from "./content";
 import { attributions } from "@/lib/places";
 import { demoGifts } from "./gifts";
-import Link from "next/link";
-import { ChevronRight } from "lucide-react";
 import { CoachMark } from "./CoachMark";
 import { Collection } from "./Collection";
-import { glass } from "./glass";
 import { GiftTicket } from "./GiftTicket";
 import { HotspotLabel, type TagIcon } from "./HotspotLabel";
 import { IslandHelp } from "./IslandHelp";
@@ -22,12 +19,13 @@ import { readOnboard, readParcelOpened, readSeen, writeOnboard, writeParcelOpene
 
 const total = unlockSteps.length;
 
-const hotspotIds = ["journal", "gift-0", "gift-1", "gift-2"];
+const hotspotIds = ["journal", "gift-0", "unlock"];
 
 /** What the small tag for an object says (always), and what its fuller label says (on hover or focus). */
 function labelFor(id: string, states: GiftState[], known: number | null, hasPlace: boolean[]): { tag: string; icon: TagIcon; title: string; sub: string } {
   const l = content.label;
   if (id === "journal") return { tag: l.tag.journal, icon: "book", ...l.journal };
+  if (id === "unlock") return { tag: l.tag.unlock, icon: "spark", title: l.unlockTitle, sub: l.unlockSub };
   const i = Number(id.slice(5));
   const gift = demoGifts[i];
   if (states[i] === "locked") return { tag: l.tag.locked, icon: "lock", title: l.lockedTitle, sub: known === null ? l.unknownSub : l.lockedSub(Math.max(0, giftMilestones[i] - known)) };
@@ -139,7 +137,6 @@ function IslandView({
   }, [opened]);
   const places = useNearbyPlaces(true);
   const [collectionOpen, setCollectionOpen] = useState(false);
-  const collectionButton = useRef<HTMLButtonElement>(null);
   // First-visit tips, one at a time: 0 the gift, 1 the journal, 2 how the world grows, 3 done. Not shown in the preview.
   const [coach, setCoach] = useState(() => (preview ? 3 : readOnboard()));
   const [readyStep, setReadyStep] = useState<number | null>(null); // the tip that has finished its camera move and may show
@@ -168,7 +165,7 @@ function IslandView({
         if (!alive.current) return;
         writeSeen(index + 1); // remembered only once the pieces have really landed
         setKnown(index + 1);
-        setNote(giftMilestones.includes(index + 1) ? `${content.grew(step.name)} ${content.giftUnlocked}` : content.grew(step.name));
+        setNote(content.grew(step.name));
         if (index + 1 < plan.earned) window.setTimeout(() => dropRef.current(h, index + 1), 1100);
       };
       // nothing new to show for this step (all its pieces are already there): move on
@@ -218,9 +215,15 @@ function IslandView({
       writeParcelOpened(demoGifts[index].id);
       setOpened((o) => o.map((v, i) => v || i === index));
     }
-    handle.current?.holdCamera(true);
     setHover(null);
-    setCoach((c) => (c === 0 && id === "gift-0") || (c === 1 && id === "journal") ? c + 1 : c);
+    setCoach((c) => ((c === 0 && id === "gift-0") || (c === 1 && id === "journal") || (c === 2 && id === "unlock") ? c + 1 : c));
+    // The unlock box is not a ticket: its lid lifts, then the collection gallery floats up over the island.
+    if (id === "unlock") {
+      handle.current?.holdCamera(true);
+      window.setTimeout(() => setCollectionOpen(true), 650);
+      return;
+    }
+    handle.current?.holdCamera(true);
     setTicket(id);
   }, []);
   const onHover = useCallback((id: string, on: boolean) => setHover((h) => (on ? id : h === id ? null : h)), []);
@@ -232,8 +235,9 @@ function IslandView({
   }, []);
   const closeCollection = useCallback(() => {
     handle.current?.holdCamera(false);
+    handle.current?.setHotspotState("unlock", "ready"); // close the box's lid again
     setCollectionOpen(false);
-    window.setTimeout(() => collectionButton.current?.focus({ preventScroll: true }), 0);
+    window.setTimeout(() => document.querySelector<HTMLElement>('[data-hotspot="unlock"]')?.focus({ preventScroll: true }), 0);
   }, []);
   const closeTicket = useCallback(() => {
     handle.current?.holdCamera(false);
@@ -254,7 +258,7 @@ function IslandView({
       const h = handle.current;
       if (coach === 0) h?.focusHotspot("gift-0");
       else if (coach === 1) h?.focusHotspot("journal");
-      else h?.resetCamera();
+      else h?.focusHotspot("unlock");
     }, first ? 1800 : 600);
     const t1 = window.setTimeout(() => setReadyStep(coach), (first ? 1800 : 600) + 1900);
     return () => {
@@ -268,7 +272,7 @@ function IslandView({
     if (prevCoach.current < 3 && coach >= 3 && !preview) handle.current?.resetCamera();
     prevCoach.current = coach;
   }, [coach, preview]);
-  const coachTarget = readyStep === coach && phase === "idle" && ticket === null && !collectionOpen ? (coach === 0 ? "gift-0" : coach === 1 ? "journal" : null) : null;
+  const coachTarget = readyStep === coach && phase === "idle" && ticket === null && !collectionOpen ? (coach === 0 ? "gift-0" : coach === 1 ? "journal" : "unlock") : null;
   useEffect(() => {
     if (!coachTarget) return;
     const h = handle.current;
@@ -290,16 +294,6 @@ function IslandView({
       <header className="pointer-events-none absolute top-20 left-4 max-w-[min(20rem,calc(100%-2rem))] sm:left-6">
         <h1 className="font-serif text-2xl leading-tight font-semibold tracking-tight">{content.title}</h1>
         <p className="text-xs text-taupe sm:text-sm">{preview ? content.help.previewNote : content.subtitle}</p>
-        {phase === "idle" && (
-          <button
-            ref={collectionButton}
-            type="button"
-            onClick={openCollection}
-            className="pointer-events-auto mt-1.5 inline-flex cursor-pointer items-center gap-0.5 text-xs font-medium underline decoration-graphite/30 underline-offset-4 outline-none hover:decoration-graphite focus-visible:ring-2 focus-visible:ring-graphite/40 sm:text-sm"
-          >
-            {content.collection.title} <ChevronRight className="size-3.5" aria-hidden />
-          </button>
-        )}
       </header>
 
       {/* One small status at a time, never a wall of errors */}
@@ -334,29 +328,14 @@ function IslandView({
       </div>
 
       {/* First-visit tips: point at the gift, then the journal, then say how the world grows */}
-      {coachTarget && <CoachMark key={coachTarget} id={coachTarget} text={coach === 0 ? content.coach.gift : content.coach.journal} skipLabel={content.coach.skip} onSkip={() => setCoach(3)} handle={handle} />}
-      {readyStep === 2 && phase === "idle" && ticket === null && !collectionOpen && coach === 2 && (
-        <div className={`absolute inset-x-3 bottom-16 z-20 mx-auto flex max-w-sm flex-col gap-2 rounded-3xl p-3.5 text-graphite sm:bottom-20 ${glass}`}>
-          <p role="status" className="text-sm leading-snug font-medium">
-            {content.coach.grow}
-          </p>
-          <div className="flex items-center gap-3">
-            <Link href="/" onClick={() => setCoach(3)} className="inline-flex h-9 items-center rounded-full bg-graphite px-4 text-xs font-medium text-ivory outline-none hover:opacity-90 focus-visible:ring-4 focus-visible:ring-graphite/25">
-              {content.coach.openMap}
-            </Link>
-            <button type="button" onClick={() => setCoach(3)} className="cursor-pointer text-xs text-taupe underline underline-offset-2 outline-none hover:text-graphite focus-visible:ring-2 focus-visible:ring-graphite/30">
-              {content.coach.gotIt}
-            </button>
-          </div>
-        </div>
-      )}
-
+      {coachTarget && <CoachMark key={coachTarget} id={coachTarget} text={coach === 0 ? content.coach.gift : coach === 1 ? content.coach.journal : content.coach.unlock} skipLabel={content.coach.skip} onSkip={() => setCoach(3)} handle={handle} />}
       {/* Keyboard and screen-reader way to each object; they show when focused, and focusing one highlights it */}
       {phase === "idle" && ticket === null && (
         <div className="pointer-events-none absolute inset-x-0 bottom-16 z-10 flex flex-col items-center gap-1 not-focus-within:sr-only">
           {hotspotIds.map((id, n) => (
             <button
               key={id}
+              data-hotspot={id}
               type="button"
               onClick={() => onHotspot(id, handle.current?.openHotspot(id) ?? "locked")}
               onFocus={() => {
@@ -369,7 +348,7 @@ function IslandView({
               }}
               className="pointer-events-auto cursor-pointer rounded-full bg-graphite px-4 py-2 text-xs font-medium text-ivory shadow-float outline-none focus-visible:ring-4 focus-visible:ring-graphite/25"
             >
-              {id === "journal" ? content.gift.journalLabel : content.gift.label(n, giftStates[n - 1] === "locked")}
+              {id === "journal" ? content.gift.journalLabel : id === "unlock" ? content.collection.title : content.gift.label(n, giftStates[n - 1] === "locked")}
             </button>
           ))}
         </div>
@@ -397,6 +376,10 @@ function IslandView({
           attribution={places.status === "ready" ? places.attribution : attributions.osm}
           handle={handle}
           onClose={closeTicket}
+          onOpenCollection={() => {
+            closeTicket();
+            openCollection();
+          }}
         />
       )}
 

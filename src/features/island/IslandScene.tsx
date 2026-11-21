@@ -12,7 +12,9 @@ export type IslandHandle = {
   dropIn: (pick: (stage: string, k: number) => boolean, onDone: () => void) => boolean;
   /** Knit the waiting piece in without dragging. */
   acceptGift: () => void;
-  /** The three gifts. States: locked, ready or opened. */
+  /** Set a gift box's state (locked, ready or opened), e.g. to close the lid of the unlock box again. */
+  setHotspotState: (id: string, state: string, instant?: boolean) => void;
+  /** The local-treat gift. States: locked, ready or opened. */
   setGiftStates: (states: string[], instant?: boolean) => void;
   /** Open a hotspot (the journal or a gift) with its little animation; returns the state it ends in. */
   openHotspot: (id: string) => string;

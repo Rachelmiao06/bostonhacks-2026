@@ -1126,15 +1126,15 @@ export function buildWorld(scene, { isUnlocked, onHotspot, onHover } = {}) {
 	const { posts, runs: fenceRuns } = buildFence(root);
 	const stones = buildStones(root);
 
-	// Four things to explore, on the near side of the island, each one a small object in the knitted world:
-	// a journal (your history), a gift (a local treat) and two wrapped parcels (discoveries still to open).
-	// The page sets each gift's state ('locked' | 'ready' | 'opened'); poking an object, or hovering it with a
-	// pointer, tells the page which one (onHotspot(id, state), onHover(id, on)).
+	// Three things to explore, on the near side of the island, each one a small object in the knitted world:
+	// a journal (your history) and two gift boxes: 'gift-0' is a local treat (it opens a voucher) and 'unlock' is
+	// "unlock more of your island" (it opens the collection gallery). The page sets the treat's state
+	// ('ready' | 'opened'); poking an object, or hovering it with a pointer, tells the page which one
+	// (onHotspot(id, state), onHover(id, on)).
 	const SPOTS = {
 		journal: { at: L(-2.6, 3.0), yaw: 0.5 },
 		'gift-0': { at: L(1.6, 4.0), yaw: -0.5 },
-		'gift-1': { at: L(3.6, 3.0), yaw: 0.9 },
-		'gift-2': { at: L(-0.4, 5.0), yaw: 0.2 },
+		unlock: { at: L(3.6, 3.0), yaw: 0.9 },
 	};
 	const ground = ([x, z]) => {
 		const [sx, sz] = settle(x, z, 0.9);
@@ -1142,14 +1142,13 @@ export function buildWorld(scene, { isUnlocked, onHotspot, onHover } = {}) {
 	};
 	const journalSpot = ground(SPOTS.journal.at);
 	const journal = buildJournal({ parent: root, kit: { mat, P }, ...journalSpot, yaw: SPOTS.journal.yaw });
-	const ribbons = ['coral', 'blue', 'green'];
-	const gifts = ['gift-0', 'gift-1', 'gift-2'].map((id, i) => {
-		const g = buildParcel({ parent: root, kit: { mat, P }, ...ground(SPOTS[id].at), yaw: SPOTS[id].yaw, wrap: 'cream', ribbon: ribbons[i] });
-		return g;
-	});
+	const treat = buildParcel({ parent: root, kit: { mat, P }, ...ground(SPOTS['gift-0'].at), yaw: SPOTS['gift-0'].yaw, wrap: 'cream', ribbon: 'coral' });
+	const unlockBox = buildParcel({ parent: root, kit: { mat, P }, ...ground(SPOTS.unlock.at), yaw: SPOTS.unlock.yaw, wrap: 'cream', ribbon: 'blue' });
+	const gifts = [treat, unlockBox];
 	const hotspots = [
 		{ id: 'journal', ...journal, open: () => 'ready' },
-		...gifts.map((g, i) => ({ id: `gift-${i}`, ...g, open: () => g.open() })),
+		{ id: 'gift-0', ...treat, open: () => treat.open() },
+		{ id: 'unlock', ...unlockBox, open: () => unlockBox.open() },
 	];
 	for (const h of hotspots) {
 		h.group.scale.setScalar(1.8); // big enough that a first-time rider notices them, still clearly part of the world

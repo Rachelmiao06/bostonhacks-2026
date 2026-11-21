@@ -16,6 +16,8 @@ type Props = {
   onClose: () => void;
   /** Wider for two-column tickets. */
   wide?: boolean;
+  /** 'voucher': a bare paper receipt (no frame of its own, soft drop shadow, no tab); 'card': the framed card. */
+  variant?: "card" | "voucher";
   children: React.ReactNode;
   /** Receives the close button so the content can place it. */
   closeRef?: React.RefObject<HTMLButtonElement | null>;
@@ -26,7 +28,7 @@ type Props = {
  * follows it on screen if the camera moves, stays inside the view, and never leaves the island: Esc or the close button
  * returns straight to the same view.
  */
-export function TicketFrame({ id, label, handle, onClose, wide, children }: Props) {
+export function TicketFrame({ id, label, handle, onClose, wide, variant = "card", children }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const card_ = useRef<HTMLDivElement>(null);
   const tailUp = useRef<HTMLSpanElement>(null);
@@ -92,7 +94,7 @@ export function TicketFrame({ id, label, handle, onClose, wide, children }: Prop
         }
         el.style.transform = `translate3d(${Math.round(left)}px, ${Math.round(top)}px, 0)`;
         const tailLeft = `${Math.min(Math.max(out.x - left - 6, 14), w - 26)}px`;
-        if (tailUp.current && tailDown.current) {
+        if (variant === "card" && tailUp.current && tailDown.current) {
           tailDown.current.style.display = side === "above" ? "block" : "none";
           tailUp.current.style.display = side === "below" ? "block" : "none";
           tailDown.current.style.left = tailUp.current.style.left = tailLeft;
@@ -102,22 +104,23 @@ export function TicketFrame({ id, label, handle, onClose, wide, children }: Prop
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [handle, id]);
+  }, [handle, id, variant]);
 
   return (
-    <div ref={box} className={cn("pointer-events-none absolute top-0 left-0 z-20 will-change-transform", wide ? "w-[min(35rem,calc(100%-1.5rem))]" : "w-[min(24rem,calc(100%-1.5rem))]")}>
+    <div ref={box} className={cn("pointer-events-none absolute top-0 left-0 z-20 will-change-transform", variant === "voucher" ? "w-[min(19.5rem,calc(100%-1.5rem))]" : wide ? "w-[min(35rem,calc(100%-1.5rem))]" : "w-[min(24rem,calc(100%-1.5rem))]")}>
       <div
         ref={card_}
         role="dialog"
         aria-label={label}
         className={cn(
-          "pointer-events-auto relative overflow-y-auto rounded-2xl border border-hairline bg-ivory font-ui text-graphite shadow-float transition-[opacity,translate] duration-300 ease-out motion-reduce:transition-none",
+          "pointer-events-auto relative overflow-y-auto font-ui text-graphite transition-[opacity,translate] duration-300 ease-out motion-reduce:transition-none",
+          variant === "voucher" ? "[filter:drop-shadow(0_12px_14px_var(--shade-soft))] rounded-t-2xl" : "rounded-2xl border border-hairline bg-ivory shadow-float",
           shown ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0",
         )}
       >
         {children}
-        <span ref={tailDown} aria-hidden className="absolute -bottom-1.5 hidden size-3 rotate-45 border-r border-b border-hairline bg-ivory" />
-        <span ref={tailUp} aria-hidden className="absolute -top-1.5 hidden size-3 rotate-45 border-t border-l border-hairline bg-ivory" />
+        {variant === "card" && <span ref={tailDown} aria-hidden className="absolute -bottom-1.5 hidden size-3 rotate-45 border-r border-b border-hairline bg-ivory" />}
+        {variant === "card" && <span ref={tailUp} aria-hidden className="absolute -top-1.5 hidden size-3 rotate-45 border-t border-l border-hairline bg-ivory" />}
       </div>
     </div>
   );

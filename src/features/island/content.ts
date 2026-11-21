@@ -56,7 +56,9 @@ export const content = {
   // The compact glass label that appears when you hover, focus or select an object on the island
   label: {
     // the always-visible small tag on each object: an icon and one word
-    tag: { journal: "Journal", gift: "Gift", opened: "Opened", locked: "Locked" },
+    tag: { journal: "Journal", gift: "Gift", opened: "Opened", locked: "Locked", unlock: "Unlock more" },
+    unlockTitle: "Unlock more of your island",
+    unlockSub: "See what is next · tap to open",
     journal: { title: "Your journal", sub: "Reports and checks" },
     readySub: (demo: boolean) => `${demo ? "Example gift" : "Local treat"} · tap to open`,
     openedSub: "Opened · tap to see it",
@@ -88,6 +90,21 @@ export const content = {
     viewOnMap: "Continue on the map",
   },
 
+  // The paper voucher a gift unfolds into
+  voucher: {
+    kicker: "A Little Gift from Boston",
+    stillFolded: "Still folded",
+    lockedTitle: "A gift to unlock",
+    demoSub: "A made-up café, for demonstration",
+    exampleOffer: "Example offer",
+    revealExample: "Reveal the example code",
+    worksNowhere: "Example only. This code works nowhere.",
+    smallPrint: "Demo content for this prototype. It cannot be used anywhere.",
+    nextGift: (need: number) => `Next gift after ${need} more ${need === 1 ? "contribution" : "contributions"}`,
+    collection: "Unlock more of your island",
+    contribute: "Contribute on the map",
+  },
+
   // A real nearby place found for a gift (never an offer)
   place: {
     title: "A Little Gift from Boston",
@@ -105,7 +122,7 @@ export const content = {
   coach: {
     gift: "A little gift is waiting. Tap it to open.",
     journal: "This is your journal. Tap it to see what you have done.",
-    grow: "Contribute on the map and new things drop onto your island and more gifts open.",
+    unlock: "Tap this box to see what else you can unlock. Contribute on the map and your island grows.",
     openMap: "Open the map",
     gotIt: "Got it",
     skip: "Skip tips",
