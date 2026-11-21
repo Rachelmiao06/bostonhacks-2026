@@ -8,7 +8,7 @@ export type Quest = {
   stationName: string;
   lines: string[];
   header: string;
-  /** Always a T Party mission, never an official MBTA request for comment. */
+  /** Always a Tada mission, never an official MBTA request for comment. */
   type: "community_mission";
   sourceUrl: string;
   rewardTokens: number;
