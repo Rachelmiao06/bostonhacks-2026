@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, Fredoka, Geist, Geist_Mono, Press_Start_2P } from "next/font/google";
 import "./globals.css";
 import { SiteNav } from "@/components/shared/site-nav";
+import { TrolleyChat } from "@/features/trolley-chat/TrolleyChat";
 import { SiteFooter } from "@/components/shared/site-footer";
 import { site } from "@/lib/config";
 
@@ -47,6 +48,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <SiteNav />
         <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">{children}</main>
         <SiteFooter />
+        <TrolleyChat />
       </body>
     </html>
   );

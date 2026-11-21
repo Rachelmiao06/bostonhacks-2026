@@ -50,7 +50,7 @@ const RESPONSE_SCHEMA = {
 };
 
 function buildPrompt(input: ReviewInput): string {
-  return `You review rider feedback for T Party, an unofficial app about MBTA (Boston transit) accessibility outages.
+  return `You review rider feedback for Tada, an unofficial app about MBTA (Boston transit) accessibility outages.
 Your job is to help the rider write clearer, more useful feedback. You are a writing coach, not an inspector.
 
 The outage this report is about (from MBTA's own alert):

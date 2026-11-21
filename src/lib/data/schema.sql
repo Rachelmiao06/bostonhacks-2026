@@ -1,4 +1,4 @@
--- T Party database (Tiger Data / PostgreSQL + TimescaleDB). Safe to run again.
+-- Tada database (Tiger Data / PostgreSQL + TimescaleDB). Safe to run again.
 -- Run with: node --env-file=.env.local scripts/db-setup.mjs
 
 -- One row per MBTA alert. resolved_at is stamped when the alert disappears from MBTA's feed.

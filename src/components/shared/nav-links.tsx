@@ -7,10 +7,13 @@ import { Menu } from "@base-ui/react/menu";
 import { Ellipsis } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type Item = { href: string; label: string; short?: string };
+type Item = { href: string; label: string; short?: string; also?: string[] };
 
-const isActive = (href: string, pathname: string | null) =>
-  pathname !== null && (href === "/" ? pathname === "/" || pathname.startsWith("/explore") : pathname.startsWith(href));
+const isActive = (item: Item, pathname: string | null) => {
+  if (pathname === null) return false;
+  if (item.href === "/" ? pathname === "/" : pathname.startsWith(item.href)) return true;
+  return (item.also ?? []).some((p) => pathname.startsWith(p));
+};
 
 function Links({ items, pathname }: { items: Item[]; pathname: string | null }) {
   const row = useRef<HTMLUListElement>(null);
@@ -23,7 +26,7 @@ function Links({ items, pathname }: { items: Item[]; pathname: string | null }) 
   return (
     <ul ref={row} className="flex min-w-0 items-center overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {items.map((item) => {
-        const active = isActive(item.href, pathname);
+        const active = isActive(item, pathname);
         return (
           <li key={item.href} className="shrink-0">
             <Link

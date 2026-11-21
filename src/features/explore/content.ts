@@ -38,7 +38,7 @@ export const content = {
   },
 
   ticket: {
-    issuer: "T Party · Boston",
+    issuer: "Tada · Boston",
     number: (n: number, total: number) => `${n} of ${total}`,
     prev: "Previous problem",
     next: "Next problem",
@@ -62,14 +62,14 @@ export const content = {
     fullPage: "Open full page",
     alert: "MBTA’s alert",
     community:
-      "T Party builds missions from public MBTA alerts. The MBTA did not ask for this feedback, and finishing it here sends nothing to the MBTA.",
+      "Tada builds missions from public MBTA alerts. The MBTA did not ask for this feedback, and finishing it here sends nothing to the MBTA.",
     lines: (lines: string[]) => (lines.length ? lines.map((l) => `${l} Line`).join(" · ") : "Bus or commuter rail"),
   },
 
   celebrate: {
     title: "Your little world just grew!",
     already: "Already part of your world",
-    honest: "Completed in T Party. This does not send anything to the MBTA.",
+    honest: "Completed in Tada. This does not send anything to the MBTA.",
     collection: "Visit my world",
     another: "Continue exploring",
     newPiece: (name: string) => `Next time you visit, ${name} lands on your island.`,

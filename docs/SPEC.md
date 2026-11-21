@@ -1,6 +1,6 @@
-# Spec: T Party ("Make every ride count")
+# Spec: Tada ("Make every ride count")
 
-T Party turns feedback on Boston's public transit into a game. College students and everyday MBTA riders explore a pixel-art map of the T, find challenges (real transit issues), write feedback with text, a photo, or both, get coaching from an AI reviewer, and earn tokens.
+Tada turns feedback on Boston's public transit into a game. College students and everyday MBTA riders explore a pixel-art map of the T, find challenges (real transit issues), write feedback with text, a photo, or both, get coaching from an AI reviewer, and earn tokens.
 
 Demo: Sunday Nov 22. Freeze `main` 30 minutes before. The demo script is 2 minutes or less and does not depend on live MBTA data.
 
@@ -15,7 +15,7 @@ Explore, discover a challenge, submit feedback, AI review, complete, track, earn
 
 ## Two kinds of challenge, always labelled
 - Official Opportunity: a real, verifiable MBTA request for public input.
-- Community Mission: created by T Party around a real problem. Must say it is unofficial.
+- Community Mission: created by Tada around a real problem. Must say it is unofficial.
 
 ## Honesty rules
 - The AI improves quality. It never confirms facts and never says a photo proves anything.
