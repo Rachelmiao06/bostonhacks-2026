@@ -172,7 +172,8 @@ export function Collection({ known, handle, onClose }: { known: number | null; h
           }
         }}
       >
-        <canvas ref={canvas} aria-hidden className="absolute inset-0 size-full" />
+        {/* the pieces are graded to look richer and more colourful than the island's soft palette: more saturation and a little contrast */}
+        <canvas ref={canvas} aria-hidden className="absolute inset-0 size-full [filter:saturate(1.55)_contrast(1.08)]" />
         {failed && <p role="alert" className="absolute inset-0 grid place-items-center text-sm text-taupe">{c.noScene}</p>}
 
         <div className="pointer-events-none absolute inset-0">

@@ -40,7 +40,7 @@ export function createCollection(canvas, { sources, states, reveal = new Set() }
 	renderer.setClearColor(0x000000, 0);
 	renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 	renderer.toneMapping = THREE.NeutralToneMapping;
-	renderer.toneMappingExposure = 1.08; // brighter than the island: the pieces are the focus
+	renderer.toneMappingExposure = 1.0; // brighter than the island: the pieces are the focus
 
 	const scene = new THREE.Scene();
 	const pmrem = new THREE.PMREMGenerator(renderer);
