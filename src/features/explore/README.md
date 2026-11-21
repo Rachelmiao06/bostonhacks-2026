@@ -26,12 +26,9 @@ Issue: #2. Owner: Rachel. Only the owner edits this folder.
 - T lines: official colours with a soft ivory edge. Selecting a stop brings its lines forward and dims the rest (`tLineLayers`).
 - Motion: nothing moves on its own. Hover and selection use short springs; Reduced Motion turns them off.
 
-## Adding the miniature buildings
-The landmarks are listed in `content.ts` (`landmarks`). Each has real coordinates and the stop its ticket belongs to.
-Until a landmark has art, a plain dashed block marks its spot. To add art:
-1. Make a PNG with a see-through background, three-quarter view, about 240px wide.
-2. Save it in `public/assets/explore/landmarks/`, for example `state-house.png`.
-3. Add `art: "/assets/explore/landmarks/state-house.png"` to that landmark in `content.ts`.
+## Green Line B collectibles
+
+Open `/explore?sample=green-b` to start over the B branch. Eight station IDs in `src/features/landmarks/catalog.ts` pair artwork with the map’s station buttons. Open the collectible in a station ticket for its three views. See the [landmark guide](../landmarks/README.md).
 
 ## Data
 - `/api/subway`: lines, stops and shapes from the MBTA V3 API, cached for a day, with `subway-snapshot.json` as fallback.

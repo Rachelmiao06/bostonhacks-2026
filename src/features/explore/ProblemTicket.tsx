@@ -7,7 +7,10 @@ import { Marker } from "@/lib/map";
 import { Stamp } from "@/components/shared/stamp";
 import { cn } from "@/lib/utils";
 import { categoryInfo, categoryOf, categoryStyle } from "./category";
-import { content, kindLabels, type Landmark } from "./content";
+import { Dialog } from "@base-ui/react/dialog";
+import { landmarks, type LandmarkId } from "@/features/landmarks/catalog";
+import { LandmarkDetail } from "@/features/landmarks/LandmarkDetail";
+import { content, kindLabels } from "./content";
 import type { SubwayLine, SubwayStation } from "./types";
 
 type Props = {
@@ -18,7 +21,7 @@ type Props = {
   index: number;
   onIndex: (index: number) => void;
   done: ReadonlySet<string>;
-  landmark?: Landmark;
+  landmark?: LandmarkId;
   /** Wide screens pin the ticket above the stop; phones dock it at the bottom. */
   docked: boolean;
   onContribute: (quest: Quest) => void;
@@ -58,7 +61,7 @@ function TicketCard({ station, lines, quests, index, onIndex, done, landmark, do
       transition={{ type: "spring", stiffness: 300, damping: 26 }}
       onClick={(event) => event.stopPropagation()}
       className={cn(
-        "relative cursor-default overflow-visible rounded-xl border border-hairline bg-ivory font-ui text-graphite shadow-ticket",
+        "cloth-ticket cloth-seam relative cursor-default overflow-visible rounded-xl border border-hairline bg-ivory font-ui text-graphite shadow-ticket",
         docked ? "w-full" : "w-[19.5rem]",
       )}
     >
@@ -93,7 +96,21 @@ function TicketCard({ station, lines, quests, index, onIndex, done, landmark, do
               {line.name}
             </span>
           ))}
-          {landmark && <span>· {content.ticket.landmark(landmark.name)}</span>}
+          {landmark && (
+            <Dialog.Root>
+              <Dialog.Trigger className="cursor-pointer underline underline-offset-2">
+                {content.ticket.landmark(landmarks[landmark].label)}
+              </Dialog.Trigger>
+              <Dialog.Portal>
+                <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/30" />
+                <Dialog.Popup className="cloth-sheet fixed top-1/2 left-1/2 z-50 w-72 -translate-x-1/2 -translate-y-1/2 rounded-xl border p-4 text-graphite shadow-ticket">
+                  <Dialog.Title className="text-sm">{station.name}</Dialog.Title>
+                  <LandmarkDetail id={landmark} size={128} />
+                  <Dialog.Close className="mt-3 w-full cursor-pointer rounded-lg border py-1">{content.close}</Dialog.Close>
+                </Dialog.Popup>
+              </Dialog.Portal>
+            </Dialog.Root>
+          )}
         </div>
       </div>
 

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { LandmarkDetail } from "./LandmarkDetail";
 import { landmarks, type LandmarkId } from "./catalog";
@@ -10,6 +11,7 @@ export function LandmarkPreview() {
   return (
     <section className="space-y-6">
       <h1 className="font-heading text-3xl font-bold">Station landmarks</h1>
+      <Link className="inline-block underline" href="/explore?sample=green-b">Explore the Green Line B sample</Link>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {(Object.keys(landmarks) as LandmarkId[]).map((key) => (
           <div key={key} className="grid justify-items-center rounded-lg bg-card px-2 pb-2 pt-20 text-card-foreground">

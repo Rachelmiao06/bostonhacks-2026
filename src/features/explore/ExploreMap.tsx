@@ -12,6 +12,7 @@ import {
   NavigationControl,
   Source,
   addStickerLayers,
+  addKnitPatterns,
   atlasCssVars,
   clearCameraPadding,
   initialView,
@@ -22,8 +23,8 @@ import {
 } from "@/lib/map";
 import { categoryOf } from "./category";
 import { ContributePanel } from "./ContributePanel";
-import { categories, content, landmarks, type CategoryId, type Landmark } from "./content";
-import { LandmarkMarker } from "./LandmarkMarker";
+import { categories, content, type CategoryId } from "./content";
+import { stationLandmarks } from "@/features/landmarks/catalog";
 import { FilterBar, ProgressChip, StatusChip } from "./MapOverlays";
 import { ClusterPin, ProblemPin } from "./ProblemMarker";
 import { ProblemTicket } from "./ProblemTicket";
@@ -42,7 +43,6 @@ const getJson = <T,>(url: string): Promise<T> =>
 const stylePromise = loadMapStyle();
 const subwayPromise = getJson<SubwayData>("/api/subway");
 
-const landmarkOfStation = new globalThis.Map(landmarks.map((landmark) => [landmark.stationId, landmark]));
 const ALL = new Set<CategoryId>(categories.map((c) => c.id));
 const NOTHING_DONE: ReadonlySet<string> = new Set();
 
@@ -76,7 +76,7 @@ export default function ExploreMap() {
   const [panelQuest, setPanelQuest] = useState<Quest | null>(null);
   const [show, setShow] = useState<ReadonlySet<CategoryId>>(ALL);
   // Rounded to half steps, so markers only redraw when the zoom has really changed.
-  const [zoom, setZoom] = useState(12);
+  const [zoom, setZoom] = useState(() => initialView().zoom);
   const quests = useQuests();
   const progress = useMyProgress();
   const done = progress.status === "ready" ? progress.done : NOTHING_DONE;
@@ -156,14 +156,6 @@ export default function ExploreMap() {
 
   const selectStop = useCallback((stop: ProblemStop) => selectStation(stop.station), [selectStation]);
 
-  const selectLandmark = useCallback(
-    (landmark: Landmark) => {
-      const station = stationById.get(landmark.stationId);
-      if (station) selectStation(station);
-    },
-    [stationById, selectStation],
-  );
-
   const expandCluster = useCallback((cluster: Cluster) => {
     const map = mapRef.current?.getMap();
     if (!map) return;
@@ -223,13 +215,13 @@ export default function ExploreMap() {
   const selectedLineKey = selected?.lineIds.join(",") ?? "";
   const lineLayers = useMemo(() => tLineLayers(selectedLineKey ? selectedLineKey.split(",") : []), [selectedLineKey]);
 
-  const landmarkScale = Math.min(1.4, Math.max(0.5, 0.55 + (zoom - 12) * 0.22));
+  const spriteSize = Math.min(34, Math.max(22, 22 + (zoom - 13) * 4));
   const selectedStop = selected ? stopById.get(selected.id) : undefined;
   const selectedQuests = selectedStop?.quests ?? [];
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="fixed inset-0 z-30" style={{ ...atlasCssVars, backgroundColor: "var(--atlas-land)" }}>
+      <div className="knit-map fixed inset-0 z-30" style={{ ...atlasCssVars, backgroundColor: "var(--atlas-land)" }}>
         {style && (
           <Map
             ref={mapRef}
@@ -240,7 +232,10 @@ export default function ExploreMap() {
             maxPitch={MAX_PITCH}
             minZoom={MIN_ZOOM}
             style={{ width: "100%", height: "100%" }}
-            onLoad={(event) => addStickerLayers(event.target)}
+            onLoad={({ target }) => {
+              addStickerLayers(target);
+              void addKnitPatterns(target).catch((error) => console.warn("Map fabric unavailable", error));
+            }}
             onZoom={(event) => setZoom(Math.round(event.viewState.zoom * 2) / 2)}
             onClick={(event) => {
               // Taps on markers and tickets also reach the map; only a tap on bare map clears the selection.
@@ -253,6 +248,7 @@ export default function ExploreMap() {
               <Source id="t-lines" type="geojson" data={lineGeoJSON}>
                 <Layer {...lineLayers.casing} />
                 <Layer {...lineLayers.line} />
+                <Layer {...lineLayers.stitches} />
               </Source>
             )}
             {data && <TrainsLayer trains={live?.trains ?? []} lines={data.lines} />}
@@ -263,21 +259,12 @@ export default function ExploreMap() {
                 kind={station.lineIds.length > 1 ? "hub" : "stop"}
                 color={colorOfLine.get(station.lineIds[0]) ?? ""}
                 selected={selected?.id === station.id}
+                landmark={zoom >= content.landmarkMinZoom ? stationLandmarks[station.id] : undefined}
+                spriteSize={spriteSize}
                 compact={zoom < 12}
                 onSelect={selectStation}
               />
             ))}
-            {data &&
-              zoom >= content.landmarkMinZoom &&
-              landmarks.map((landmark) => (
-                <LandmarkMarker
-                  key={landmark.id}
-                  landmark={landmark}
-                  scale={landmarkScale}
-                  selected={selected?.id === landmark.stationId}
-                  onSelect={selectLandmark}
-                />
-              ))}
             {clusters.map((cluster) =>
               cluster.stops.length > 1 ? (
                 <ClusterPin key={`c-${cluster.id}`} cluster={cluster} onExpand={expandCluster} />
@@ -300,7 +287,7 @@ export default function ExploreMap() {
                 index={Math.min(questIndex, Math.max(0, selectedQuests.length - 1))}
                 onIndex={setQuestIndex}
                 done={done}
-                landmark={landmarkOfStation.get(selected.id)}
+                landmark={stationLandmarks[selected.id]}
                 docked={false}
                 onContribute={contribute}
                 onClose={clearSelection}
@@ -345,7 +332,7 @@ export default function ExploreMap() {
             index={Math.min(questIndex, Math.max(0, selectedQuests.length - 1))}
             onIndex={setQuestIndex}
             done={done}
-            landmark={landmarkOfStation.get(selected.id)}
+            landmark={stationLandmarks[selected.id]}
             docked
             onContribute={contribute}
             onClose={clearSelection}

@@ -31,7 +31,7 @@ function Links({ items, pathname }: { items: Item[]; pathname: string | null }) 
               aria-current={active ? "page" : undefined}
               className={cn(
                 "relative block rounded-xl px-2.5 py-2 text-[0.82rem] font-medium whitespace-nowrap outline-none transition-colors focus-visible:ring-2 focus-visible:ring-graphite/40 sm:px-3.5 sm:text-sm",
-                active ? "bg-graphite text-ivory" : "text-taupe hover:bg-stone-deep/60 hover:text-graphite",
+                active ? "cloth-tab-active text-graphite" : "text-taupe hover:bg-stone-deep/60 hover:text-graphite",
               )}
             >
               {item.short ? (

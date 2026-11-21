@@ -46,7 +46,7 @@ export const content = {
     source: "MBTA alert",
     unofficial: "Community mission · not an MBTA request",
     nothingHere: "No open MBTA problems listed at this stop right now.",
-    landmark: (name: string) => `Near ${name}`,
+    landmark: (name: string) => `Station collectible · ${name}`,
     stampDone: "Done",
     stampChecked: "Checked",
   },
@@ -71,8 +71,7 @@ export const content = {
   },
 
   /** Below this zoom the landmark models are hidden, so the far-out view stays clean. */
-  landmarkMinZoom: 11.5,
-  landmarkPlaceholder: "Model to come",
+  landmarkMinZoom: 12.5,
   /** Problems within this many pixels of each other merge into one cluster. 0 = never. */
   clusterRadiusPx: (zoom: number) => (zoom >= 14.5 ? 0 : 46),
 };
@@ -111,27 +110,3 @@ export const kindLabels: Record<QuestKind, string> = {
   shuttle: "Shuttle buses",
   suspension: "Service suspended",
 };
-
-/**
- * The miniature buildings. A small hand-picked set, never the whole city.
- * `art` is the picture to float over the map: a PNG with a see-through background in
- * public/assets/explore/landmarks/, drawn in three-quarter view, about 240px wide.
- * Until a landmark has `art`, a plain stand-in block shows where it will go.
- * `stationId` is the stop whose ticket opens when the landmark is tapped.
- */
-export type Landmark = {
-  id: string;
-  name: string;
-  longitude: number;
-  latitude: number;
-  stationId: string;
-  art?: string;
-};
-
-export const landmarks: Landmark[] = [
-  { id: "state-house", name: "State House", longitude: -71.0638, latitude: 42.3588, stationId: "place-pktrm" },
-  { id: "fenway-park", name: "Fenway Park", longitude: -71.0972, latitude: 42.3467, stationId: "place-kencl" },
-  { id: "public-library", name: "Boston Public Library", longitude: -71.0782, latitude: 42.3493, stationId: "place-coecl" },
-  { id: "south-station", name: "South Station", longitude: -71.0552, latitude: 42.3519, stationId: "place-sstat" },
-  { id: "td-garden", name: "TD Garden", longitude: -71.0621, latitude: 42.3662, stationId: "place-north" },
-];
