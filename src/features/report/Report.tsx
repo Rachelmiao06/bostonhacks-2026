@@ -6,7 +6,7 @@ import { Activity } from "./Activity";
 import { checkPhoto, findNearby, ReportApiError } from "./api";
 import { Camera, type Shot } from "./Camera";
 import { content } from "./content";
-import { KnittedCamera, KnittedControl, KnittedHills, KnittedSuccess, YarnBall } from "./Knitted";
+import { KnittedCamera, KnittedControl, KnittedSuccess, YarnBall } from "./Knitted";
 import { Prepare } from "./Prepare";
 import { Result, type Analysis } from "./Result";
 import { loadCases, saveCase } from "./store";
@@ -104,7 +104,7 @@ function Entry({ onStart, onActivity }: { onStart: () => void; onActivity: () =>
     setCount(loadCases().length);
   }, []);
   return (
-    <section className="mx-auto grid w-full max-w-xl justify-items-center gap-5 py-2 text-center motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-300 sm:gap-6 sm:py-12">
+    <section className="mx-auto flex w-full max-w-xl flex-col items-center gap-5 py-4 text-center motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-300 sm:gap-6 sm:py-12">
       <KnittedCamera className="w-40 sm:w-56" />
       <div className="grid gap-3">
         <h1 className="font-serif text-5xl leading-[1.05] font-semibold text-balance sm:text-6xl">{content.entry.headline}</h1>
@@ -118,7 +118,6 @@ function Entry({ onStart, onActivity }: { onStart: () => void; onActivity: () =>
           {content.entry.activity(count)}
         </button>
       )}
-      <KnittedHills className="mt-2 w-full" />
     </section>
   );
 }
@@ -178,7 +177,6 @@ function Analyzing({ shot, note, onDone, onError }: { shot: Shot; note: string; 
       {/* Your own photo stays visible, small, so it is clear what is being looked at. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={shot.thumb} alt="" className="size-14 rounded-2xl object-cover shadow-float" />
-      <KnittedHills variant="river" className="mt-2 w-full" />
     </section>
   );
 }

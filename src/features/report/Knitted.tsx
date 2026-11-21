@@ -93,7 +93,7 @@ export function YarnBall({ className }: { className?: string }) {
 export function KnittedHills({ variant = "hills", className }: { variant?: "hills" | "river" | "meadow"; className?: string }) {
   return (
     <div aria-hidden className={cn("pointer-events-none", className)}>
-      <Sprite name={variant} className={cn("mx-auto w-full max-w-[26rem]", variant === "hills" && "-scale-x-100")} />
+      <Sprite name={variant} className={cn("mx-auto w-full max-w-[17rem] opacity-95", variant === "hills" && "-scale-x-100")} />
     </div>
   );
 }

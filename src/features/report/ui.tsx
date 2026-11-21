@@ -1,6 +1,6 @@
 // Small Tada-styled pieces for the Report screens: warm stone and ivory, thin outlines, restrained glass.
 // Colours come only from theme tokens in globals.css.
-import { useEffect, useRef, type ButtonHTMLAttributes, type CSSProperties, type HTMLAttributes, type ReactNode } from "react";
+import { useEffect, useRef, type ButtonHTMLAttributes, type HTMLAttributes, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /** Subtle entrance. Switched off for people who ask for reduced motion. */
@@ -11,28 +11,15 @@ export function Panel({ className, ...p }: HTMLAttributes<HTMLDivElement>) {
   return <div className={cn("rounded-3xl border border-hairline bg-ivory/90 p-4 shadow-float backdrop-blur-md sm:p-5", enter, className)} {...p} />;
 }
 
-// Buttons are real <button> elements with real text. The knitted look is a BLANK wool plate drawn behind the text
-// (9-slice: the rounded ends keep their shape, the middle stretches). No text is ever baked into an image.
-const PLATES = {
-  green: { src: "/assets/report/knitted-plate-green-large.webp", cap: 103 },
-  cream: { src: "/assets/report/knitted-plate-cream-large.webp", cap: 101 },
-} as const;
-
-/** Inline style for a knitted plate. Exported for links that must look like the buttons. */
-export function plateStyle(tone: keyof typeof PLATES): CSSProperties {
-  const p = PLATES[tone];
-  return { borderStyle: "solid", borderWidth: "0 24px", borderImage: `url(${p.src}) 0 ${p.cap} fill / 0 24px / 0 stretch`, backgroundColor: "transparent" };
-}
-
 const base =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-1 text-[0.95rem] font-medium whitespace-nowrap outline-none transition-[filter,transform] focus-visible:ring-2 focus-visible:ring-graphite/50 focus-visible:ring-offset-2 focus-visible:ring-offset-ivory hover:brightness-105 active:translate-y-px disabled:pointer-events-none disabled:opacity-50 motion-reduce:transition-none";
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 text-[0.95rem] font-medium whitespace-nowrap outline-none transition-colors focus-visible:ring-2 focus-visible:ring-graphite/50 focus-visible:ring-offset-2 focus-visible:ring-offset-ivory disabled:pointer-events-none disabled:opacity-50";
 
-export function PrimaryButton({ className, style, ...p }: ButtonHTMLAttributes<HTMLButtonElement>) {
-  return <button type="button" className={cn(base, "text-ivory", className)} style={{ ...plateStyle("green"), ...style }} {...p} />;
+export function PrimaryButton({ className, ...p }: ButtonHTMLAttributes<HTMLButtonElement>) {
+  return <button type="button" className={cn(base, "bg-cat-verify text-ivory hover:bg-cat-verify/90", className)} {...p} />;
 }
 
-export function SecondaryButton({ className, style, ...p }: ButtonHTMLAttributes<HTMLButtonElement>) {
-  return <button type="button" className={cn(base, "text-graphite", className)} style={{ ...plateStyle("cream"), ...style }} {...p} />;
+export function SecondaryButton({ className, ...p }: ButtonHTMLAttributes<HTMLButtonElement>) {
+  return <button type="button" className={cn(base, "border border-hairline bg-ivory text-graphite hover:bg-stone-deep/50", className)} {...p} />;
 }
 
 export function Chip({ tone = "quiet", className, children }: { tone?: "quiet" | "go" | "warn"; className?: string; children: ReactNode }) {

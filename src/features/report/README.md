@@ -48,15 +48,15 @@ Transparent WebP cut-outs in `public/assets/report/`, resized to about 2x their 
 | Art | Where |
 |---|---|
 | Camera (high resolution), floating | Entry hero |
-| Blank green and cream wool plates | Behind every button's real text (9-slice `border-image`, so the rounded ends keep their shape). Links styled as buttons use `plateStyle()` |
+| Blank wool plates (files kept, **not used**) | Tried behind button text with `border-image`; the stretched stitches looked pixelated, so buttons are flat again |
 | Shutter, close, back discs | Camera screen; "Back" on Prepare and Activity |
 | Ring, half ring, solid check markers | Case timeline (half = where the case is now) |
 | Yarn ball, six frames | Analyzing (frames cycle; breathing scale). Frame 1 only for reduced motion |
-| Landscape strips (hills, river, meadow) | Bottom of Entry (hills) and Analyzing (river); hills are mirrored so a flower clears the floating chat button |
+| Landscape strips (files and `KnittedHills` kept, **not used**) | Removed from Entry and Analyzing: they read as a big green block, not a decoration |
 | Success badge | "Saved" and "Following" screen |
 | Mascot | Ask Tada header |
 | Generic building | "Belongs to someone else" when the authority is not the MBTA |
 | Category badges (pothole, street light, litter, graffiti, fallen tree, rat) | Result photo corner and the pick-a-category list; other types show nothing |
 | Icon discs (camera, location, bank), flowers | Permission note, "Who can help", empty Activity |
 
-Not used yet: thread strands, the small plate sizes, and these sheets that have not been generated: result-page illustrations (emergency, private, unclear), the nine icon discs, and empty/error/offline art. Those screens keep their line icons. Originals are in `docs/knit-assets/incoming/`; an overview is `docs/knit-assets/album.png`.
+Not used yet: thread strands, the plates, the landscape strips, and these sheets that have not been generated: result-page illustrations (emergency, private, unclear), the nine icon discs, and empty/error/offline art. Those screens keep their line icons. Originals are in `docs/knit-assets/incoming/`; an overview is `docs/knit-assets/album.png`.
