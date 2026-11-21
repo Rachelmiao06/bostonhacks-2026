@@ -13,7 +13,7 @@ export const content = {
   questsRefreshMs: 5 * 60 * 1000,
   liveChip: (trains: number) => `Live · ${trains} trains`,
   sampleChip: "Saved sample · not live",
-  questsSnapshot: "MBTA could not be reached: problems shown are a saved copy.",
+  questsSnapshot: "MBTA unreachable · saved copy of alerts",
   questsFailed: "Problems could not load. The map still works.",
 
   filters: {
@@ -53,10 +53,11 @@ export const content = {
 
   panel: {
     back: "Back to the map",
+    fullPage: "Open full page",
     alert: "MBTA’s alert",
     community:
       "T Party builds missions from public MBTA alerts. The MBTA did not ask for this feedback, and finishing it here sends nothing to the MBTA.",
-    lines: (lines: string[]) => (lines.length ? lines.join(" · ") : "Bus or commuter rail"),
+    lines: (lines: string[]) => (lines.length ? lines.map((l) => `${l} Line`).join(" · ") : "Bus or commuter rail"),
   },
 
   celebrate: {
@@ -85,7 +86,7 @@ export const categories = [
   { id: "service", label: "Service changes", short: "Service", stamp: "Service" },
   { id: "access", label: "Accessibility", short: "Access", stamp: "Access" },
   { id: "station", label: "Escalators & station", short: "Station", stamp: "Station" },
-  { id: "verify", label: "Check it’s fixed", short: "Fixed?", stamp: "Checked" },
+  { id: "verify", label: "Check it’s fixed", short: "Fixed?", stamp: "Verify" },
 ] as const;
 
 export type CategoryId = (typeof categories)[number]["id"];

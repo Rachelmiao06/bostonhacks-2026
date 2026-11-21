@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { useRouter } from "next/navigation";
 import { MotionConfig } from "motion/react";
 import type { Quest } from "@/lib/mbta";
 import {
@@ -22,6 +21,7 @@ import {
   type MapRef,
 } from "@/lib/map";
 import { categoryOf } from "./category";
+import { ContributePanel } from "./ContributePanel";
 import { categories, content, landmarks, type CategoryId, type Landmark } from "./content";
 import { LandmarkMarker } from "./LandmarkMarker";
 import { FilterBar, ProgressChip, StatusChip } from "./MapOverlays";
@@ -65,7 +65,6 @@ function useWide() {
  * It fills the whole screen (fixed, under the floating nav) so other UI can be layered on top of it.
  */
 export default function ExploreMap() {
-  const router = useRouter();
   const mapRef = useRef<MapRef>(null);
   const wide = useWide();
   const [style, setStyle] = useState<MapStyle | null>(null);
@@ -74,6 +73,7 @@ export default function ExploreMap() {
   const [failed, setFailed] = useState(false);
   const [selected, setSelected] = useState<SubwayStation | null>(null);
   const [questIndex, setQuestIndex] = useState(0);
+  const [panelQuest, setPanelQuest] = useState<Quest | null>(null);
   const [show, setShow] = useState<ReadonlySet<CategoryId>>(ALL);
   // Rounded to half steps, so markers only redraw when the zoom has really changed.
   const [zoom, setZoom] = useState(12);
@@ -204,8 +204,20 @@ export default function ExploreMap() {
     });
   }, []);
 
-  // Contribute: the full flow arrives in the map panel next; until then it opens the quest page.
-  const contribute = useCallback((quest: Quest) => router.push(`/challenges/${encodeURIComponent(quest.id)}`), [router]);
+  // Contribute in a panel over the map. On wide screens the camera slides left so the stop stays in view.
+  const contribute = useCallback(
+    (quest: Quest) => {
+      setPanelQuest(quest);
+      const map = mapRef.current?.getMap();
+      if (map && wide) map.easeTo({ padding: { top: 420, right: 460, bottom: 0, left: 0 }, duration: 600 });
+    },
+    [wide],
+  );
+  const closePanel = useCallback(() => {
+    setPanelQuest(null);
+    const map = mapRef.current?.getMap();
+    if (map && wide) map.easeTo({ padding: { top: 420, right: 0, bottom: 0, left: 0 }, duration: 600 });
+  }, [wide]);
 
   // The selected station's lines come forward; the rest step back.
   const selectedLineKey = selected?.lineIds.join(",") ?? "";
@@ -323,7 +335,9 @@ export default function ExploreMap() {
           </p>
         )}
 
-        {data && selected && !wide && (
+        <ContributePanel quest={panelQuest} onClose={closePanel} />
+
+        {data && selected && !wide && !panelQuest && (
           <ProblemTicket
             station={selected}
             lines={data.lines}
