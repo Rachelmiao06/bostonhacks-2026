@@ -66,8 +66,10 @@ export const content = {
     tokens: (n: number) => `+${n} tokens`,
     stamp: (category: string) => `${category} stamp added to your collection`,
     honest: "Completed in T Party. This does not send anything to the MBTA.",
-    collection: "View collection",
-    another: "Find another problem",
+    collection: "Visit my world",
+    another: "Continue exploring",
+    newPiece: (name: string) => `Your island has a new piece waiting: ${name}.`,
+    stampsSoFar: (n: number, total: number) => `${n} of ${total} stamps toward your island`,
   },
 
   /** Below this zoom the landmark models are hidden, so the far-out view stays clean. */

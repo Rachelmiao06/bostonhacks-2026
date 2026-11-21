@@ -9,8 +9,10 @@ import { PixelTrain } from "@/components/shared/pixel-train";
 import { Stamp } from "@/components/shared/stamp";
 import { flow } from "@/features/challenge/content";
 import { cn } from "@/lib/utils";
+import { unlockTiers } from "@/features/island/content";
 import { categoryInfo, categoryOf, categoryStyle } from "./category";
 import { content } from "./content";
+import { stampCount, useMyProgress } from "./progress";
 import { AtlasButton } from "./ui";
 
 type Props = {
@@ -36,6 +38,10 @@ export function Celebration({ quest, tokens, already, handedOff, onHandOff, extr
   const style = categoryStyle[category];
   const info = categoryInfo(category);
   const ref = useRef<HTMLElement>(null);
+  // The stamp count comes from the server (the same store the pins and the island read); nothing is counted here.
+  const progress = useMyProgress();
+  const stamps = progress.status === "ready" ? stampCount(progress.data) : null;
+  const piece = !already && stamps !== null && stamps >= 1 && stamps <= unlockTiers.length ? unlockTiers[stamps - 1] : null;
 
   // The panel may be scrolled down to the buttons: bring the stamp into view.
   useEffect(() => {
@@ -93,6 +99,15 @@ export function Celebration({ quest, tokens, already, handedOff, onHandOff, extr
         </h3>
         {!already && <p className="font-pixel text-[0.7rem] leading-relaxed text-graphite">{content.celebrate.tokens(tokens)}</p>}
         {!already && <p className="text-sm text-taupe">{content.celebrate.stamp(info.label)}</p>}
+        {piece && stamps !== null && (
+          <p className="flex items-start gap-2 rounded-xl border border-hairline bg-ivory px-3 py-2 text-sm">
+            <span aria-hidden className="mt-1 size-2 shrink-0 rotate-45 bg-cat-station" />
+            <span>
+              <span className="block font-medium">{content.celebrate.newPiece(piece.name)}</span>
+              <span className="block text-xs text-taupe">{content.celebrate.stampsSoFar(stamps, unlockTiers.length)}</span>
+            </span>
+          </p>
+        )}
       </div>
 
       {extra}
@@ -115,7 +130,7 @@ export function Celebration({ quest, tokens, already, handedOff, onHandOff, extr
       <div className="flex flex-wrap gap-2 pt-1">
         <AtlasButton onClick={onDone}>{content.celebrate.another}</AtlasButton>
         <Link
-          href="/rewards"
+          href="/island"
           className="inline-flex h-10 items-center rounded-full border border-graphite/25 px-4 text-sm font-medium outline-none hover:bg-stone focus-visible:ring-4 focus-visible:ring-graphite/25"
         >
           {content.celebrate.collection}

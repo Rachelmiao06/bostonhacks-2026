@@ -25,7 +25,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { Rope } from './rope.js';
 import { Spring } from './spring.js';
 import { H, S } from './layout.js';
-import { playBaa, playPop } from './sound.js';
+import { playBaa, playChime, playPop } from './sound.js';
 
 // ---------------------------------------------------------------------------
 // Feel knobs
@@ -57,6 +57,9 @@ const WIGGLE_T = 0.7; // s one tug lasts
 const WIGGLE_SPEED = 3.2; // peak sideways speed of the tip during a tug
 const WIGGLE_LIFT = 0.25; // peak upward speed of the tip during a tug
 const WIGGLE_POINTS = 7; // rope particles at the tail that move
+const GIFT_PULL = 0.6; // how far the new piece's thread must be pulled out to knit the piece in
+const GIFT_POP_T = 1.1; // s a piece takes to spring into place
+const GIFT_STAGGER = 0.13; // s between the pieces of one gift
 const COLLAPSE_HINT_T = 6; // s after the intro ends that hint reports 'collapse'
 const BALL_THREAD_DIR = [0.55, 0.83]; // xz direction the ball thread trails (toward the default camera)
 const BALL_THREAD_Y = -0.68; // anchor height on the unit ball, relative to its center
@@ -605,11 +608,11 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 	const pomMat = mat(P.mustard, 'boucle', sphereRep(POMPOM_R));
 	const threadMat = mat(P.mustard, 'strand', [1, 1]);
 
-	function makeHandle(groundFn, anchor, colliders) {
-		const rope = new Rope({ groundAt: groundFn, material: threadMat, maxPoints: 120, radius: THREAD_RADIUS, colliders });
+	function makeHandle(groundFn, anchor, colliders, material = threadMat, pomMaterial = pomMat) {
+		const rope = new Rope({ groundAt: groundFn, material, maxPoints: 120, radius: THREAD_RADIUS, colliders });
 		rope.mesh.visible = false;
 		group.add(rope.mesh);
-		const pom = new THREE.Mesh(pomGeo, pomMat);
+		const pom = new THREE.Mesh(pomGeo, pomMaterial);
 		pom.castShadow = true;
 		pom.receiveShadow = true;
 		pom.raycast = () => {};
@@ -619,6 +622,8 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 	}
 	const edgeH = makeHandle(groundAt, thread.path[0].clone(), []);
 	const ballH = makeHandle(matTop, new THREE.Vector3(), [ballCollider]);
+	// the new-piece thread is MBTA red, so it cannot be mistaken for the sandstone edge thread that unravels the island
+	const giftH = makeHandle(groundAt, new THREE.Vector3(), [], mat(P.red, 'strand', [1, 1]), mat(P.red, 'boucle', sphereRep(POMPOM_R)));
 	const pullDir = new THREE.Vector3();
 	const pickSphere = new THREE.Sphere();
 	const pickPt = new THREE.Vector3();
@@ -723,19 +728,21 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 	// pick covers whichever thread is live in the current state; a ray near the pompom grabs the tip
 	const grabbable = {
 		pick(ray, camera) {
-			const h = state === 'idle' ? edgeH : state === 'ball' ? ballH : null;
-			if (!h || !h.live) return null;
-			pickHandle = h;
-			pickSphere.center.copy(h.pom.position);
-			pickSphere.radius = POMPOM_PICK_R;
-			if (ray.intersectSphere(pickSphere, pickPt)) {
-				pickIndex = h.rope.count - 1;
-				return { distance: pickPt.distanceTo(ray.origin) };
+			const handles = state === 'idle' ? [giftH, edgeH] : state === 'ball' ? [ballH] : [];
+			let best = null;
+			for (const h of handles) {
+				if (!h.live) continue;
+				pickSphere.center.copy(h.pom.position);
+				pickSphere.radius = POMPOM_PICK_R;
+				let hit = null;
+				if (ray.intersectSphere(pickSphere, pickPt)) hit = { distance: pickPt.distanceTo(ray.origin), index: h.rope.count - 1 };
+				else hit = h.rope.pick(ray, camera);
+				if (hit && (!best || hit.distance < best.distance)) best = { h, distance: hit.distance, index: hit.index };
 			}
-			const hit = h.rope.pick(ray, camera);
-			if (!hit) return null;
-			pickIndex = hit.index;
-			return { distance: hit.distance };
+			if (!best) return null;
+			pickHandle = best.h;
+			pickIndex = best.index;
+			return { distance: best.distance };
 		},
 		grab() {
 			const h = pickHandle;
@@ -1007,10 +1014,96 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 		playPop({ pitch: 1.9 });
 	}
 
+	// Jump straight to the finished island (a returning visitor does not need the opening again).
+	function skipIntro() {
+		playIntro();
+		ballGone = true;
+		ballR.snap(0);
+		kick.snap(0);
+		drop.snap(0);
+		matSpring.snap(0);
+		bigRoot.visible = false;
+		matG.visible = false;
+		hideHandle(ballH);
+		clearStreaks();
+		finishIntro();
+	}
+
 	// ---- idle / outro ------------------------------------------------------------------------------------
 	function stepIdle(dt) {
 		stepHandle(edgeH, dt);
+		if (gift && !gift.popping) {
+			stepHandle(giftH, dt);
+			if (giftH.held && giftH.rope.pullExcess(pullDir) > GIFT_PULL) startGift();
+		}
 		if (edgeH.rope.pullExcess(pullDir) > PULL_TRIGGER) startUnravel();
+	}
+
+	// ---- gift: a new piece waits hidden; a loose thread sticks out of the quilt where it will go ----------
+	// Pulling the thread knits the piece in with a soft spring; used when a new stamp has been earned since the last visit.
+	let gift = null; // { items, popping, t, label }
+	let giftUntil = 0;
+	let onGift = null;
+	const giftDir = new THREE.Vector3();
+	function offerGift(stages, label, onKnitted) {
+		hideHandle(giftH);
+		gift = null;
+		const set = new Set(stages);
+		const picked = items.filter((it) => set.has(it.stage));
+		if (!picked.length) return false;
+		for (const it of picked) {
+			refreshBase(it);
+			it.locked = true;
+			hideItem(it);
+		}
+		// the thread lies on the quilt in front of the first piece, pointing toward the camera side
+		const b = picked[0].base;
+		giftDir.set(b.x, 0, b.z);
+		if (giftDir.lengthSq() < 1e-4) giftDir.set(0, 0, 1);
+		giftDir.normalize();
+		const sx = b.x * 0.9;
+		const sz = b.z * 0.9;
+		const path = [0, 0.3, 0.6, 0.9, 1.2, 1.5].map((s) => {
+			const x = sx + giftDir.x * s;
+			const z = sz + giftDir.z * s;
+			return new THREE.Vector3(x, groundAt(x, z) + 0.02, z);
+		});
+		giftH.anchor.copy(path[0]);
+		showHandle(giftH, path);
+		gift = { items: picked, popping: false, t: 0, label };
+		onGift = onKnitted ?? null;
+		return true;
+	}
+	function startGift() {
+		gift.popping = true;
+		gift.t = 0;
+		startReel(giftH);
+		giftUntil = clock + 0.9;
+		playChime();
+	}
+	function stepGift(dt) {
+		if (giftH.reel) stepReel(giftH, dt, giftUntil);
+		if (!gift || !gift.popping) return;
+		gift.t += dt;
+		let done = true;
+		gift.items.forEach((it, i) => {
+			const t = gift.t - i * GIFT_STAGGER;
+			if (t <= 0) return void (done = false);
+			it.w.visible = true;
+			const s = Math.max(1e-3, springOut(t, 13, 0.5));
+			place(it, s, s, s, it.base.x, it.base.y, it.base.z);
+			if (t < GIFT_POP_T) done = false;
+		});
+		if (!done) return;
+		for (const it of gift.items) {
+			it.locked = false;
+			resetItem(it);
+		}
+		gift = null;
+		playPop({ pitch: 1.4 });
+		const cb = onGift;
+		onGift = null;
+		cb?.();
 	}
 
 	let thS = 0;
@@ -1018,6 +1111,8 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 	let finalAt = -1;
 	let baaed = false;
 	function startUnravel() {
+		hideHandle(giftH);
+		gift = null;
 		state = 'unravel';
 		clock = 0;
 		thS = 0;
@@ -1174,6 +1269,7 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 		if (state === 'intro') stepIntro(dt);
 		else if (state === 'idle') stepIdle(dt);
 		else if (state === 'unravel') stepUnravel(dt);
+		stepGift(dt);
 		stepStreaks(dt);
 		if (bigRoot.visible) updateBall(dt);
 		// the ball thread follows the ball surface (after updateBall)
@@ -1201,6 +1297,12 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 	return {
 		update,
 		playIntro,
+		skipIntro,
+		offerGift,
+		// the no-drag way to knit the waiting piece in
+		acceptGift() {
+			if (state === 'idle' && gift && !gift.popping) startGift();
+		},
 		restore,
 		grabbable,
 		get busy() {
@@ -1215,7 +1317,8 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 		},
 		get hint() {
 			if (state === 'ball' && ballH.live && !ballH.held) return fillHint('start', ballH);
-			if (state === 'idle' && edgeH.live && !edgeH.held && clock < COLLAPSE_HINT_T) return fillHint('collapse', edgeH);
+			if (state === 'idle' && gift && !gift.popping && giftH.live && !giftH.held) return fillHint('gift', giftH);
+			if (state === 'idle' && !gift && edgeH.live && !edgeH.held && clock < COLLAPSE_HINT_T) return fillHint('collapse', edgeH);
 			return null;
 		},
 	};

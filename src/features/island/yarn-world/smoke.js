@@ -244,5 +244,5 @@ export function setupSmoke({ root, wind, kit, house }) {
 	}
 	reset();
 
-	return { update, reset, vane };
+	return { update, reset, vane, mesh: smokeMesh };
 }

@@ -23,9 +23,9 @@ const BACKGROUND = '#ebe5d9'; // warm stone
 
 /**
  * @param {HTMLElement} container
- * @param {{ isUnlocked: (stage: string) => boolean, onPhase?: (phase: string) => void }} options
+ * @param {{ isUnlocked: (stage: string) => boolean, onPhase?: (phase: string) => void, instant?: boolean }} options
  */
-export function mountIsland(container, { isUnlocked, onPhase }) {
+export function mountIsland(container, { isUnlocked, onPhase, instant = false }) {
 	const size = () => ({ w: Math.max(1, container.clientWidth), h: Math.max(1, container.clientHeight) });
 	let { w, h } = size();
 
@@ -64,6 +64,7 @@ export function mountIsland(container, { isUnlocked, onPhase }) {
 	scene.add(new THREE.HemisphereLight('#fde8d2', '#7a6a5c', 0.55));
 
 	const world = buildWorld(scene, { isUnlocked });
+	if (instant) world.snapIsland();
 	const focus = world.focusTarget ?? new THREE.Vector3(0, 0.6, 0);
 
 	const camera = new THREE.PerspectiveCamera(28, w / h, 0.1, 100);
@@ -191,10 +192,14 @@ export function mountIsland(container, { isUnlocked, onPhase }) {
 		else adaptPixelRatio(rawDt);
 	});
 
+	// ?debug=1 exposes the scene for inspection (used by the tests)
+	if (new URLSearchParams(location.search).get('debug') === '1') window.__island = { world, camera, controls };
 	return {
 		world,
 		/** Replay the knit-in with whatever is unlocked right now. */
 		replay: () => world.playIntro(),
+		offerGift: (stages, label, onKnitted) => world.offerGift(stages, label, onKnitted),
+		acceptGift: () => world.acceptGift(),
 		dispose() {
 			renderer.setAnimationLoop(null);
 			observer.disconnect();

@@ -69,7 +69,7 @@ export function setupGuide({ camera, dom, parent = document.body }) {
 
 			if (hint.kind !== kind) {
 				kind = hint.kind;
-				label.style.display = kind === 'start' ? '' : 'none';
+				label.style.display = kind === 'start' || kind === 'gift' ? '' : 'none';
 			}
 
 			const still = reduced.matches;

@@ -19,6 +19,12 @@ export const content = {
   credit: "Island by Kris Yang (Yarn World, MIT licence). Sounds are CC0 from freesound.org.",
   creditUrl: "https://github.com/krisyangdev/yarn-world",
   fromRewards: "See your island",
+  welcomeBack: (stamps: number, total: number) => `Welcome back. ${stamps} of ${total} stamps are knitted in.`,
+  giftReady: (name: string) => `New stamp: ${name} is ready. Pull the loose thread on the quilt to knit it in.`,
+  giftButton: "Knit it in for me",
+  giftKnitted: (name: string) => `Knitted in: ${name}.`,
+  giftMore: "Another stamp is waiting. Look for the next loose thread.",
+  unavailable: "Your stamps could not load right now, so the island shows what is saved here.",
 };
 
 /**
