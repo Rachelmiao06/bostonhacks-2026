@@ -8,6 +8,7 @@ export const site = {
     { href: "/explore", label: "Explore" },
     { href: "/my-challenges", label: "Mine" },
     { href: "/rewards", label: "Rewards" },
+    { href: "/stats", label: "Stats" },
     { href: "/about", label: "About" },
   ],
 };
