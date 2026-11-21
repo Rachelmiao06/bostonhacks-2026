@@ -1,13 +1,12 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { content } from "./content";
+import { ExploreLoader } from "./ExploreLoader";
 
+/** The map stands alone and fills the screen. The title is kept for screen readers only. */
 export function Explore() {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{content.title}</CardTitle>
-      </CardHeader>
-      <CardContent className="text-muted-foreground">{content.blurb}</CardContent>
-    </Card>
+    <>
+      <h1 className="sr-only">{content.title}</h1>
+      <ExploreLoader />
+    </>
   );
 }
