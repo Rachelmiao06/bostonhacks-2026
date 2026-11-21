@@ -108,6 +108,8 @@ export function setupPoke({ dom, camera, controls, targets, grabbables = [], gro
 			grip = { handle: pending.grab(), autoRotate: controls.autoRotate };
 			pending = null;
 			controls.autoRotate = false;
+			// while a thread is in your hand, a second finger must not spin the camera
+			controls.enabled = false;
 			setHover(null, 'grabbing');
 		}
 		if (grip) {
@@ -125,6 +127,7 @@ export function setupPoke({ dom, camera, controls, targets, grabbables = [], gro
 		if (!grip) return;
 		grip.handle.release();
 		controls.autoRotate = grip.autoRotate;
+		controls.enabled = true;
 		grip = null;
 		down = null;
 	});
@@ -133,6 +136,7 @@ export function setupPoke({ dom, camera, controls, targets, grabbables = [], gro
 		if (grip) {
 			grip.handle.release();
 			controls.autoRotate = grip.autoRotate;
+			controls.enabled = true;
 			grip = null;
 			down = null;
 			dom.style.cursor = 'grab';

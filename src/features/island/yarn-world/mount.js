@@ -38,6 +38,10 @@ export function mountIsland(container, { isUnlocked, onPhase, instant = false })
 	renderer.toneMappingExposure = 1.0;
 	renderer.domElement.style.display = 'block';
 	renderer.domElement.style.touchAction = 'none';
+	// a long press on the thread must not open the browser's text or image menu
+	renderer.domElement.style.userSelect = 'none';
+	renderer.domElement.style.webkitUserSelect = 'none';
+	renderer.domElement.style.webkitTouchCallout = 'none';
 	container.appendChild(renderer.domElement);
 
 	const scene = new THREE.Scene();

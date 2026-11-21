@@ -127,7 +127,8 @@ export function Celebration({ quest, tokens, already, handedOff, onHandOff, extr
         <p className="text-xs text-taupe">{handedOff ? flow.tellMbtaSaved : flow.tellMbtaHelp}</p>
       </div>
 
-      <div className="flex flex-wrap gap-2 pt-1">
+      {/* Stays at the bottom of the panel while the rest scrolls, so both choices are always in view. */}
+      <div className="sticky bottom-2 z-10 flex flex-wrap gap-2 rounded-xl border border-hairline bg-ivory/95 p-2 shadow-float backdrop-blur-sm">
         <AtlasButton onClick={onDone}>{content.celebrate.another}</AtlasButton>
         <Link
           href="/island"
