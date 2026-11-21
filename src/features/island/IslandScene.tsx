@@ -12,11 +12,12 @@ export type IslandHandle = {
   dropIn: (pick: (stage: string, k: number) => boolean, onDone: () => void) => boolean;
   /** Knit the waiting piece in without dragging. */
   acceptGift: () => void;
-  /** The little gift: open it (lid lifts), or show it already opened. */
-  openParcel: () => void;
-  setParcelOpened: (opened: boolean) => void;
-  /** Where the gift is on screen, in pixels of the scene, so the offer ticket can sit beside it. */
-  parcelScreen: (out: { x: number; y: number; visible: boolean }) => { x: number; y: number; visible: boolean };
+  /** The gifts hanging from the clouds. States: locked, ready or opened. */
+  setGiftStates: (states: string[], instant?: boolean) => void;
+  /** Open gift `index` (with its animation); returns the state it ends in. */
+  openGift: (index: number) => string;
+  /** Where gift `index` is on screen, in pixels of the scene, so the ticket can sit beside it. */
+  giftScreen: (index: number, out: { x: number; y: number; visible: boolean }) => { x: number; y: number; visible: boolean };
   /** Hold the slow auto-rotation while the ticket is open, so the camera stays where it is. */
   holdCamera: (hold: boolean) => void;
 };
@@ -28,14 +29,14 @@ type Props = {
   instant?: boolean;
   onReady?: (handle: IslandHandle) => void;
   onPhase?: (phase: string) => void;
-  /** The gift was poked (opened) in the scene. */
-  onParcel?: () => void;
+  /** A gift was poked in the scene: which one, and the state it is in. */
+  onGift?: (index: number, state: string) => void;
   /** The scene could not start (no WebGL). */
   onFail?: () => void;
 };
 
 // Mounts the three.js island into a div and cleans it up when you leave.
-export default function IslandScene({ unlocked, instant = false, onReady, onPhase, onParcel, onFail }: Props) {
+export default function IslandScene({ unlocked, instant = false, onReady, onPhase, onGift, onFail }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const unlockedRef = useRef(unlocked);
   const handle = useRef<IslandHandle | null>(null);
@@ -55,7 +56,7 @@ export default function IslandScene({ unlocked, instant = false, onReady, onPhas
         const h = mountIsland(el, {
           isUnlocked: (stage: string, k: number) => unlockedRef.current(stage, k),
           onPhase,
-          onParcel,
+          onGift,
           instant,
         }) as IslandHandle;
         handle.current = h;

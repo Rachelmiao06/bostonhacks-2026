@@ -34,8 +34,8 @@ export const content = {
   credit: "Island by Kris Yang (Yarn World, MIT licence). Sounds are CC0 from freesound.org.",
   creditUrl: "https://github.com/krisyangdev/yarn-world",
 
-  parcel: {
-    label: "A little gift is waiting. Open it.",
+  gift: {
+    label: (n: number, locked: boolean) => `Open gift ${n}${locked ? " (locked)" : ""}`,
     kicker: "Demo surprise · example only",
     realKicker: "A gift for you",
     title: "A Little Gift from Boston",
@@ -45,10 +45,24 @@ export const content = {
     expires: "Expires",
     conditions: "Conditions",
     status: "Status",
-    code: "Code",
-    instructions: "How to redeem",
+    code: "Promo code",
+    reveal: "Reveal the code",
+    codeNote: "Example only. This code works nowhere.",
+    locked: (need: number) => `Locked. ${need} more ${need === 1 ? "contribution" : "contributions"} on the map opens it.`,
     close: "Close and go back to the island",
   },
+
+  journey: {
+    title: "Your journey",
+    summary: (known: number, total: number) => `${known} of ${total} pieces on your island`,
+    next: (need: number) => `Next gift after ${need} more ${need === 1 ? "contribution" : "contributions"}`,
+    allGifts: "Every gift is hanging in your clouds.",
+    unknown: "Could not check your progress just now.",
+    start: "A quilt, a river and a ball of yarn",
+    gift: (n: number) => `Gift ${n}`,
+    more: "More contributions are still counted. There is nothing more to add to the island yet.",
+  },
+  giftUnlocked: "A new gift is hanging in the clouds.",
 };
 
 /**
@@ -68,19 +82,37 @@ export const unlockSteps: { name: string; add: Record<string, number> }[] = [
   { name: "a sheep", add: { sheep: 1 } },
   { name: "more trees and flowers", add: { tree: Infinity, pine: Infinity, flower: Infinity } },
   { name: "the rest of the flock", add: { sheep: Infinity } },
-  { name: "the bridge and the river's little life", add: { bridge: Infinity, water: Infinity } },
+  { name: "the bridge", add: { bridge: Infinity } },
+  { name: "the river's little life", add: { water: Infinity } },
   { name: "a kite, laundry and pinwheels", add: { prop: Infinity } },
-  { name: "clouds", add: { cloud: Infinity } },
 ];
 
-/** How many pieces of each stage exist after `steps` contributions. The yarn ball is always there. */
+/** How many pieces of each stage exist after `steps` contributions. The yarn ball and the clouds (which carry the gifts) are always there. */
 export function allowedFor(steps: number): Record<string, number> {
-  const allowed: Record<string, number> = { ball: Infinity };
+  const allowed: Record<string, number> = { ball: Infinity, cloud: Infinity };
   unlockSteps.slice(0, Math.max(0, steps)).forEach((step) => {
     for (const [stage, n] of Object.entries(step.add)) allowed[stage] = Math.max(allowed[stage] ?? 0, n);
   });
   return allowed;
 }
 
-/** Does piece number `k` of `stage` exist at this point of the journey? `parcel` is the little gift. */
+/** Does piece number `k` of `stage` exist at this point of the journey? */
 export const isIn = (allowed: Record<string, number>) => (stage: string, k: number) => (allowed[stage] ?? 0) > k;
+
+/**
+ * The gifts hanging from the three clouds. Gift i can be opened once the journey has reached `giftMilestones[i]` steps:
+ * the first is always there; more gifts come with more contributions. Until then a gift hangs faint ('locked').
+ */
+export const giftMilestones = [0, 5, 10];
+
+export type GiftState = "locked" | "ready" | "opened";
+
+export function giftStatesFor(known: number, opened: boolean[]): GiftState[] {
+  return giftMilestones.map((m, i) => (m > known ? "locked" : opened[i] ? "opened" : "ready"));
+}
+
+/** The next locked gift: its number (1-based) and how many more contributions it needs, or null when all are open. */
+export function nextGift(known: number): { number: number; need: number } | null {
+  const i = giftMilestones.findIndex((m) => m > known);
+  return i < 0 ? null : { number: i + 1, need: giftMilestones[i] - known };
+}

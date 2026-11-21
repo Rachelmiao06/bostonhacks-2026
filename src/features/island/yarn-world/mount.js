@@ -23,9 +23,9 @@ const BACKGROUND = '#ebe5d9'; // warm stone
 
 /**
  * @param {HTMLElement} container
- * @param {{ isUnlocked: (stage: string, k: number) => boolean, onPhase?: (phase: string) => void, instant?: boolean, onParcel?: () => void }} options
+ * @param {{ isUnlocked: (stage: string, k: number) => boolean, onPhase?: (phase: string) => void, instant?: boolean, onGift?: (index: number, state: string) => void }} options
  */
-export function mountIsland(container, { isUnlocked, onPhase, onParcel, instant = false }) {
+export function mountIsland(container, { isUnlocked, onPhase, onGift, instant = false }) {
 	const size = () => ({ w: Math.max(1, container.clientWidth), h: Math.max(1, container.clientHeight) });
 	let { w, h } = size();
 
@@ -67,7 +67,7 @@ export function mountIsland(container, { isUnlocked, onPhase, onParcel, instant 
 	scene.add(sun);
 	scene.add(new THREE.HemisphereLight('#fde8d2', '#7a6a5c', 0.55));
 
-	const world = buildWorld(scene, { isUnlocked, onParcel });
+	const world = buildWorld(scene, { isUnlocked, onGift });
 	if (instant) world.snapIsland();
 	const focus = world.focusTarget ?? new THREE.Vector3(0, 0.6, 0);
 
@@ -212,12 +212,13 @@ export function mountIsland(container, { isUnlocked, onPhase, onParcel, instant 
 		/** New pieces fall onto the island from above. pick(stage, k) chooses which. */
 		dropIn: (pick, onDone) => world.dropIn(pick, onDone),
 		acceptGift: () => world.acceptGift(),
-		/** The little gift: open it (lid lifts), or show it already opened. */
-		openParcel: () => world.parcel.open(),
-		setParcelOpened: (on) => world.parcel.setOpened(on),
-		/** Where the gift is on screen, in container pixels, so the offer ticket can sit next to it. */
-		parcelScreen: (out) => {
-			world.parcel.anchor(anchorPoint).project(camera);
+		/** The gifts hanging from the clouds. States: 'locked' | 'ready' | 'opened'. */
+		setGiftStates: (states, instant) => states.forEach((st, i) => world.gifts[i]?.setState(st, instant)),
+		/** Open gift `index` (animation); returns the state it ends in. */
+		openGift: (index) => world.gifts[index]?.open(),
+		/** Where gift `index` is on screen, in container pixels, so the ticket can sit next to it. */
+		giftScreen: (index, out) => {
+			world.gifts[index].anchor(anchorPoint).project(camera);
 			out.x = (anchorPoint.x * 0.5 + 0.5) * container.clientWidth;
 			out.y = (0.5 - anchorPoint.y * 0.5) * container.clientHeight;
 			out.visible = anchorPoint.z < 1;

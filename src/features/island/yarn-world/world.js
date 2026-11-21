@@ -915,10 +915,12 @@ function buildClouds(parent, rand) {
 		[-0.3, 0.34, 0.25, 0.4],
 		[0.05, -0.1, 0.55, 0.4],
 	];
+	// Lower and nearer the middle than the original, so the three gifts that hang from them stay in view
+	// whichever way the slow camera is turned (checked at 1280x800 over a full turn).
 	const specs = [
-		{ x: S(-5.2), y: 5.6, z: S(-4.6), s: 1.0 },
-		{ x: S(5.4), y: 6.2, z: S(-2.8), s: 1.15 },
-		{ x: S(-1.0), y: 6.6, z: S(-6.2), s: 0.85 },
+		{ x: -4.49, y: 4.3, z: -2.2, s: 0.8 },
+		{ x: 4.43, y: 4.7, z: -2.3, s: 0.9 },
+		{ x: -0.15, y: 4.5, z: 5.0, s: 0.7 },
 	];
 	const ANCHOR_Y = 11;
 	const pivots = [];
@@ -1087,7 +1089,7 @@ function buildThreadPath() {
 // ---------------------------------------------------------------------------
 // World
 // ---------------------------------------------------------------------------
-export function buildWorld(scene, { isUnlocked, onParcel } = {}) {
+export function buildWorld(scene, { isUnlocked, onGift } = {}) {
 	const rand = mulberry32(20261031);
 	const root = new THREE.Group();
 	scene.add(root);
@@ -1125,22 +1127,25 @@ export function buildWorld(scene, { isUnlocked, onParcel } = {}) {
 	const { posts, runs: fenceRuns } = buildFence(root);
 	const stones = buildStones(root);
 
-	// a little gift waiting on the near side, in front of the river bend. Stage 'parcel' only knits in when the
-	// page says a gift is available (isUnlocked('parcel')); poking it opens it and tells the page.
-	const [parcelX, parcelZ] = settle(...L(2.3, 2.1), 1.1);
-	const parcel = buildParcel({
-		parent: root,
-		kit: { mat, P },
-		x: parcelX,
-		z: parcelZ,
-		y: heightAt(parcelX, parcelZ) - 0.02,
-		yaw: -0.6,
+	// Three little gifts hang from the three clouds on strings. The page sets each one's state
+	// ('locked' | 'ready' | 'opened'); poking one tells the page which (onGift(index, state)).
+	const gifts = clouds.map((c, i) => {
+		const g = buildParcel({
+			parent: c.cloud,
+			kit: { mat, P },
+			y: -1.62,
+			hang: 0.62,
+			yaw: 0.8 * i,
+			wrap: 'cream',
+			ribbon: ['coral', 'blue', 'green'][i % 3],
+		});
+		g.group.scale.setScalar(1 / c.s); // the same size on every cloud
+		g.group.userData.onPoke = () => {
+			if (weave.busy) return;
+			onGift?.(i, g.open());
+		};
+		return g;
 	});
-	parcel.group.userData.onPoke = () => {
-		if (weave.busy || !isUnlocked?.('parcel', 0)) return;
-		parcel.open();
-		onParcel?.();
-	};
 
 	// ground a sheep may trot over: on the island, off the river, clear of trees, house, ball, fence and stones
 	const blockers = [
@@ -1302,7 +1307,7 @@ export function buildWorld(scene, { isUnlocked, onParcel } = {}) {
 		smoke.update(t, dt);
 		kite.update(t, dt);
 		meadow.update(t, dt);
-		parcel.update(t, dt);
+		for (const g of gifts) g.update(t, dt);
 		weave.update(t, dt);
 		// the first gust sweeps over the island as soon as the knit-in finishes; cloud shadows fade in with it
 		const busy = weave.busy;
@@ -1345,7 +1350,6 @@ export function buildWorld(scene, { isUnlocked, onParcel } = {}) {
 			...trees.map((tr) => ({ obj: tr.g, stage: 'tree' })),
 			...pines.map((pn) => ({ obj: pn.g, stage: 'pine' })),
 			...flowerClusters.map(({ group, base }) => ({ obj: group, stage: 'flower', clip: true, base })),
-			{ obj: parcel.group, stage: 'parcel' },
 			{ obj: ballG, stage: 'ball', follow: ballRig.group, drop: 0.5 },
 			...sheep.map((s) => ({ obj: s.g, stage: 'sheep' })),
 			...clouds.map((c) => ({ obj: c.pivot, stage: 'cloud' })),
@@ -1405,7 +1409,7 @@ export function buildWorld(scene, { isUnlocked, onParcel } = {}) {
 		dropIn: (pick, onDone) => weave.dropIn(pick, onDone),
 		acceptGift: () => weave.acceptGift(),
 		setPullSpan: (v) => weave.setPullSpan(v),
-		parcel,
+		gifts,
 		get phase() {
 			return weave.phase;
 		},
