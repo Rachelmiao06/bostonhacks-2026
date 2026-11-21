@@ -9,6 +9,8 @@ import { Ribbon } from "@/components/shared/ribbon";
 import { Coin } from "@/components/shared/coin";
 import { daysOpenText, details, failuresText, kindLabels } from "./content";
 import { useQuest } from "./useQuest";
+import { ReportForm } from "./ReportForm";
+import { VerifyForm } from "./VerifyForm";
 
 // The live quest page at /challenges/[id]. Quest data comes from /api/quests only.
 export function QuestPage({ id }: { id: string }) {
@@ -99,6 +101,8 @@ function QuestDetails({ quest, source }: { quest: Quest; source: QuestFeed["sour
           {source === "snapshot" && <p className="text-sm text-muted-foreground">{details.snapshotNote}</p>}
         </CardContent>
       </Card>
+
+      {verify ? <VerifyForm quest={quest} /> : <ReportForm quest={quest} />}
     </article>
   );
 }

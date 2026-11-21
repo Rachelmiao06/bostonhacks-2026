@@ -103,3 +103,68 @@ export function daysOpenText(days: number) {
 export function failuresText(n: number) {
   return n === 1 ? "1 time" : `${n} times`;
 }
+
+// Text for what the rider does on /challenges/[id].
+export const flow = {
+  steps: ["Write", "Check with AI", "Revise", "Complete"],
+  stepsLabel: "Your progress",
+  stepHelp: [
+    "Tell us what you see. Tap a question below for a sentence starter.",
+    "Ready? The AI coach scores clarity and detail. It cannot verify facts.",
+    "The coach has suggestions. Edit your report, then check again.",
+    "Your report passed. Complete it to earn tokens.",
+  ],
+  promptsTitle: "Need ideas? Tap a question to add a starter",
+  prompts: [
+    { label: "When?", starter: "I was here on [day] at about [time]." },
+    { label: "Where exactly?", starter: "It is the one at [platform / entrance / lobby]." },
+    { label: "What did you see?", starter: "I saw that " },
+    { label: "How did it affect you?", starter: "Because of this I had to " },
+    { label: "What would help?", starter: "It would help if " },
+  ],
+  textLabel: "Your report",
+  textPlaceholder: "Example: The escalator to the Alewife platform was stopped on Friday at 8:30am, so I carried my stroller down the stairs...",
+  charCount: (n: number) => `${n} / 2000`,
+  draftSaved: "Your words are saved on this device.",
+  check: "Check with AI",
+  checking: "Checking...",
+  complete: "Complete quest",
+  completing: "Completing...",
+  hintEmpty: "Write something or add a photo to unlock the AI check.",
+  hintNeedsCheck: "Run the AI check on this version to unlock Complete.",
+  hintNeedsPass: "Revise using the suggestions, then check again to unlock Complete.",
+  notChecked: "Not checked: you changed your report after this check. Check again to unlock Complete.",
+  reviewTitle: "AI coach",
+  passed: "Looks good",
+  needsRevision: "Needs revision",
+  suggestionsTitle: "Try this",
+  scoreNames: { relevance: "Relevance", specificity: "Specificity", completeness: "Completeness", photoRelevance: "Photo fit" },
+  aiDisclaimer: "The AI coach helps with clarity and detail. It cannot verify facts, and a photo is never proof.",
+  photoNote: "Photos are shrunk on your device, sent once for the AI check, and not stored.",
+
+  verifyTitle: "Is it working again?",
+  verifyHelp: "Go and look, then tap what you see. One tap earns tokens.",
+  working: "Working again",
+  stillBroken: "Still broken",
+  noteLabel: "Note (optional)",
+  notePlaceholder: "Anything worth adding, like which level you checked.",
+  sending: "Sending...",
+  verifiedWorking: "You said it is working again.",
+  verifiedBroken: "You said it is still broken.",
+
+  doneTitle: "Quest complete!",
+  tokensEarned: (n: number) => `+${n} tokens`,
+  doneBody: "Completed in T Party. This does not send anything to the MBTA.",
+  alreadyDone: "You already finished this quest.",
+  tellMbta: "Also tell the MBTA",
+  tellMbtaHelp: "Optional. Opens the MBTA's official feedback page in a new tab. T Party does not send anything for you.",
+  tellMbtaSaved: "Noted: you opened the MBTA's page.",
+  mbtaUrl: "https://www.mbta.com/customer-support",
+  backToExplore: "Find another quest",
+
+  errors: {
+    network: "We could not reach T Party. Check your connection and try again. Your report is still here.",
+    ai: "The AI coach could not answer just now. Your report is safe here. Please try again in a moment.",
+    fallback: "Something went wrong. Your report is still here. Please try again.",
+  },
+};

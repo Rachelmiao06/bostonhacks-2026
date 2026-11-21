@@ -83,7 +83,7 @@ export function PhotoField({ photo, error, disabled, onPick, onRemove }: Props) 
               <ImagePlus aria-hidden /> {content.addPhoto}
             </Button>
           </div>
-          <p className="text-sm text-paper/80">
+          <p className="text-sm opacity-80">
             {content.photoHint} {content.cameraHint}
           </p>
         </div>
