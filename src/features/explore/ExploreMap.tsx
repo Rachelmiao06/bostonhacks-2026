@@ -26,6 +26,7 @@ import { categories, content, landmarks, type CategoryId, type Landmark } from "
 import { LandmarkMarker } from "./LandmarkMarker";
 import { FilterBar, ProgressChip, StatusChip } from "./MapOverlays";
 import { ClusterPin, ProblemPin } from "./ProblemMarker";
+import { verifiedOf } from "./verified";
 import { ProblemTicket } from "./ProblemTicket";
 import { useMyProgress } from "./progress";
 import { clusterStops, problemStops, useQuests, type Cluster, type ProblemStop } from "./quests";
@@ -288,6 +289,7 @@ export default function ExploreMap() {
                   doneCount={cluster.stops[0].quests.filter((q) => done.has(q.id)).length}
                   selected={selected?.id === cluster.id}
                   compact={zoom < 11.5}
+                  verified={verifiedOf(cluster.stops[0])}
                   onSelect={selectStop}
                 />
               ),

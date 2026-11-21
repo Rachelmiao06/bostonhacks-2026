@@ -30,6 +30,13 @@ export const content = {
   marker: (station: string, n: number, done: number) =>
     `${station}: ${n} ${n === 1 ? "problem" : "problems"}${done ? `, ${done} done by you` : ""}`,
 
+  /** Green marker: always says who the status comes from. Never "fixed", never "sent to MBTA". */
+  verified: {
+    mbta: (ago: string) => `MBTA marked this working again · ${ago}`,
+    riders: (n: number) => `Riders report it is working · ${n} ${n === 1 ? "rider" : "riders"}`,
+    marker: (station: string, label: string) => `${station}: ${label}`,
+  },
+
   ticket: {
     issuer: "T Party · Boston",
     number: (n: number, total: number) => `${n} of ${total}`,
