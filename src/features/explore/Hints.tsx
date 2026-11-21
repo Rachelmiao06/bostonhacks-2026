@@ -6,36 +6,87 @@ import { motion, useReducedMotion } from "motion/react";
 import { hints } from "./content";
 import { hasSeen, markSeen } from "./onboarding";
 
+type LngLat = [number, number];
+type Place = "right" | "left" | "above" | "below";
+type Choice = { target: LngLat; place: Place; shift: number; tailAt: number };
+
+// The callout's footprint on screen, and the room kept clear around other pins, the top nav and the bottom edge.
+const CALLOUT_W = 236;
+const CALLOUT_H = 96;
+const PIN_BOX = { w: 44, up: 62, down: 10 }; // a pin: its tag above the stop, plus a little stem
+const MARGIN = 10;
+const TOP_CLEAR = 96; // under the floating nav and the name tag (phones stack more up there: see below)
+const BOTTOM_CLEAR = 64; // above the attribution and zoom controls
+
+type Rect = { l: number; t: number; r: number; b: number };
+const hit = (a: Rect, b: Rect) => a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t;
+
 /**
- * The first-map hint: one small glass callout anchored above a real pin, with a single quiet pulse.
- * The rest of the map stays usable. The first thing the rider does (a tap anywhere else, a key, "Got it")
- * puts it away for good, and it is never shown twice.
+ * The first-discovery hint: one small liquid-glass callout, tied to one real challenge pin that is on screen and
+ * still open. It sits on whichever side of that pin leaves every other pin, the nav and the screen edges clear,
+ * and if no side is clear (or no pin is suitable) it simply does not show. The map stays fully usable; the first
+ * thing the rider does (a tap anywhere else, a key, "Got it") puts it away for good. Never shown twice.
  */
-export function MapHint({ longitude, latitude, onGone }: { longitude: number; latitude: number; onGone: () => void }) {
+export function MapHint({
+  candidates,
+  others,
+  onGone,
+  onNone,
+}: {
+  /** Open, unresolved, unlabelled pins, best first. */
+  candidates: LngLat[];
+  /** Every other marker on screen (pins and landmarks), so the callout never sits on one. */
+  others: LngLat[];
+  onGone: () => void;
+  onNone: () => void;
+}) {
   const box = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion() ?? false;
   const { current: map } = useMap();
-  // Beside the pin when there is room, so the pin and its neighbours' labels stay clear. Otherwise above it,
-  // growing inward from whichever edge it is near.
-  const [place] = useState<"right" | "left" | "above-left" | "above" | "above-right">(() => {
-    if (!map) return "above";
-    const x = map.project([longitude, latitude]).x;
-    const width = map.getContainer().clientWidth;
-    if (x + 290 < width) return "right";
-    if (x - 290 > 0) return "left";
-    return x < 130 ? "above-left" : x > width - 130 ? "above-right" : "above";
+
+  // Decided once, when the camera has settled: which pin, and which side of it.
+  const [choice] = useState<Choice | null>(() => {
+    if (!map) return null;
+    const w = map.getContainer().clientWidth;
+    const h = map.getContainer().clientHeight;
+    const screen = (p: LngLat) => map.project(p);
+    const pinRect = (p: LngLat): Rect => {
+      const s = screen(p);
+      return { l: s.x - PIN_BOX.w / 2, r: s.x + PIN_BOX.w / 2, t: s.y - PIN_BOX.up, b: s.y + PIN_BOX.down };
+    };
+    const compact = w < 460;
+    const cw = compact ? 176 : CALLOUT_W;
+    const topClear = compact ? 156 : TOP_CLEAR;
+    for (const target of candidates) {
+      const s = screen(target);
+      // Only a pin that is really on screen, clear of the nav and the bottom controls.
+      if (s.x < MARGIN + 24 || s.x > w - MARGIN - 24 || s.y < topClear + PIN_BOX.up || s.y > h - BOTTOM_CLEAR) continue;
+      const mid = s.y - 26;
+      // Above or below the pin the callout may slide sideways to stay on screen; its tail still points at the pin.
+      const slide = Math.min(Math.max(s.x - cw / 2, MARGIN), w - MARGIN - cw);
+      const spots: Record<Place, Rect> = {
+        right: { l: s.x + 30, r: s.x + 30 + cw, t: mid - CALLOUT_H / 2, b: mid + CALLOUT_H / 2 },
+        left: { l: s.x - 30 - cw, r: s.x - 30, t: mid - CALLOUT_H / 2, b: mid + CALLOUT_H / 2 },
+        above: { l: slide, r: slide + cw, t: s.y - PIN_BOX.up - 12 - CALLOUT_H, b: s.y - PIN_BOX.up - 12 },
+        below: { l: slide, r: slide + cw, t: s.y + 18, b: s.y + 18 + CALLOUT_H },
+      };
+      // Also keep clear of the target stop's own name label, which is printed on the map around its foot.
+      const ownLabel: Rect = { l: s.x - 80, r: s.x + 80, t: s.y - 10, b: s.y + 26 };
+      const clearOf = [ownLabel, ...others.filter((o) => o[0] !== target[0] || o[1] !== target[1]).map(pinRect)];
+      for (const place of ["right", "left", "above", "below"] as Place[]) {
+        const r = spots[place];
+        const inside = r.l >= MARGIN && r.r <= w - MARGIN && r.t >= topClear && r.b <= h - BOTTOM_CLEAR;
+        if (inside && !clearOf.some((o) => hit(r, o))) return { target, place, shift: slide + cw / 2 - s.x, tailAt: s.x - slide };
+      }
+    }
+    return null;
   });
-  const anchor = { right: "left", left: "right", "above-left": "bottom-left", above: "bottom", "above-right": "bottom-right" }[place] as "left" | "right" | "bottom-left" | "bottom" | "bottom-right";
-  const offset: [number, number] =
-    place === "right" ? [30, -26] : place === "left" ? [-30, -26] : place === "above-left" ? [-20, -58] : place === "above-right" ? [20, -58] : [0, -58];
-  const tail =
-    place === "right"
-      ? "top-1/2 -left-1.5 -translate-y-1/2 border-b border-l"
-      : place === "left"
-        ? "top-1/2 -right-1.5 -translate-y-1/2 border-t border-r"
-        : `-bottom-1.5 border-r border-b ${place === "above" ? "left-1/2 -translate-x-1/2" : place === "above-left" ? "left-4" : "right-4"}`;
 
   useEffect(() => {
+    if (!choice) {
+      onNone();
+      return;
+    }
     markSeen("mapHint");
     const away = (event: Event) => {
       // A tap inside the hint is its own button's job.
@@ -48,22 +99,38 @@ export function MapHint({ longitude, latitude, onGone }: { longitude: number; la
       window.removeEventListener("pointerdown", away, true);
       window.removeEventListener("keydown", away, true);
     };
-  }, [onGone]);
+  }, [choice, onGone, onNone]);
+
+  if (!choice) return null;
+  const { target, place, shift, tailAt } = choice;
+  const anchor = { right: "left", left: "right", above: "bottom", below: "top" }[place] as "left" | "right" | "bottom" | "top";
+  const offset: [number, number] = place === "right" ? [30, -26] : place === "left" ? [-30, -26] : place === "above" ? [shift, -74] : [shift, 18];
+  const tail =
+    place === "right"
+      ? "top-1/2 -left-1.5 -translate-y-1/2 border-b border-l"
+      : place === "left"
+        ? "top-1/2 -right-1.5 -translate-y-1/2 border-t border-r"
+        : place === "above"
+          ? "-bottom-1.5 -translate-x-1/2 border-r border-b"
+          : "-top-1.5 -translate-x-1/2 border-l border-t";
 
   return (
     <>
-      {/* the pulse sits on the pin itself */}
-      <Marker longitude={longitude} latitude={latitude} anchor="bottom" offset={[0, -10]} style={{ zIndex: 3, pointerEvents: "none" }}>
-        <span aria-hidden className="block size-12 rounded-full border-2 border-cat-service/50 motion-safe:animate-ping" />
+      {/* A glow on the pin itself: a steady ring, plus one slow pulse unless Reduced Motion is on. */}
+      <Marker longitude={target[0]} latitude={target[1]} anchor="bottom" offset={[0, -8]} style={{ zIndex: 3, pointerEvents: "none" }}>
+        <span aria-hidden className="relative block size-12">
+          <span className="absolute inset-0 rounded-full border-2 border-cat-service/45 bg-cat-service/10" />
+          {!reduce && <span className="absolute inset-0 rounded-full border-2 border-cat-service/50 animate-ping" />}
+        </span>
       </Marker>
-      <Marker longitude={longitude} latitude={latitude} anchor={anchor} offset={offset} style={{ zIndex: 8 }}>
+      <Marker longitude={target[0]} latitude={target[1]} anchor={anchor} offset={offset} style={{ zIndex: 8 }}>
         <motion.div
           ref={box}
           role="note"
-          initial={reduce ? false : { opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={reduce ? false : { opacity: 0, scale: 0.94 }}
+          animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4, ease: "easeOut" }}
-          className="relative w-60 rounded-2xl border border-ivory/70 bg-ivory/80 px-3.5 py-3 font-ui text-graphite shadow-float backdrop-blur-xl"
+          className="relative w-44 rounded-2xl border border-ivory/80 bg-gradient-to-br from-ivory/80 to-ivory/55 px-3.5 py-3 font-ui text-graphite shadow-float backdrop-blur-xl backdrop-saturate-150 min-[460px]:w-[14.75rem]"
         >
           <p className="font-serif text-base leading-tight font-semibold">{hints.map.title}</p>
           <p className="mt-0.5 text-xs leading-snug text-taupe">{hints.map.body}</p>
@@ -74,7 +141,7 @@ export function MapHint({ longitude, latitude, onGone }: { longitude: number; la
           >
             {hints.map.dismiss}
           </button>
-          <span aria-hidden className={`absolute size-3 rotate-45 border-ivory/70 bg-ivory/80 ${tail}`} />
+          <span aria-hidden className={`absolute size-3 rotate-45 border-ivory/80 bg-ivory/70 ${tail}`} style={place === "above" || place === "below" ? { left: tailAt } : undefined} />
         </motion.div>
       </Marker>
     </>
@@ -82,20 +149,26 @@ export function MapHint({ longitude, latitude, onGone }: { longitude: number; la
 }
 
 /**
- * A line inside the ticket, the first time a rider opens one: what they can do here.
- * Written as a quiet editorial note, not a banner. It stays for as long as that ticket is open.
+ * Whether this is the rider's first ticket. Decided once when the ticket opens, then written down, so the very
+ * next ticket stays clean. The ticket uses the answer for the note and for the glow on its contribution action.
  */
-export function TicketHint({ verify, className }: { verify: boolean; className?: string }) {
-  // Decided once, when the first ticket opens; the "seen" mark is written right after, so the next ticket stays clean.
-  const [show] = useState(() => typeof window !== "undefined" && !hasSeen("ticketHint"));
+export function useFirstTicket(): boolean {
+  const [first] = useState(() => typeof window !== "undefined" && !hasSeen("ticketHint"));
   useEffect(() => {
-    if (show) markSeen("ticketHint");
-  }, [show]);
+    if (first) markSeen("ticketHint");
+  }, [first]);
+  return first;
+}
+
+/** The note inside a first ticket: what the rider can do here. A quiet editorial line, not a popup. */
+export function TicketHint({ show, className }: { show: boolean; className?: string }) {
   if (!show) return null;
-  const text = verify ? hints.ticket.verify : hints.ticket.report;
   return (
     <p className={`border-l-2 border-cat-service/50 pl-2.5 font-ui text-xs leading-snug text-taupe ${className ?? ""}`}>
-      <span className="font-serif text-sm font-semibold text-graphite">{text.title}</span> {text.body}
+      <span className="font-serif text-sm font-semibold text-graphite">{hints.ticket.title}</span> {hints.ticket.body}
     </p>
   );
 }
+
+/** A soft ring that draws the eye to the contribution action on a first ticket. Still, so Reduced Motion needs no change. */
+export const firstGlow = "ring-4 ring-cat-service/25";

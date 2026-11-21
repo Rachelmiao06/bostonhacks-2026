@@ -30,8 +30,8 @@ const stationList = (stationData.stations as { id: string; name: string; lines: 
   .sort((a, b) => a.name.localeCompare(b.name));
 
 /**
- * The welcome: a small liquid-glass card floating in the middle of the live map, a little below centre, so the
- * lines of the T show through it. The map loads behind it and stays visible. Three honest choices, location
+ * The welcome: a small liquid-glass card floating in the lower-left corner of the live map on wide screens (a bottom sheet on
+ * phones), light enough that the stations and lines stay in view. The map loads behind it and stays visible. Three honest choices, location
  * optional. When the camera starts to move, the card fades away.
  */
 export function DiveGate({ phase, status, error, onLocate, onSpot, onSkip, onGone }: Props) {
@@ -79,13 +79,13 @@ export function DiveGate({ phase, status, error, onLocate, onSpot, onSkip, onGon
   const note = status.failed ? dive.failed : error ? dive.errors[error] : phase === "waiting" && ready < 3 ? dive.waiting : "";
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-[35] flex items-center justify-center px-4 pt-[12vh] pb-[max(1rem,env(safe-area-inset-bottom))]">
+    <div className="pointer-events-none fixed inset-0 z-[35] flex items-end justify-center px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:justify-start sm:px-6 sm:pb-6">
       <div
         ref={card}
         role="region"
         aria-label={dive.title}
         className={cn(
-          "pointer-events-auto relative isolate w-full max-w-[25rem] overflow-hidden rounded-[1.75rem] border border-ivory/80 bg-gradient-to-br from-ivory/55 via-ivory/30 to-ivory/18 p-4 font-ui text-graphite backdrop-blur-xl backdrop-saturate-[1.8] sm:p-5",
+          "pointer-events-auto relative isolate w-full max-w-[22.5rem] overflow-hidden rounded-[1.75rem] border border-ivory/80 bg-gradient-to-br from-ivory/55 via-ivory/30 to-ivory/18 p-4 font-ui text-graphite backdrop-blur-xl backdrop-saturate-[1.8]",
           phase === "revealing" && "pointer-events-none",
         )}
         style={{
@@ -114,11 +114,11 @@ export function DiveGate({ phase, status, error, onLocate, onSpot, onSkip, onGon
           style={{ background: "linear-gradient(90deg, transparent, color-mix(in oklab, var(--ivory) 70%, transparent), transparent)", transform: "translateX(-130%)" }}
         />
         <p className="font-mono text-[0.62rem] tracking-[0.14em] text-taupe uppercase">{dive.eyebrow}</p>
-        <h2 className="mt-1 font-serif text-2xl leading-tight font-semibold tracking-tight">{dive.title}</h2>
+        <h2 className="mt-1 font-serif text-[1.4rem] leading-tight font-semibold tracking-tight">{dive.title}</h2>
         <p className="mt-1 text-sm text-taupe">{dive.intro}</p>
 
         {/* A ticket's tear line */}
-        <div aria-hidden className="my-3.5 border-t border-dashed border-graphite/25" />
+        <div aria-hidden className="my-3 border-t border-dashed border-graphite/25" />
 
         {choosing ? (
           <div className="space-y-2.5">

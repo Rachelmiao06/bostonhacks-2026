@@ -1,5 +1,7 @@
 # Onboarding friction log
 
+(Written 2026-11-21 when the product was still called T Party; it is now Tada.)
+
 Walked through https://bostonhacks-2026.vercel.app (desktop Chrome, 2026-11-21) as a first-time user.
 Not tested: real browser location prompt, photo upload, final "Stamp the ticket" submit (it would write to the live app), phone width.
 

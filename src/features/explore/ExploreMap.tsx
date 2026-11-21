@@ -230,24 +230,25 @@ export default function ExploreMap({ entry, onStatus, onReveal, guided = false }
     () => new Set(landmarks.filter((l) => l.pixel && worldStationList.some((s) => s.id === l.stationId)).map((l) => l.id)),
     [worldStationList],
   );
-  // The hint points at the problem pin nearest the middle of the little world, a pin that is really on screen
-  // (landmark stops show a pixel building instead, so they are not a target).
-  const hintTarget = useMemo(() => {
-    if (!worldInfo) return null;
-    // Pins that already carry their own label (a verified green pin names its source) are not a target: the hint would sit on top of it.
-    const pins = worldStops.filter((stop) => !pixelLandmarkStations.has(stop.station.id) && !verifiedOf(stop));
-    let best: ProblemStop | null = null;
-    let bestD = Infinity;
-    for (const stop of pins) {
-      const d = distanceM(worldInfo.center, [stop.station.longitude, stop.station.latitude]);
-      if (d < bestD) {
-        best = stop;
-        bestD = d;
-      }
-    }
-    return best;
-  }, [worldInfo, worldStops]);
-  const showHint = guided && hintAllowed && !hintGone && mode === "world" && arrived && !selected && !panelQuest && hintTarget !== null;
+  // The hint points at one open challenge pin near the middle of the little world. Only pins that are really
+  // there qualify: not a landmark (it shows a pixel building instead), not one that is already resolved or
+  // verified (it carries its own label), not one the rider has finished. MapHint then keeps only a pin that is
+  // on screen and has a clear side to sit on.
+  const hintCandidates = useMemo(() => {
+    if (!worldInfo) return [];
+    return worldStops
+      .filter((stop) => !pixelLandmarkStations.has(stop.station.id) && !verifiedOf(stop) && !stop.quests.every((q) => done.has(q.id)))
+      .map((stop) => ({ stop, d: distanceM(worldInfo.center, [stop.station.longitude, stop.station.latitude]) }))
+      .sort((x, y) => x.d - y.d)
+      .map(({ stop }) => [stop.station.longitude, stop.station.latitude] as [number, number]);
+  }, [worldInfo, worldStops, done]);
+  // Every marker the callout must stay off: all problem pins and the pixel landmarks.
+  const hintOthers = useMemo(() => {
+    const spots: [number, number][] = worldStops.map((stop) => [stop.station.longitude, stop.station.latitude]);
+    for (const landmark of landmarks) if (worldLandmarkIds.has(landmark.id)) spots.push([landmark.longitude, landmark.latitude]);
+    return spots;
+  }, [worldStops, worldLandmarkIds]);
+  const showHint = guided && hintAllowed && !hintGone && mode === "world" && arrived && !selected && !panelQuest && hintCandidates.length > 0;
 
   const worldProblemCount = worldStops.reduce((sum, stop) => sum + stop.quests.length, 0);
 
@@ -639,9 +640,7 @@ export default function ExploreMap({ entry, onStatus, onReveal, guided = false }
                   onSelect={selectStop}
                 />
               ))}
-            {showHint && hintTarget && (
-              <MapHint longitude={hintTarget.station.longitude} latitude={hintTarget.station.latitude} onGone={() => setHintGone(true)} />
-            )}
+            {showHint && <MapHint candidates={hintCandidates} others={hintOthers} onGone={() => setHintGone(true)} onNone={() => setHintGone(true)} />}
             {mode === "world" && arrived && worldInfo?.you && (
               <Marker longitude={worldInfo.you[0]} latitude={worldInfo.you[1]} anchor="center" style={{ zIndex: 7 }}>
                 <span role="img" aria-label={worldText.you} title={worldText.you} className="relative block size-4">

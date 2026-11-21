@@ -156,7 +156,7 @@ export const landmarks: Landmark[] = [
 
 /** The welcome card: the one thing a first-time rider sees, floating over the map while it loads. */
 export const dive = {
-  eyebrow: "T Party · Welcome aboard",
+  eyebrow: "Tada · Welcome aboard",
   title: "Where should we start?",
   intro: "Find T issues near you. Your location stays in your browser.",
   useLocation: "Use my location",
@@ -190,11 +190,8 @@ export const dive = {
 
 /** One-time hints, shown where they matter and never again. */
 export const hints = {
-  map: { title: "Every pin has a story.", body: "Tap a station to see what riders are experiencing.", dismiss: "Got it" },
-  ticket: {
-    report: { title: "Seen this too?", body: "Share what you noticed. It stays in T Party." },
-    verify: { title: "Seen this too?", body: "Help verify whether it is working again." },
-  },
+  map: { title: "Every pin is a challenge.", body: "Tap one to explore.", dismiss: "Got it" },
+  ticket: { title: "Seen this too?", body: "Share what you noticed or help verify it." },
 };
 
 /** The small 3D world around one stop, and the questions asked inside it. */

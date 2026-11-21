@@ -8,7 +8,7 @@ import { Stamp } from "@/components/shared/stamp";
 import { cn } from "@/lib/utils";
 import { categoryInfo, categoryOf, categoryStyle } from "./category";
 import { content, kindLabels, type Landmark } from "./content";
-import { TicketHint } from "./Hints";
+import { firstGlow, TicketHint, useFirstTicket } from "./Hints";
 import type { SubwayLine, SubwayStation } from "./types";
 
 type Props = {
@@ -152,6 +152,7 @@ function ProblemBody({ quest, done, onContribute }: { quest: Quest; done: boolea
   const style = categoryStyle[category];
   const Icon = style.icon;
   const verify = quest.mode === "verify";
+  const firstTicket = useFirstTicket();
   // MBTA headers often start with the unit name; only print it separately when they do not.
   const showFacility = quest.facilityName && !quest.header.startsWith(quest.facilityName);
 
@@ -205,13 +206,13 @@ function ProblemBody({ quest, done, onContribute }: { quest: Quest; done: boolea
         </div>
       </dl>
 
-      {!done && <TicketHint verify={verify} className="mt-3.5" />}
+      {!done && <TicketHint show={firstTicket} className="mt-3.5" />}
 
       <div className="mt-3.5 flex flex-wrap items-center gap-x-4 gap-y-2">
         <button
           type="button"
           onClick={() => onContribute(quest)}
-          className="cursor-pointer rounded-full bg-graphite px-4 py-2 text-sm font-medium text-ivory outline-none transition-opacity hover:opacity-90 focus-visible:ring-4 focus-visible:ring-graphite/30"
+          className={cn("cursor-pointer rounded-full bg-graphite px-4 py-2 text-sm font-medium text-ivory outline-none transition-opacity hover:opacity-90 focus-visible:ring-4 focus-visible:ring-graphite/30", !done && firstTicket && firstGlow)}
         >
           {done ? content.ticket.seeYours : verify ? content.ticket.verify : content.ticket.report}
         </button>
