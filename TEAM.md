@@ -3,7 +3,10 @@
 | Page | Route | Folder | Owner |
 |---|---|---|---|
 | Home | `/` | `src/features/home/` | TBD |
-| Main app | `/app` | `src/features/main-app/` | TBD |
+| Explore (pixel map) | `/explore` | `src/features/explore/` | TBD |
+| My Challenges | `/my-challenges` | `src/features/my-challenges/` | TBD |
+| Rewards | `/rewards` | `src/features/rewards/` | TBD |
+| Challenge details + submit | `/challenges/[id]` (not created yet) | `src/features/challenge/` | TBD |
 | About | `/about` | `src/features/about/` | TBD |
 
 Fill in owners once you decide who does what. Add a page = add a row, a route and a folder (on its own PR).
