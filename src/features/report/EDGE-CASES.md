@@ -121,3 +121,16 @@ Handling always follows the README rules: reason plus next step, nothing uncheck
 | X-09 | Reduced motion | Entrance animations and the checking pulse are motion-safe only; transitions are off under motion-reduce. Checked in code, not by device emulation. | Decided |
 | X-10 | Floating trolley chat covers the bottom-right corner on phones | Report leaves bottom padding so the last content can scroll clear of it. | Decided |
 | X-11 | Cases opened from "Update" | Opening a row clears its Update mark without re-sorting the list under the finger. | Decided |
+
+## Journey redesign (result routing and Ask Tada)
+| ID | Case | Handling | State |
+|---|---|---|---|
+| Y-01 | A problem that belongs to another authority (for example an MBTA elevator) | New verdict `other_authority`. MBTA gets its verified channel; anything else is an unverified guess plus a limitation. Never forced into a Boston 311 category. | Decided |
+| Y-02 | Person picks a category the AI did not suggest | The result says "You chose: <category>" and does not reuse the AI's headline. The nearby lookup re-runs for that category. | Decided |
+| Y-03 | Clipboard blocked on "Copy & open Boston 311" | The screen says the copy failed and shows the text to copy by hand. It never says "copied" when it was not. | Decided |
+| Y-04 | The handoff to Boston 311 was used | Nothing is saved in Activity: Tada cannot see that case until it appears in the city's public data. | Decided |
+| Y-05 | Ask Tada is asked something it cannot know (live elevator status, another entrance, repair time) | It says it has no verified information and links a verified official page. Tested with a rule-breaking prompt. | Decided |
+| Y-06 | Ask Tada answer links | The model only picks a key; the label and URL come from a fixed, verified list. | Decided |
+| Y-07 | Ask Tada rate limit | 20 questions per 10 minutes per client, in memory (resets on restart). | Open |
+| Y-08 | Floating trolley chat covers the corner on phones | Result photos are shorter on phones so main actions stay clear; Report leaves bottom padding. | Decided |
+| Y-09 | Other authorities beyond the MBTA | No verified channels yet. Future scope: a verified mapping (for example MassDOT, Massport). | Open |

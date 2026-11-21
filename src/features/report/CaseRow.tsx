@@ -20,9 +20,9 @@ const when = (v: string | number | null | undefined) => {
   return Number.isNaN(d.getTime()) ? null : d.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 };
 
-/** What the city said, in its own words. "Fixed" only when the closure data supports it (see closure.ts). */
+/** What closed means. A demo case never speaks for the city; a real one quotes the city and says "Fixed" only when the data supports it. */
 function outcome(c: SavedCase, city: CityStatus | undefined) {
-  if (c.kind === "demo") return closureView(c.team, "Resolved", demoNote(c.serviceName));
+  if (c.kind === "demo") return { headline: "Simulated closure", note: demoNote(c.serviceName), reasonLine: "Simulated. This is not an update from the city." };
   return closureView(city?.team ?? c.team, city?.closureReason ?? null, city?.closureComment ?? null);
 }
 
@@ -31,15 +31,16 @@ function dates(c: SavedCase, city: CityStatus | undefined): Record<Stage, string
   return { sent: when(city?.openedAt), in_progress: null, closed: when(city?.closedAt) };
 }
 
-/** One compact line per case. Opens to show progress and, once closed, the city's answer. */
+/** One compact card per case. Opens to show progress and, once closed, what the city (or the simulation) said. */
 export function CaseRow({ c, stage, city, fresh, unread, onOpen }: { c: SavedCase; stage: Stage; city?: CityStatus; fresh?: boolean; unread?: boolean; onOpen: (c: SavedCase, stage: Stage) => void }) {
   const [open, setOpen] = useState(false);
   const at = ORDER.indexOf(stage);
   const done = stage === "closed" ? outcome(c, city) : null;
   const when_ = dates(c, city);
+  const latest = c.kind === "demo" ? when_[stage] : when_.closed ?? when_.sent;
 
   return (
-    <li className={cn("rounded-2xl border bg-ivory/80 transition-colors", fresh ? "border-graphite/40" : "border-hairline")}>
+    <li className={cn("rounded-2xl border bg-ivory transition-colors", fresh ? "border-cat-verify/60" : "border-hairline")}>
       <button
         type="button"
         aria-expanded={open}
@@ -51,17 +52,16 @@ export function CaseRow({ c, stage, city, fresh, unread, onOpen }: { c: SavedCas
       >
         {c.thumb ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={c.thumb} alt="" className="size-11 shrink-0 rounded-xl object-cover" />
+          <img src={c.thumb} alt="" className="size-12 shrink-0 rounded-xl object-cover" />
         ) : (
-          <span className="size-11 shrink-0 rounded-xl bg-stone-deep/60" aria-hidden />
+          <span className="size-12 shrink-0 rounded-xl bg-stone-deep/60" aria-hidden />
         )}
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-medium">{c.serviceName}</span>
-          <span className="block truncate text-xs text-taupe">
-            {c.team} · {c.kind === "demo" ? content.reports.demoTag : content.reports.realTag}
-          </span>
+          <span className="block text-xs text-taupe">{c.team} · {c.kind === "demo" ? content.activity.demoTag : content.activity.realTag}</span>
+          {latest && <span className="block text-xs text-taupe">Updated {latest}</span>}
         </span>
-        {unread && <Chip tone="go">{content.reports.update}</Chip>}
+        {unread && <Chip tone="go">{content.activity.update}</Chip>}
         <Chip tone={stage === "closed" ? "go" : "quiet"}>{content.stages[stage]}</Chip>
         <ChevronDown className={cn("size-4 shrink-0 text-taupe transition-transform motion-reduce:transition-none", open && "rotate-180")} aria-hidden />
       </button>
@@ -72,7 +72,7 @@ export function CaseRow({ c, stage, city, fresh, unread, onOpen }: { c: SavedCas
           <ol className="grid gap-2" aria-label="Case progress">
             {ORDER.map((s, i) => (
               <li key={s} aria-current={i === at ? "step" : undefined} className="flex items-center gap-2">
-                <span className={cn("grid size-5 place-items-center rounded-full border text-graphite", i <= at ? "border-graphite bg-graphite text-ivory" : "border-hairline")}>
+                <span className={cn("grid size-5 place-items-center rounded-full border", i <= at ? "border-cat-verify bg-cat-verify text-ivory" : "border-hairline")}>
                   {i <= at && <Check className="size-3" aria-hidden />}
                 </span>
                 <span className={cn(i <= at ? "font-medium" : "text-taupe")}>{content.stages[s]}</span>
@@ -88,7 +88,7 @@ export function CaseRow({ c, stage, city, fresh, unread, onOpen }: { c: SavedCas
             </div>
           )}
           <p className="text-xs text-taupe">
-            {c.caseId} · {c.kind === "demo" ? content.reports.demoNote : content.reports.realNote}
+            {c.caseId} · {c.kind === "demo" ? content.activity.demoNote : content.activity.realNote}
           </p>
         </div>
       )}

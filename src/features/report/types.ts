@@ -1,6 +1,9 @@
 // Shared by the Report screens and the /api/report routes. No secrets here.
 
-export type Verdict = "fixable" | "private" | "unclear" | "emergency";
+export type Verdict = "fixable" | "private" | "unclear" | "emergency" | "other_authority";
+
+/** Only MBTA has a verified reporting channel in Tada today. "other" means a real public problem for someone else. */
+export type Authority = "MBTA" | "other" | "none";
 
 export type CheckResult = {
   verdict: Verdict;
@@ -10,6 +13,14 @@ export type CheckResult = {
   serviceName: string;
   /** Draft description, editable by the user. Only meaningful when fixable. */
   description: string;
+  /** Short, specific title for the result screen, for example "This looks like a damaged sidewalk." */
+  headline: string;
+  /** One short sentence about why it matters. */
+  explanation: string;
+  /** Who the problem probably belongs to when it is not a Boston 311 matter. */
+  authority: Authority;
+  /** Free-text guess for authorities we cannot verify. Shown as "possibly", never as routing. */
+  authorityName: string;
   /** "low" means the AI is unsure: the user must confirm the category before saving. */
   confidence: "high" | "low";
   /** Other plausible categories, offered as one-tap corrections. */

@@ -10,7 +10,8 @@ const MODELS = (process.env.GEMINI_MODELS || "gemini-flash-lite-latest,gemini-fl
   .map((m) => m.trim())
   .filter(Boolean);
 const RETRYABLE = [429, 500, 502, 503, 504];
-const VERDICTS: Verdict[] = ["fixable", "private", "unclear", "emergency"];
+const VERDICTS: Verdict[] = ["fixable", "private", "unclear", "emergency", "other_authority"];
+const AUTHORITIES = ["MBTA", "other", "none"];
 const MAX_BASE64 = 2_000_000;
 
 // Best-effort rate limit per client (resets when the server instance restarts).
@@ -30,12 +31,16 @@ const SCHEMA = {
     reason: { type: "STRING" },
     serviceName: { type: "STRING", enum: CATEGORY_NAMES },
     description: { type: "STRING" },
+    headline: { type: "STRING" },
+    explanation: { type: "STRING" },
+    authority: { type: "STRING", enum: AUTHORITIES },
+    authorityName: { type: "STRING" },
     confidence: { type: "STRING", enum: ["high", "low"] },
     alternatives: { type: "ARRAY", items: { type: "STRING", enum: CATEGORY_NAMES } },
     peopleVisible: { type: "BOOLEAN" },
     photoOfScreen: { type: "BOOLEAN" },
   },
-  required: ["verdict", "reason", "serviceName", "description", "confidence", "alternatives", "peopleVisible", "photoOfScreen"],
+  required: ["verdict", "reason", "serviceName", "description", "headline", "explanation", "authority", "authorityName", "confidence", "alternatives", "peopleVisible", "photoOfScreen"],
 };
 
 function prompt(userText: string) {
@@ -46,9 +51,12 @@ verdict:
 - "fixable": a clear city-fixable problem on a street, sidewalk, park or other public place (pothole, broken sidewalk, street light out, litter or dumping, overflowing public trash, graffiti, missing sign, fallen tree, blocked sidewalk, needle, dead animal, rats, illegal parking, abandoned vehicle, weeds, broken park equipment).
 - "private": the problem is on private property (private lot, a shop, inside a home or building) or is not the city's job. Say who to contact in the reason (for example the landlord or property manager).
 - "unclear": too dark, blurry, far away, blank, a selfie, a pet, food, an indoor scene, a photo of a screen or of another photo, or nothing reportable. Say how to retake it.
+- "other_authority": a real problem in a public place that the City of Boston does NOT run, for example an MBTA station, elevator, escalator, bus stop shelter or train; a state highway; Massport property; a university campus. Set authority to "MBTA" for MBTA assets. Use "other" for any other authority and put your best guess of its name in authorityName (otherwise leave it empty). Use "none" for every other verdict.
 - "emergency": fire, smoke, injury, a person in danger, a gas smell, a downed power line. Never treat these as 311 reports.
 
 Rules:
+- headline: one short, specific title in plain language, for example "This looks like a damaged sidewalk." Use "This might be ..." when confidence is low. For unclear photos, leave it empty.
+- explanation: one short sentence on why it matters, for example "The uneven surface may create a tripping hazard." No more than 20 words. No diagnosis, no blame, never claim anything is confirmed.
 - reason: one or two friendly sentences to the user. Plain language. Never say the city received or accepted anything.
 - serviceName: pick the closest category from the allowed list. Use "Other" only if nothing fits. Only meaningful when verdict is "fixable".
 - description: one or two factual sentences describing what is visible and where (no guesses, no blame, no names, no phone numbers). Only meaningful when "fixable". If the user's note is useful, use it.
@@ -133,12 +141,27 @@ export async function POST(req: Request) {
   const serviceName = CATEGORY_NAMES.includes(out.serviceName as string) ? (out.serviceName as string) : "Other";
   const description = typeof out.description === "string" ? out.description.trim().slice(0, 500) : "";
 
+  const str = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+  const authority = (AUTHORITIES.includes(out.authority as string) ? out.authority : "none") as CheckResult["authority"];
+  const headline = str(out.headline, 100) || (verdict === "fixable" ? `This looks like ${serviceName.toLowerCase()}.` : "");
   const alternatives = Array.isArray(out.alternatives)
     ? [...new Set((out.alternatives as unknown[]).filter((a): a is string => typeof a === "string" && CATEGORY_NAMES.includes(a) && a !== serviceName))].slice(0, 2)
     : [];
   // "Other" is never a confident answer: the user should pick.
   const confidence: CheckResult["confidence"] = out.confidence === "high" && serviceName !== "Other" ? "high" : "low";
 
-  const result: CheckResult = { verdict, reason, serviceName, description: verdict === "fixable" ? description : "", confidence, alternatives };
+  const result: CheckResult = {
+    verdict,
+    reason,
+    serviceName,
+    description: verdict === "fixable" ? description : "",
+    headline,
+    explanation: str(out.explanation, 180),
+    // Only MBTA is a named destination. Anything else stays a guess.
+    authority: verdict === "other_authority" ? (authority === "none" ? "other" : authority) : "none",
+    authorityName: verdict === "other_authority" && authority !== "MBTA" ? str(out.authorityName, 60) : "",
+    confidence,
+    alternatives,
+  };
   return Response.json(result);
 }

@@ -54,14 +54,24 @@ Non-goals (v1)
 | R13 | Warn when the description contains a phone number or email | Should |
 | R14 | Leaves awards | Later |
 
-## 6b. Experience principles (redesign)
-- Camera-first: Snap, Review, Follow. One primary action per screen.
-- Permissions are explained before they are requested, and never requested on page load.
-- The AI only suggests. The user can change the issue, the words and the spot; nothing is saved until they say so. When the AI is unsure, the user must confirm the issue.
-- The likely team is shown as a guess ("A guess from the issue type"), never as confirmed routing.
-- A nearby open case is shown as "possibly the same", never as proof of a duplicate.
-- Saving is labelled "Save demo report". Nothing is presented as filed with Boston 311. An official-311 handoff (copy the description, open 311) is offered instead.
-- Secondary detail (location details, privacy, official handoff) sits behind progressive disclosure.
+## 6b. Experience (photo-first, AI-guided)
+Journey: Entry, Camera, Photo, Analyzing, Result (or a safety state), Guided action, Activity.
+
+- **Entry:** one headline, one line, one primary action. "Your activity (n)" appears only when there is something to show.
+- **Permissions** are explained before they are requested, and never on page load.
+- **Analyzing** is a plain "Looking at your photo..." with no fake progress.
+- **Result** chooses its layout from the real backend answer:
+  A. Boston 311 matter, no nearby case: Boston 311 is the channel; primary action "Prepare my report".
+  B. A similar open case is nearby: primary action "Follow existing case". Shown as "possibly the same": place and type cannot prove two reports are one problem.
+  C. Belongs to another authority: MBTA has a verified channel (MBTA customer support). Any other authority is shown as an unverified guess with a plain limitation and a pointer to Boston 311. We never invent a destination.
+  D. Private property or unusable photo: reason, nothing sent, "Take another photo".
+  E. Emergency: "Call 911", nothing filed.
+  F. AI unsure: the closest categories as simple choices; the person must choose before continuing.
+  G. Location or service error: a recoverable message, nothing sent.
+- **Guided action:** prefilled, editable. The main action is "Copy & open Boston 311" (Tada cannot submit). "Save demo report" is separate, local, and labelled.
+- **Activity:** "Following" (real Boston 311 cases, real statuses) and "Saved demos" (local, simulated). The two are never mixed, and a simulated status is never presented as a city update.
+- **Ask Tada:** a small bottom sheet that sees only what the photo analysis found and verified nearby cases. It answers from that or says it has no verified information and points to a verified official page. It never states live station status.
+- The AI only suggests; likely teams are guesses; nothing is saved until the person says so.
 
 ## 7. Data (verified 2026-11-21)
 Source: Analyze Boston, "311 Service Requests – NEW SYSTEM", datastore API.

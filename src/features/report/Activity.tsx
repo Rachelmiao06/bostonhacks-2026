@@ -6,20 +6,18 @@ import { CaseRow, stageOfCity } from "./CaseRow";
 import { content } from "./content";
 import { demoStage } from "./demo-case";
 import { loadCases, nowMs, saveCase } from "./store";
-import { Panel } from "./ui";
+import { PrimaryButton } from "./ui";
 import type { CityStatus, SavedCase, Stage } from "./types";
 
-const SHOWN = 3;
 const PRIORITY: Record<Stage, number> = { closed: 0, in_progress: 1, sent: 2 };
 
-/** Your cases and what the city said. Real cases are refreshed from Boston's 311 data; updates float to the top. */
-export function MyReports({ highlight }: { highlight?: string }) {
+/** Your activity: real Boston 311 cases you follow, and demo reports saved on this device. The two are never mixed. */
+export function Activity({ highlight, onCamera }: { highlight?: string; onCamera: () => void }) {
   const [cases, setCases] = useState<SavedCase[]>([]);
   const [city, setCity] = useState<Record<string, CityStatus>>({});
   const [now, setNow] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [refreshFailed, setRefreshFailed] = useState(false);
-  const [all, setAll] = useState(false);
   const [seenIds, setSeenIds] = useState<string[]>([]);
 
   // Reads browser storage after load (it does not exist on the server).
@@ -28,7 +26,7 @@ export function MyReports({ highlight }: { highlight?: string }) {
     setCases(loadCases());
     setNow(nowMs());
     setLoaded(true);
-  }, [highlight]);
+  }, []);
 
   // Demo cases move on a timer, so tick; real cases are fetched.
   useEffect(() => {
@@ -59,48 +57,49 @@ export function MyReports({ highlight }: { highlight?: string }) {
   const stageOf = (c: SavedCase): Stage => (c.kind === "demo" ? demoStage(c, now) : stageOfCity(city[c.caseId]));
   // Order uses what was true when the list loaded; opening a row clears its dot without making the row jump away.
   const wasUpdate = (c: SavedCase) => c.lastStage !== undefined && c.lastStage !== stageOf(c);
+  const order = (a: SavedCase, b: SavedCase) => Number(wasUpdate(b)) - Number(wasUpdate(a)) || PRIORITY[stageOf(a)] - PRIORITY[stageOf(b)] || b.createdAt - a.createdAt;
 
   function seen(c: SavedCase, stage: Stage) {
     saveCase({ ...c, lastStage: stage });
     setSeenIds((ids) => [...ids, c.caseId]);
   }
 
-  const sorted = [...cases].sort((a, b) => Number(wasUpdate(b)) - Number(wasUpdate(a)) || PRIORITY[stageOf(a)] - PRIORITY[stageOf(b)] || b.createdAt - a.createdAt);
-  const shown = all ? sorted : sorted.slice(0, SHOWN);
+  const group = (kind: SavedCase["kind"], title: string, note: string) => {
+    const list = cases.filter((c) => c.kind === kind).sort(order);
+    if (!list.length) return null;
+    return (
+      <section aria-label={title} className="grid grid-cols-[minmax(0,1fr)] gap-2">
+        <div className="px-1">
+          <h2 className="font-serif text-lg font-semibold">{title}</h2>
+          <p className="text-xs text-taupe">{note}</p>
+        </div>
+        <ul className="grid grid-cols-[minmax(0,1fr)] gap-2">
+          {list.map((c) => (
+            <CaseRow key={c.caseId} c={c} stage={stageOf(c)} city={city[c.caseId]} fresh={c.caseId === highlight} unread={wasUpdate(c) && !seenIds.includes(c.caseId)} onOpen={seen} />
+          ))}
+        </ul>
+      </section>
+    );
+  };
 
-  return (
-    <section aria-labelledby="my-reports" className="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-3">
-      <div className="flex items-baseline justify-between px-1">
-        <h2 id="my-reports" className="font-serif text-xl font-semibold">
-          {content.reports.title}
-        </h2>
-        {sorted.length > SHOWN && (
-          <button onClick={() => setAll((a) => !a)} className="rounded-lg text-sm text-taupe underline underline-offset-4 outline-none hover:text-graphite focus-visible:ring-2 focus-visible:ring-graphite/50">
-            {all ? content.reports.showLess : content.reports.viewAll(sorted.length)}
-          </button>
-        )}
+  if (!loaded) return <p className="text-sm text-taupe" aria-busy="true">{content.activity.loading}</p>;
+  if (!cases.length) {
+    return (
+      <div className="grid justify-items-center gap-4 py-10 text-center">
+        <p className="text-taupe">{content.activity.empty}</p>
+        <PrimaryButton onClick={onCamera}>{content.activity.emptyCta}</PrimaryButton>
       </div>
-
-      {!loaded ? (
-        <Panel className="text-sm text-taupe" aria-busy="true">
-          {content.reports.loading}
-        </Panel>
-      ) : sorted.length === 0 ? (
-        <Panel className="text-sm text-taupe">{content.reports.empty}</Panel>
-      ) : (
-        <>
-          {refreshFailed && (
-            <p role="status" className="rounded-xl bg-stone-deep/50 px-3 py-2 text-xs text-taupe">
-              {content.reports.refreshFailed}
-            </p>
-          )}
-          <ul className="grid grid-cols-[minmax(0,1fr)] gap-2">
-            {shown.map((c) => (
-              <CaseRow key={c.caseId} c={c} stage={stageOf(c)} city={city[c.caseId]} fresh={c.caseId === highlight} unread={wasUpdate(c) && !seenIds.includes(c.caseId)} onOpen={seen} />
-            ))}
-          </ul>
-        </>
+    );
+  }
+  return (
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-6">
+      {refreshFailed && (
+        <p role="status" className="rounded-xl bg-stone-deep/50 px-3 py-2 text-xs text-taupe">
+          {content.activity.refreshFailed}
+        </p>
       )}
-    </section>
+      {group("followed", content.activity.following, content.activity.followingNote)}
+      {group("demo", content.activity.demos, content.activity.demosNote)}
+    </div>
   );
 }

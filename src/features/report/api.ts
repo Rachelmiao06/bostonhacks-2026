@@ -31,3 +31,7 @@ export const fetchStatus = async (ids: string[]) =>
 
 export const sendReport = (d: { serviceName: string; description: string; lat: number; lng: number; key: string }) =>
   post("/api/report/send", d) as Promise<{ caseId: string; team: string; simulated: boolean }>;
+
+export type AskAnswer = { answer: string; source: { label: string; url: string } | null };
+
+export const askTada = (d: { question: string; context: unknown }) => post("/api/report/ask", d) as Promise<AskAnswer>;
