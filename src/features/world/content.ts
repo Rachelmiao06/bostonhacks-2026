@@ -8,9 +8,8 @@ export const content = {
   tokensNote: "Counted by T Party’s server: one reward per completed report, checked fix or like stamp received, never twice for the same thing.",
   stamps: (n: number) => `${n} ${n === 1 ? "stamp" : "stamps"}`,
   likesReceived: (n: number) => `${n} like ${n === 1 ? "stamp" : "stamps"} from riders`,
-  summary: (reports: number, checks: number) =>
-    `${reports} ${reports === 1 ? "report" : "reports"} completed · ${checks} ${checks === 1 ? "fix" : "fixes"} checked`,
 
+  close: "Close and go back to the island",
   tabs: { journey: "My journey", community: "Community" },
 
   // My journey

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { ArrowRight, Stamp as StampIcon } from "lucide-react";
 import type { QuestKind } from "@/lib/mbta";
 import { PixelTrain } from "@/components/shared/pixel-train";
-import { Stamp } from "@/components/shared/stamp";
 import { cn } from "@/lib/utils";
 import { categoryInfo, categoryStyle } from "@/features/explore/category";
 import { categoryOfKind, kindLabels, type CategoryId } from "@/features/explore/content";
@@ -70,7 +69,6 @@ export function Journey({ data }: { data: MyProgress }) {
               notes={[...(s.handed_off ? [content.handedOff] : []), ...(s.resolved_at ? [content.nowFixed] : [])]}
               quote={s.text}
               likes={s.likes ?? 0}
-              stamped
               action={s.resolved_at ? undefined : { href: `/?quest=${encodeURIComponent(s.alert_id)}`, label: content.viewOnMap }}
             />
           ))}
@@ -87,7 +85,6 @@ export function Journey({ data }: { data: MyProgress }) {
               header={v.header}
               status={`${v.verdict === "working" ? content.working : content.stillBroken} ${content.on(day(v.created_at))}`}
               notes={[]}
-              stamped
             />
           ))}
         </Section>
@@ -118,12 +115,11 @@ type RowProps = {
   notes: string[];
   quote?: string;
   likes?: number;
-  stamped?: boolean;
   action?: { href: string; label: string };
 };
 
 /** One contribution as a printed ticket: a coloured stub on the left, the details, and a stamp once done. */
-function TicketRow({ category, kindLabel, station, header, status, notes, quote, likes = 0, stamped, action }: RowProps) {
+function TicketRow({ category, kindLabel, station, header, status, notes, quote, likes = 0, action }: RowProps) {
   const style = categoryStyle[category];
   const Icon = style.icon;
   const info = categoryInfo(category);
@@ -160,15 +156,6 @@ function TicketRow({ category, kindLabel, station, header, status, notes, quote,
             </Link>
           )}
         </div>
-        {stamped && (
-          <Stamp
-            size="sm"
-            top={info.stamp}
-            middle={category === "verify" ? "Checked" : "Done"}
-            tone={cn(style.text, style.border)}
-            className="mt-1 max-sm:hidden"
-          />
-        )}
       </div>
     </li>
   );

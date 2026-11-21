@@ -1,6 +1,6 @@
 # Island
 
-What: a knitted island you can play with that grows as the rider earns stamps. Shown inside My World (`/world`, see `features/world`) as `<Island embedded />`; `/island` redirects there. Without `embedded` it is still a full-screen page.
+What: a knitted island you can play with that grows as the rider earns stamps. Full screen, and it is the whole of My World (`/world`, see `features/world`): `<Island>` takes the panel as children and draws it over the scene. `/island` redirects there.
 Owner: Rachel. Only the owner edits this folder.
 
 ## How it fits together

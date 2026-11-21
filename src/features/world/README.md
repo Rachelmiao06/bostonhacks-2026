@@ -4,7 +4,8 @@ What: one page that replaces My Journey, Collection and the standalone island. R
 Owner: Rachel. Only the owner edits this folder.
 
 ## What is on the page
-- **Island** (`features/island`, `<Island embedded />`): the knitted world as a card at the top. It grows with the rider's stamps, exactly as before.
+- **Island** (`features/island`, `<Island>`): the whole screen. Opening My World is walking into it. It grows with the rider's stamps, exactly as before.
+- **Panel**: two pills (My journey, Community) and a token chip float over the island; a pill opens a side panel (bottom sheet on phones) that closes with X or Esc.
 - **Totals**: tokens, stamps, and like stamps received. All counted by the server (`/api/submissions`), never here.
 - **My journey tab** (`Journey.tsx`): the rider's tickets: drafts, completed reports (with the like stamps other riders pressed), fixes checked.
 - **Community tab** (`Community.tsx`, `useCommunity.ts`, `LikeStamp.tsx`): what other riders wrote on completed reports, newest first. Press a like stamp on one.

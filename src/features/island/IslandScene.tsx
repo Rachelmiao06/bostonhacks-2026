@@ -18,14 +18,12 @@ type Props = {
   stages: Set<string>;
   /** Start with the finished island instead of the yarn-ball opening (returning visitors). */
   instant?: boolean;
-  /** Sits inside a scrolling page: the mouse wheel scrolls the page instead of zooming the island. */
-  embedded?: boolean;
   onReady?: (handle: IslandHandle) => void;
   onPhase?: (phase: string) => void;
 };
 
 // Mounts the three.js island into a div and cleans it up when you leave.
-export default function IslandScene({ stages, instant = false, embedded = false, onReady, onPhase }: Props) {
+export default function IslandScene({ stages, instant = false, onReady, onPhase }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const stagesRef = useRef(stages);
   const handle = useRef<IslandHandle | null>(null);
@@ -46,7 +44,6 @@ export default function IslandScene({ stages, instant = false, embedded = false,
           isUnlocked: (stage: string) => stagesRef.current.has(stage),
           onPhase,
           instant,
-          embedded,
         }) as IslandHandle;
         handle.current = h;
         onReady?.(h);
