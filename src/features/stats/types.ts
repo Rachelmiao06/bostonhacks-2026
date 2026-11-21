@@ -20,6 +20,11 @@ export type StatsResponse = {
     /** Units that broke 3 or more times in the window. */
     repeatOffenders: { facilityId: string; stationName: string; kind: string; outages: number }[];
     busiestStations: { stationName: string; outages: number }[];
+    /** Most outages seen open at once, per hour (last 48 h) and per day. Not drawn on the page yet. */
+    openOverTime?: {
+      byHour: { hour: string; open: number }[];
+      byDay: { day: string; open: number }[];
+    };
   };
   riders: {
     riders: number;
@@ -33,11 +38,18 @@ export type StatsResponse = {
     handoffPercent: number | null;
     /** Outages MBTA resolved after a rider reported them here. Timing only, never a cause. */
     resolvedAfterReport: number;
+    /** Riders checking whether a reported fix really worked. Not drawn on the page yet. */
+    verifications?: number;
+    confirmedWorkingPercent?: number | null;
+    /** Outages where a rider said "still broken" after MBTA marked it fixed. */
+    disputedFixes?: number;
   };
   dataNotes: {
     totalOutagesOnRecord: number;
     archiveStartsAt: string | null;
     liveSyncs: number;
+    /** Closed outages left out of the time-to-fix numbers because their end time was not reliable. Not shown on the page yet. */
+    fixesExcludedAsImprecise?: number;
     sources: string[];
   };
 };
