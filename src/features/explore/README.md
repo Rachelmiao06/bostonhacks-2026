@@ -6,9 +6,13 @@ Issue: #2. Owner: Rachel. Only the owner edits this folder.
 ## How it fits together
 - `Explore.tsx`: just the map, full screen under the site nav, so other UI can be layered on top (server). `ExploreLoader.tsx`: loads the map in the browser only (`next/dynamic`, `ssr: false`).
 - `ExploreMap.tsx`: the map, the T lines, the markers. All map settings come from `src/lib/map.ts`.
-- The look: OpenFreeMap streets redrawn as a one-colour line drawing on cream paper (`loadMapStyle` in `src/lib/map.ts`),
-  with 3D buildings from zoom 13. Only the things on top are colourful. The one colour is `BASE_TONE` in that file:
-  `--sky` gives light blue (current), `--cherry` gives pink, `--steel` gives grey.
+- The look, in the manner of an illustrated city map (`loadMapStyle` in `src/lib/map.ts`): the real streets and buildings underneath,
+  in one colour. Land is a soft block of that colour, streets are the paper showing through, water is a deeper shade.
+  The one colour is `BASE_TONE`: `--sky` gives light blue (current), `--cherry` pink, `--steel` grey.
+  `BUILDINGS_3D` switches buildings between flat footprints (current) and raised blocks.
+- T lines are drawn like a highlighter pen: a wide see-through stroke with a solid line down the middle.
+- Stickers on top (`addStickerLayers`): hospitals from the map's own place data, each with a hand-drawn cross badge.
+  They appear from about zoom 14, where the map data carries places. More kinds can be added the same way.
 - `TrainsLayer.tsx`: live trains as dots in their line colour, gliding for two seconds after each update (every 15 seconds).
 - Elevator outages: a red dot on the marker and the MBTA's own alert text in the sheet. That station's challenge becomes "Elevator check".
 - Tapping a marker flies the camera down to the station.

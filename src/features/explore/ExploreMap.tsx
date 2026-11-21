@@ -9,15 +9,16 @@ import {
   Map,
   NavigationControl,
   Source,
+  T_LINE_HIGHLIGHT_LAYER,
   T_LINE_LAYER,
   DOODLE_FILTER,
   addDoodleTextures,
+  addStickerLayers,
   clearCameraPadding,
   flyToStation,
   initialView,
   loadMapStyle,
   shapesToGeoJSON,
-  tLineCasingLayer,
   type MapRef,
 } from "@/lib/map";
 import { cn } from "@/lib/utils";
@@ -86,8 +87,6 @@ export default function ExploreMap() {
     );
   }, [data]);
 
-  const casingLayer = useMemo(() => tLineCasingLayer(), []);
-
   const outagesByStation = useMemo(() => {
     const byStation = new globalThis.Map<string, string[]>();
     for (const outage of live?.outages ?? []) {
@@ -133,14 +132,17 @@ export default function ExploreMap() {
           maxPitch={MAX_PITCH}
           minZoom={MIN_ZOOM}
           style={{ width: "100%", height: "100%" }}
-          onLoad={(event) => addDoodleTextures(event.target)}
+          onLoad={(event) => {
+            addDoodleTextures(event.target);
+            addStickerLayers(event.target);
+          }}
           onMoveStart={() => setMoving(true)}
           onMoveEnd={() => setMoving(false)}
         >
           <NavigationControl position="bottom-right" visualizePitch />
           {lineGeoJSON && (
             <Source id="t-lines" type="geojson" data={lineGeoJSON}>
-              <Layer {...casingLayer} />
+              <Layer {...T_LINE_HIGHLIGHT_LAYER} />
               <Layer {...T_LINE_LAYER} />
             </Source>
           )}
