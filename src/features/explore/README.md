@@ -8,7 +8,7 @@ Issue: #2. Owner: Rachel. Only the owner edits this folder.
 - `ExploreMap.tsx`: the map, the T lines, the markers. All map settings come from `src/lib/map.ts`.
 - The look, in the manner of an illustrated city map (`loadMapStyle` in `src/lib/map.ts`): the real streets and buildings underneath,
   in one colour. Land is a soft block of that colour, streets are the paper showing through, water is a deeper shade.
-  The one colour is `BASE_TONE`: `--sky` gives light blue (current), `--cherry` pink, `--steel` grey.
+  The one colour is `BASE_TONE` with `BASE_STRENGTH`: `--wood` gives warm cream (current), `--sky` light blue, `--cherry` pink, `--steel` grey.
   `BUILDINGS_3D` switches buildings between flat footprints (current) and raised blocks.
 - T lines are drawn like a highlighter pen: a wide see-through stroke with a solid line down the middle.
 - Stickers on top (`addStickerLayers`): hospitals from the map's own place data, each with a hand-drawn cross badge.
