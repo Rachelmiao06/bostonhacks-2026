@@ -45,8 +45,8 @@ export const content = {
 };
 
 export const settings = {
-  /** Photo size limit. [TBD] decision, 5 MB for now. */
-  maxPhotoBytes: 5 * 1024 * 1024,
+  /** Photo size limit: 4 MB, matches the server review route (Vercel rejects request bodies over 4.5 MB). */
+  maxPhotoBytes: 4 * 1024 * 1024,
   acceptedPhotoTypes: ["image/jpeg", "image/png", "image/webp"],
   /** [TBD] decision: must the AI coach be satisfied before Complete unlocks? */
   requirePassToComplete: true,

@@ -56,5 +56,5 @@ One form for every quest; AI never confirms facts or treats a photo as proof; "c
 - Quest page is `/challenge?id=<id>`, read on the client, not `/challenges/[id]`: live quests are unknown at build time and Cache Components rejects unknown dynamic params.
 - Sample quests and the offline practice reviewer stand in until `/api/quests` and `/api/review` are wired in.
 - Complete unlocks only after a current AI check passes (`requirePassToComplete` in `content.ts`). [TBD] confirm with team.
-- Photos stay in IndexedDB on the device. Limit is 5 MB for now ([TBD]; the server review route allows 4 MB, so align to 4 MB when wiring it).
+- Photos stay in IndexedDB on the device. Limit is 4 MB, matching the server review route (`src/app/api/review/route.ts`).
 - Submissions and tokens live in the browser for now. The teammate's database `submissions` table and `/api/submissions` overlap with this: pick one source of truth, then have `useSubmission` call the API.
