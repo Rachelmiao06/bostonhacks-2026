@@ -12,4 +12,6 @@ Owner: Louie. Only the owner edits this folder.
 - **Pictures.** Landmark art is the existing `public/assets/landmarks`. Category badges use the Explore category icons.
 
 ## Not done
-`/my-challenges` and `/rewards` still exist (nothing links to them from the nav). They go once this page is accepted.
+- **Not in the nav.** Main's three tabs (Explore / Report / My Tada) already place My Challenges under Explore and Rewards under My Tada, so this page is reachable only by its address, `/passport`. If the team likes it, it can replace `/my-challenges` and `/rewards` (or become the My Tada page); that is a nav change in `lib/config.ts`, which is Rachel's shared file.
+- `/my-challenges` and `/rewards` are untouched.
+- Unit tests for `model.ts` are not here because the test runner is in PR #13.
