@@ -4,11 +4,12 @@ What: a real map of Boston with the T lines and one floating marker per station 
 Issue: #2. Owner: Rachel. Only the owner edits this folder.
 
 ## How it fits together
-- `Explore.tsx`: title and blurb (server). `ExploreLoader.tsx`: loads the map in the browser only (`next/dynamic`, `ssr: false`).
+- `Explore.tsx`: just the map, full screen under the site nav, so other UI can be layered on top (server). `ExploreLoader.tsx`: loads the map in the browser only (`next/dynamic`, `ssr: false`).
 - `ExploreMap.tsx`: the map, the T lines, the markers. All map settings come from `src/lib/map.ts`.
-- The look: OpenFreeMap streets repainted in our own tokens (`loadMapStyle` in `src/lib/map.ts`): cream land, blue water,
-  faint streets, 3D buildings from zoom 13. Change a token in `globals.css` and the map follows.
-- `TrainsLayer.tsx`: live trains as dots in their line colour, gliding between updates (every 15 seconds).
+- The look: OpenFreeMap streets redrawn as a one-colour line drawing on cream paper (`loadMapStyle` in `src/lib/map.ts`),
+  with 3D buildings from zoom 13. Only the things on top are colourful. The one colour is `BASE_TONE` in that file:
+  `--sky` gives light blue (current), `--cherry` gives pink, `--steel` gives grey.
+- `TrainsLayer.tsx`: live trains as dots in their line colour, gliding for two seconds after each update (every 15 seconds).
 - Elevator outages: a red dot on the marker and the MBTA's own alert text in the sheet. That station's challenge becomes "Elevator check".
 - Tapping a marker flies the camera down to the station.
 - `StationMarker.tsx`: one pixel sprite per station. Bobs gently, springs up on hover (Motion). Grey until completed.
@@ -17,8 +18,15 @@ Issue: #2. Owner: Rachel. Only the owner edits this folder.
 - `content.ts`: all text, the placeholder challenges, sprite paths and size.
 - Data: `/api/subway` (`src/app/api/subway/route.ts`) reads lines, stops and shapes from the MBTA V3 API, cached for a day.
   If the MBTA cannot be reached it serves `subway-snapshot.json`, so the demo never depends on live data.
-- Live data: `/api/subway/live` (`src/app/api/subway/live/route.ts`) reads train positions and elevator alerts, shared for 10 seconds.
+- Live data: `/api/subway/live` (`src/app/api/subway/live/route.ts`) reads train positions and elevator alerts, shared for 15 seconds.
   If the MBTA cannot be reached it serves `live-snapshot.json` and the map chip says "Saved sample · not live" (trains then stand still).
+
+## Speed
+- The street style and the T data start downloading the moment the map code arrives, side by side; streets show without waiting for the T.
+- The marker bob is a browser-native animation (see `StationMarker.tsx`), so 125 markers cost nothing while tiles load. Motion only runs on hover.
+- Trains redraw for two seconds per update, not constantly.
+- The MBTA allows 20 requests a minute without a key. We use 7 once a day plus 8 a minute while someone is watching.
+  Set `MBTA_API_KEY` in Vercel (free from api-v3.mbta.com) to lift that to 1,000.
 
 ## Swapping in the real art
 Replace the files in `public/assets/explore/`, keeping the names: `marker-red.png`, `marker-orange.png`,

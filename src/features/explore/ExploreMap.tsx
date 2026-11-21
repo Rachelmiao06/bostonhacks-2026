@@ -31,7 +31,14 @@ type MapStyle = Awaited<ReturnType<typeof loadMapStyle>>;
 const getJson = <T,>(url: string): Promise<T> =>
   fetch(url).then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))));
 
-/** The real map of Boston with T lines, live trains and one floating marker per station. Browser only. */
+// Both downloads start the moment this file arrives in the browser, before React has drawn anything.
+const stylePromise = loadMapStyle();
+const subwayPromise = getJson<SubwayData>("/api/subway");
+
+/**
+ * The real map of Boston with T lines, live trains and one floating marker per station. Browser only.
+ * It fills the whole screen (fixed, under the site nav) so other UI can be layered on top of it.
+ */
 export default function ExploreMap() {
   const mapRef = useRef<MapRef>(null);
   const [style, setStyle] = useState<MapStyle | null>(null);
@@ -42,16 +49,11 @@ export default function ExploreMap() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const completed = useCompleted();
 
-  // Streets (repainted in our tokens) and the T itself: loaded once.
+  // Streets and the T load side by side; the streets show as soon as they are ready.
   useEffect(() => {
     let cancelled = false;
-    Promise.all([loadMapStyle(), getJson<SubwayData>("/api/subway")])
-      .then(([mapStyle, subway]) => {
-        if (cancelled) return;
-        setStyle(mapStyle);
-        setData(subway);
-      })
-      .catch(() => !cancelled && setFailed(true));
+    stylePromise.then((mapStyle) => !cancelled && setStyle(mapStyle)).catch(() => !cancelled && setFailed(true));
+    subwayPromise.then((subway) => !cancelled && setData(subway)).catch(() => !cancelled && setFailed(true));
     return () => {
       cancelled = true;
     };
@@ -104,8 +106,8 @@ export default function ExploreMap() {
   }, []);
 
   return (
-    <div className="relative h-[70dvh] min-h-96 overflow-hidden rounded-2xl border-2 border-ink bg-paper shadow-tile">
-      {style && data && lineGeoJSON && (
+    <div className="fixed inset-0 z-30 bg-paper">
+      {style && (
         <Map
           ref={mapRef}
           initialViewState={initialView()}
@@ -116,13 +118,15 @@ export default function ExploreMap() {
           minZoom={MIN_ZOOM}
           style={{ width: "100%", height: "100%" }}
         >
-          <NavigationControl position="top-right" visualizePitch />
-          <Source id="t-lines" type="geojson" data={lineGeoJSON}>
-            <Layer {...casingLayer} />
-            <Layer {...T_LINE_LAYER} />
-          </Source>
-          <TrainsLayer trains={live?.trains ?? []} lines={data.lines} />
-          {data.stations.map((station, index) => (
+          <NavigationControl position="bottom-right" visualizePitch />
+          {lineGeoJSON && (
+            <Source id="t-lines" type="geojson" data={lineGeoJSON}>
+              <Layer {...casingLayer} />
+              <Layer {...T_LINE_LAYER} />
+            </Source>
+          )}
+          {data && <TrainsLayer trains={live?.trains ?? []} lines={data.lines} />}
+          {data?.stations.map((station, index) => (
             <StationMarker
               key={station.id}
               station={station}
@@ -136,7 +140,7 @@ export default function ExploreMap() {
       )}
 
       {live && data && (
-        <p className="absolute top-3 left-3 flex items-center gap-2 rounded-full border-2 border-ink bg-popover px-3 py-1.5 font-pixel text-[0.55rem] text-popover-foreground shadow-chip">
+        <p className="absolute top-20 left-3 flex items-center gap-2 rounded-full border-2 border-ink bg-popover px-3 py-1.5 font-pixel text-[0.55rem] text-popover-foreground shadow-chip">
           <span
             className={cn(
               "size-2 rounded-full border border-ink",

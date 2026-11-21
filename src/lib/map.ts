@@ -27,29 +27,52 @@ export function initialView() {
   return { longitude: -71.0712, latitude: 42.3522, zoom: isPhone ? 11.4 : 12.3, pitch: 55, bearing: 0 };
 }
 
-/**
- * Reads a colour token from globals.css (for example "--paper") as a colour the map can use.
- * The map cannot read CSS variables or oklch itself, so the browser converts it for us.
- */
-export function tokenColor(token: string, alpha = 1): string {
+/** Reads a colour token from globals.css (for example "--paper") as red, green, blue numbers. */
+function tokenRgb(token: string): [number, number, number] {
   const value = getComputedStyle(document.documentElement).getPropertyValue(token).trim();
   const ctx = document.createElement("canvas").getContext("2d", { willReadFrequently: true });
-  if (!ctx) return value;
+  if (!ctx) return [0, 0, 0];
   ctx.fillStyle = value;
   ctx.fillRect(0, 0, 1, 1);
   const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
-  return `rgba(${r},${g},${b},${alpha})`;
+  return [r, g, b];
 }
 
 /**
- * The board-game look: cream paper land, blue water, faint streets, 3D buildings.
+ * A colour token as a colour the map can use.
+ * The map cannot read CSS variables or oklch itself, so the browser converts it for us.
+ */
+export function tokenColor(token: string, alpha = 1): string {
+  const [r, g, b] = tokenRgb(token);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+/** A solid blend of two tokens: 0 is all `from`, 1 is all `to`. */
+function blend(from: string, to: string, amount: number): string {
+  const a = tokenRgb(from);
+  const b = tokenRgb(to);
+  const mix = a.map((channel, i) => Math.round(channel + (b[i] - channel) * amount));
+  return `rgb(${mix.join(",")})`;
+}
+
+/**
+ * The one colour the whole base map is drawn in, on cream paper.
+ * "--sky" gives light blue; "--cherry" gives pink; "--steel" gives grey.
+ * Everything colourful (T lines, trains, markers, whatever we add next) goes on top.
+ */
+const BASE_TONE = "--sky";
+
+/**
+ * The base map: OpenFreeMap streets redrawn as a one-colour line drawing on paper, with 3D buildings.
  * Every colour comes from a token in globals.css, so a theme change restyles the map too.
  */
 export async function loadMapStyle(): Promise<StyleSpecification> {
   const style: StyleSpecification = await fetch(BASE_STYLE).then((res) => res.json());
   const paper = tokenColor("--paper");
-  const land = tokenColor("--muted");
-  const water = tokenColor("--sky");
+  const wash = blend("--paper", BASE_TONE, 0.45); // water
+  const tint = blend("--paper", BASE_TONE, 0.14); // parks, buildings
+  const stroke = blend("--paper", BASE_TONE, 0.7); // streets
+  const text = blend(BASE_TONE, "--ink", 0.4); // labels: the same colour, darkened so they stay readable
 
   style.layers = style.layers.flatMap((layer): LayerSpecification[] => {
     const sourceLayer = "source-layer" in layer ? layer["source-layer"] : undefined;
@@ -57,9 +80,8 @@ export async function loadMapStyle(): Promise<StyleSpecification> {
     if (layer.type === "background") return [{ ...layer, paint: { "background-color": paper } }];
 
     if (layer.type === "fill") {
-      if (sourceLayer === "water") return [{ ...layer, paint: { "fill-color": water } }];
-      if (sourceLayer === "park" || sourceLayer === "landcover")
-        return [{ ...layer, paint: { "fill-color": tokenColor("--leaf", 0.3) } }];
+      if (sourceLayer === "water") return [{ ...layer, paint: { "fill-color": wash } }];
+      if (sourceLayer === "park") return [{ ...layer, paint: { "fill-color": tint } }];
       // Flat buildings are replaced by a 3D layer.
       if (sourceLayer === "building")
         return [
@@ -70,32 +92,27 @@ export async function loadMapStyle(): Promise<StyleSpecification> {
             "source-layer": "building",
             minzoom: 13,
             paint: {
-              "fill-extrusion-color": land,
+              "fill-extrusion-color": tint,
               "fill-extrusion-height": ["coalesce", ["get", "render_height"], 6],
               "fill-extrusion-base": ["coalesce", ["get", "render_min_height"], 0],
-              "fill-extrusion-opacity": 0.9,
+              "fill-extrusion-opacity": 0.92,
             },
           },
         ];
-      return [{ ...layer, paint: { "fill-color": paper } }];
+      // Land-use patches would only add noise to a line drawing.
+      return [];
     }
 
     if (layer.type === "line") {
       if (sourceLayer === "boundary" || layer.id.endsWith("_casing") || layer.id.endsWith("dashline")) return [];
-      if (sourceLayer === "waterway") return [{ ...layer, paint: { "line-color": water } }];
-      // Streets stay faint so the T lines are the loudest thing on the board.
-      return [{ ...layer, paint: { ...layer.paint, "line-color": land, "line-opacity": 1 } }];
+      if (sourceLayer === "waterway") return [{ ...layer, paint: { "line-color": wash } }];
+      return [{ ...layer, paint: { ...layer.paint, "line-color": stroke, "line-opacity": 1 } }];
     }
 
     if (layer.type === "symbol") {
       // Road-number shields are grey sprite images from the base style; leave them out.
       if (layer.id.includes("shield")) return [];
-      return [
-        {
-          ...layer,
-          paint: { "text-color": tokenColor("--ink", 0.75), "text-halo-color": paper, "text-halo-width": 1.5 },
-        },
-      ];
+      return [{ ...layer, paint: { "text-color": text, "text-halo-color": paper, "text-halo-width": 1.5 } }];
     }
 
     return [layer];
@@ -185,7 +202,8 @@ export function flyToStation(map: MapLibreMap, station: { longitude: number; lat
       top: 0,
       left: 0,
       bottom: isPhone ? box.clientHeight * 0.35 : 0,
-      right: isPhone ? 0 : box.clientWidth * 0.3,
+      // The sheet is 24rem wide on wider screens.
+      right: isPhone ? 0 : Math.min(384, box.clientWidth * 0.4),
     },
     duration: 1600,
   });

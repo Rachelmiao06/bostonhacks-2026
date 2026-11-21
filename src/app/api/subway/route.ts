@@ -16,7 +16,11 @@ type Resource = {
 type Doc = { data: Resource[]; included?: Resource[] };
 
 async function mbta(path: string): Promise<Doc> {
-  const res = await fetch(`${API}${path}`, { headers: { accept: "application/vnd.api+json" } });
+  // Works without a key (20 requests a minute). MBTA_API_KEY in Vercel raises that to 1,000.
+  const key = process.env.MBTA_API_KEY;
+  const res = await fetch(`${API}${path}`, {
+    headers: { accept: "application/vnd.api+json", ...(key ? { "x-api-key": key } : {}) },
+  });
   if (!res.ok) throw new Error(`MBTA ${res.status} for ${path}`);
   return res.json();
 }
@@ -31,30 +35,35 @@ async function loadSubway(): Promise<SubwayData> {
   // Route types 0 and 1 are light rail and heavy rail: the subway.
   const routes = (await mbta("/routes?filter[type]=0,1&fields[route]=color,long_name")).data;
   const routeIds = routes.map((r) => r.id);
+  // One stops request per line (the four Green branches share one) keeps us well under the MBTA limit.
+  const lineIds = [...new Set(routeIds.map(lineIdOf))];
 
-  const [patterns, ...stopsPerRoute] = await Promise.all([
+  const [patterns, ...stopsPerLine] = await Promise.all([
     mbta(
       `/route_patterns?filter[route]=${routeIds.join(",")}&filter[canonical]=true` +
         "&include=representative_trip.shape&fields[route_pattern]=direction_id,typicality" +
         "&fields[trip]=headsign&fields[shape]=polyline",
     ),
-    ...routeIds.map((id) => mbta(`/stops?filter[route]=${id}&fields[stop]=name,latitude,longitude`)),
+    ...lineIds.map((lineId) =>
+      mbta(
+        `/stops?filter[route]=${routeIds.filter((id) => lineIdOf(id) === lineId).join(",")}` +
+          "&fields[stop]=name,latitude,longitude",
+      ),
+    ),
   ]);
 
   const lines = new Map<string, SubwayLine>();
   const stations = new Map<string, SubwayStation>();
 
-  routes.forEach((route, i) => {
-    const id = lineIdOf(route.id);
-    if (!lines.has(id)) {
-      lines.set(id, {
-        id,
-        name: String(route.attributes.long_name).replace(/ [A-Z]$/, ""),
-        color: `#${route.attributes.color}`,
-        stationCount: 0,
-      });
-    }
-    for (const stop of stopsPerRoute[i].data) {
+  lineIds.forEach((id, i) => {
+    const route = routes.find((r) => lineIdOf(r.id) === id)!;
+    lines.set(id, {
+      id,
+      name: String(route.attributes.long_name).replace(/ [A-Z]$/, ""),
+      color: `#${route.attributes.color}`,
+      stationCount: 0,
+    });
+    for (const stop of stopsPerLine[i].data) {
       const station = stations.get(stop.id) ?? {
         id: stop.id,
         name: String(stop.attributes.name),

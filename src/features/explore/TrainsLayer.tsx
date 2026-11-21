@@ -12,7 +12,7 @@ const EMPTY = pointsToGeoJSON([]);
 
 /**
  * Live trains as dots on the map. Each time new positions arrive, every train glides
- * from where it is drawn now to its new spot, so the board looks alive between updates.
+ * from where it is drawn now to its new spot.
  */
 export function TrainsLayer({ trains, lines }: Props) {
   const { current: mapRef } = useMap();
@@ -49,13 +49,14 @@ export function TrainsLayer({ trains, lines }: Props) {
       return;
     }
 
-    // Glide for one full refresh interval, redrawing about ten times a second.
+    // A short glide after each update, then the map rests. Redrawing all the time kept the
+    // map busy and slowed the streets down while they were still loading.
     const startedAt = performance.now();
     const timer = window.setInterval(() => {
-      const progress = Math.min(1, (performance.now() - startedAt) / content.liveRefreshMs);
+      const progress = Math.min(1, (performance.now() - startedAt) / content.liveGlideMs);
       draw(progress);
       if (progress === 1) window.clearInterval(timer);
-    }, 100);
+    }, 80);
     draw(0);
     return () => window.clearInterval(timer);
   }, [mapRef, trains, lines, reduceMotion]);

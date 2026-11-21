@@ -1,6 +1,5 @@
 export const content = {
   title: "Explore",
-  blurb: "Every stop on the T has a challenge. Tap a marker to see it.",
   loading: "Loading the T…",
   error: "The map data did not load. Refresh to try again.",
   missionLabel: "Community Mission",
@@ -12,6 +11,8 @@ export const content = {
   close: "Close",
   /** How often train positions and elevator outages refresh, in milliseconds. */
   liveRefreshMs: 15000,
+  /** How long trains take to glide to a new position. */
+  liveGlideMs: 2000,
   liveChip: (trains: number) => `Live · ${trains} trains`,
   sampleChip: "Saved sample · not live",
   outageLabel: "Elevator out",

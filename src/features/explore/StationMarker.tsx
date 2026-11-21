@@ -1,7 +1,7 @@
 "use client";
 
-import { memo } from "react";
-import { motion, useReducedMotion } from "motion/react";
+import { memo, useCallback } from "react";
+import { motion } from "motion/react";
 import { Marker } from "@/lib/map";
 import { cn } from "@/lib/utils";
 import { content } from "./content";
@@ -19,7 +19,19 @@ type Props = {
 
 /** One pixel sprite floating over a station. Greyed until the station is completed. */
 export const StationMarker = memo(function StationMarker({ station, index, completed, outage, onSelect }: Props) {
-  const reduceMotion = useReducedMotion();
+  // The bob runs as a browser-native animation (off the main thread), so 125 markers
+  // cost the page nothing while the map loads. Motion handles only the hover spring.
+  const bob = useCallback(
+    (img: HTMLImageElement | null) => {
+      if (!img || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      const animation = img.animate(
+        [{ transform: "translateY(0)" }, { transform: "translateY(-5px)" }, { transform: "translateY(0)" }],
+        { duration: 2400, iterations: Infinity, easing: "ease-in-out", delay: (index % 12) * -200 },
+      );
+      return () => animation.cancel();
+    },
+    [index],
+  );
 
   return (
     <Marker longitude={station.longitude} latitude={station.latitude} anchor="bottom">
@@ -39,17 +51,17 @@ export const StationMarker = memo(function StationMarker({ station, index, compl
           variants={{ rest: { y: 0, scale: 1 }, lift: { y: -10, scale: 1.35 } }}
           transition={{ type: "spring", stiffness: 420, damping: 14 }}
         >
-          {/* Gentle bob, always on */}
-          <motion.img
+          {/* Gentle bob: a browser-native animation, see `bob` above */}
+          {/* eslint-disable-next-line @next/next/no-img-element -- tiny pixel sprite, must not be resampled */}
+          <img
             src={content.sprite(station.lineIds[0])}
             alt=""
             width={content.spriteSize}
             height={content.spriteSize}
             draggable={false}
-            animate={reduceMotion ? undefined : { y: [0, -5, 0] }}
-            transition={{ duration: 2.4, ease: "easeInOut", repeat: Infinity, delay: (index % 12) * 0.2 }}
+            ref={bob}
             className={cn(
-              "block drop-shadow-[0_3px_0_var(--shade)] transition-[filter,opacity] duration-300 [image-rendering:pixelated]",
+              "block [image-rendering:pixelated] drop-shadow-[0_3px_0_var(--shade)] transition-[filter,opacity] duration-300",
               !completed && "opacity-75 grayscale",
             )}
           />

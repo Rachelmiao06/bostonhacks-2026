@@ -1,14 +1,12 @@
 import { content } from "./content";
 import { ExploreLoader } from "./ExploreLoader";
 
+/** The map stands alone and fills the screen. The title is kept for screen readers only. */
 export function Explore() {
   return (
-    <div className="flex flex-col gap-5">
-      <header className="flex flex-col gap-2">
-        <h1 className="font-pixel text-xl sm:text-2xl">{content.title}</h1>
-        <p className="text-lg text-foreground/80">{content.blurb}</p>
-      </header>
+    <>
+      <h1 className="sr-only">{content.title}</h1>
       <ExploreLoader />
-    </div>
+    </>
   );
 }

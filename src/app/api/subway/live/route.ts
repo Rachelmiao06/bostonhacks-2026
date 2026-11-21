@@ -4,7 +4,7 @@ import snapshot from "@/features/explore/live-snapshot.json";
 import type { LiveData } from "@/features/explore/types";
 
 // Where the trains are right now, and which station elevators are out (MBTA V3 API, no key needed).
-// Shared between all visitors for 10 seconds so we stay far below the MBTA's request limit.
+// Shared between all visitors for 15 seconds so we stay far below the MBTA's request limit.
 // Falls back to a saved sample so the demo never depends on live data.
 
 const API = "https://api-v3.mbta.com";
@@ -18,7 +18,10 @@ type Resource = {
 type Doc = { data: Resource[]; included?: Resource[] };
 
 async function mbta(path: string): Promise<Doc> {
-  const res = await fetch(`${API}${path}`, { headers: { accept: "application/vnd.api+json" } });
+  const key = process.env.MBTA_API_KEY;
+  const res = await fetch(`${API}${path}`, {
+    headers: { accept: "application/vnd.api+json", ...(key ? { "x-api-key": key } : {}) },
+  });
   if (!res.ok) throw new Error(`MBTA ${res.status} for ${path}`);
   return res.json();
 }
@@ -28,7 +31,7 @@ const one = (rel?: { data: { id: string } | { id: string }[] | null }) =>
 
 async function loadLive(): Promise<LiveData> {
   "use cache";
-  cacheLife({ stale: 10, revalidate: 10, expire: 60 });
+  cacheLife({ stale: 15, revalidate: 15, expire: 60 });
 
   const [vehicles, alerts] = await Promise.all([
     mbta("/vehicles?filter[route_type]=0,1&fields[vehicle]=latitude,longitude"),
