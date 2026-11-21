@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { DiveGate, type GatePhase, type LoadStatus } from "./DiveGate";
 import { startPrefetch } from "./prefetch";
+import { clearReturnFromIsland, isReturningFromIsland } from "./viewMemory";
 import type { Entry } from "./world";
 
 // MapLibre needs the browser (WebGL, window), so the map is never rendered on the server.
@@ -28,7 +29,16 @@ export function ExploreLoader() {
   // A shared link (?quest=...) is known only in the browser; the server render assumes there is none.
   const deepLinked = useSyncExternalStore(nothingToWatch, () => new URLSearchParams(window.location.search).has("quest"), () => false);
   const [chosen, setEntry] = useState<Entry>({ kind: "pending" });
-  const entry = deepLinked ? ATLAS : chosen;
+  // Back from the island with a saved camera: skip the gate and resume the map. Read once, then cleared (see viewMemory.ts),
+  // so a first visit, or a later fresh visit, still gets the gate and the dive.
+  const flagged = useSyncExternalStore(nothingToWatch, isReturningFromIsland, () => false);
+  const [returning, setReturning] = useState(false);
+  if (flagged && !returning) setReturning(true); // latch it, because the flag is cleared right after
+  useEffect(() => {
+    if (returning) clearReturnFromIsland();
+  }, [returning]);
+  const skipGate = deepLinked || flagged || returning;
+  const entry = skipGate ? ATLAS : chosen;
   const [phase, setPhase] = useState<GatePhase | "gone">("gate");
   const [status, setStatus] = useState(NOTHING_READY);
   const [denied, setDenied] = useState(false);
@@ -78,7 +88,7 @@ export function ExploreLoader() {
       {/* The paper under the map, so the first frame is never blank while the map code arrives. */}
       <div aria-hidden className="fixed inset-0 z-30 bg-stone" />
       <ExploreMap entry={entry} onStatus={onStatus} onReveal={onReveal} />
-      {!deepLinked && phase !== "gone" && (
+      {!skipGate && phase !== "gone" && (
         <DiveGate
           phase={phase}
           status={status}

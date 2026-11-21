@@ -139,6 +139,9 @@ function Collection({ data }: { data: MyProgress }) {
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-hairline pt-4">
         <p className="max-w-md text-xs text-taupe">{content.honest}</p>
+        <Link href="/island" className="inline-flex items-center gap-1 text-xs font-medium underline decoration-graphite/30 underline-offset-4 hover:decoration-graphite">
+          {content.island} <ArrowRight className="size-3" aria-hidden />
+        </Link>
         {stamps.length > 0 && (
           <Link href="/my-challenges" className="inline-flex items-center gap-1 text-xs font-medium underline decoration-graphite/30 underline-offset-4 hover:decoration-graphite">
             {content.journey} <ArrowRight className="size-3" aria-hidden />
