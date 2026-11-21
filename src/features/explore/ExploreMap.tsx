@@ -10,6 +10,8 @@ import {
   NavigationControl,
   Source,
   T_LINE_LAYER,
+  DOODLE_FILTER,
+  addDoodleTextures,
   clearCameraPadding,
   flyToStation,
   initialView,
@@ -47,6 +49,8 @@ export default function ExploreMap() {
   const [failed, setFailed] = useState(false);
   const [selected, setSelected] = useState<SubwayStation | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  // The hand-drawn wobble is switched off while the map is being dragged, so dragging stays smooth.
+  const [moving, setMoving] = useState(false);
   const completed = useCompleted();
 
   // Streets and the T load side by side; the streets show as soon as they are ready.
@@ -106,7 +110,19 @@ export default function ExploreMap() {
   }, []);
 
   return (
-    <div className="fixed inset-0 z-30 bg-paper">
+    <div
+      className={cn(
+        "fixed inset-0 z-30 bg-paper",
+        !moving && "[&_.maplibregl-canvas]:[filter:url(#doodle)]",
+      )}
+    >
+      {/* The wobble itself: see DOODLE_FILTER in src/lib/map.ts */}
+      <svg aria-hidden className="absolute size-0">
+        <filter id={DOODLE_FILTER.id}>
+          <feTurbulence type="fractalNoise" baseFrequency={DOODLE_FILTER.frequency} numOctaves={2} seed={4} />
+          <feDisplacementMap in="SourceGraphic" scale={DOODLE_FILTER.strength} />
+        </filter>
+      </svg>
       {style && (
         <Map
           ref={mapRef}
@@ -117,6 +133,9 @@ export default function ExploreMap() {
           maxPitch={MAX_PITCH}
           minZoom={MIN_ZOOM}
           style={{ width: "100%", height: "100%" }}
+          onLoad={(event) => addDoodleTextures(event.target)}
+          onMoveStart={() => setMoving(true)}
+          onMoveEnd={() => setMoving(false)}
         >
           <NavigationControl position="bottom-right" visualizePitch />
           {lineGeoJSON && (

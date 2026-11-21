@@ -128,6 +128,40 @@ export async function loadMapStyle(): Promise<StyleSpecification> {
   return style;
 }
 
+/**
+ * Doodle look, part 1: water filled with crayon-style scribble strokes instead of a flat colour.
+ * The little texture is drawn here in the base tone, then handed to the map. Call once the map has loaded.
+ */
+export function addDoodleTextures(map: MapLibreMap) {
+  const size = 64;
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx || map.hasImage("scribble")) return;
+  ctx.fillStyle = blend("--paper", BASE_TONE, 0.22);
+  ctx.fillRect(0, 0, size, size);
+  ctx.strokeStyle = blend("--paper", BASE_TONE, 0.75);
+  ctx.lineCap = "round";
+  // Slanted strokes of uneven weight, repeated past the edges so the tile joins up with itself.
+  [0, 13, 29, 41, 54].forEach((offset, i) => {
+    ctx.lineWidth = 1.2 + (i % 3) * 0.7;
+    for (const shift of [-size, 0, size]) {
+      ctx.beginPath();
+      ctx.moveTo(offset + shift - 6, size + 6);
+      ctx.lineTo(offset + shift + size + 6, -6);
+      ctx.stroke();
+    }
+  });
+  map.addImage("scribble", ctx.getImageData(0, 0, size, size));
+  if (map.getLayer("water")) map.setPaintProperty("water", "fill-pattern", "scribble");
+}
+
+/**
+ * Doodle look, part 2: an SVG filter that nudges every pixel a little, so straight map lines
+ * come out wobbly, as if drawn by hand. ExploreMap puts the filter on the page and points the map at it.
+ */
+export const DOODLE_FILTER = { id: "doodle", frequency: 0.018, strength: 7 };
+
 /** Navy outline under each T line, the same "ink edge" the buttons and cards have. */
 export function tLineCasingLayer(): LayerProps {
   return {

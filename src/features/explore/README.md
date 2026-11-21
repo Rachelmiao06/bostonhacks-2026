@@ -21,6 +21,12 @@ Issue: #2. Owner: Rachel. Only the owner edits this folder.
 - Live data: `/api/subway/live` (`src/app/api/subway/live/route.ts`) reads train positions and elevator alerts, shared for 15 seconds.
   If the MBTA cannot be reached it serves `live-snapshot.json` and the map chip says "Saved sample · not live" (trains then stand still).
 
+## Doodle look (涂鸦)
+- Wobbly lines: an SVG filter (`DOODLE_FILTER` in `src/lib/map.ts`) nudges the map picture so straight lines look hand-drawn.
+  `strength` is how far lines wander, `frequency` how often they bend. It switches off while the map is dragged, to keep dragging smooth.
+- Scribbled water: `addDoodleTextures` draws a small crayon-stroke tile in the base tone and fills the water with it.
+- Place names are still typeset (they wobble with everything else). Truly hand-lettered names need a handwriting font, which lives in the shared layout.
+
 ## Speed
 - The street style and the T data start downloading the moment the map code arrives, side by side; streets show without waiting for the T.
 - The marker bob is a browser-native animation (see `StationMarker.tsx`), so 125 markers cost nothing while tiles load. Motion only runs on hover.
