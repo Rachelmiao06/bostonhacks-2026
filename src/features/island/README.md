@@ -25,6 +25,7 @@ Owner: Rachel. Only the owner edits this folder.
 
 ## Notes
 - The yarn ball, the quilt and the river are always there. The unlock set is read when the thread is pulled.
+- Sheep: two sheep come with the first stamp (stage `sheep`, first tier) so the island is never empty; the third arrives with the third stamp (stage `flock`). Set in `content.ts` (`unlockTiers`) and the `weave` items in `yarn-world/world.js`.
 - "Preview the full island" shows everything without touching real stamps (good for the demo).
 - Keys: `M` mutes. Sound starts after the first touch on the scene (browsers require it).
 - The scene is about 480 KB of JavaScript, loaded only on `/island`.

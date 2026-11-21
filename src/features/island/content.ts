@@ -36,9 +36,9 @@ export const content = {
  * The yarn ball (stage "ball") and the quilt with its river are always there: that is how you start.
  */
 export const unlockTiers: { name: string; stages: string[] }[] = [
-  { name: "grass, trees and flowers", stages: ["grass", "flower", "tree", "pine"] },
+  { name: "grass, trees, flowers and two sheep", stages: ["grass", "flower", "tree", "pine", "sheep"] },
   { name: "the cottage and its garden", stages: ["house", "garden", "fence"] },
-  { name: "the sheep", stages: ["sheep"] },
+  { name: "the rest of the flock", stages: ["flock"] },
   { name: "ducks, the bridge and stepping stones", stages: ["water", "bridge", "stone"] },
   { name: "kite, laundry, pinwheels and clouds", stages: ["prop", "cloud"] },
 ];

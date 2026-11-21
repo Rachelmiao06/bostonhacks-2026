@@ -1327,7 +1327,8 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 			...pines.map((pn) => ({ obj: pn.g, stage: 'pine' })),
 			...flowerClusters.map(({ group, base }) => ({ obj: group, stage: 'flower', clip: true, base })),
 			{ obj: ballG, stage: 'ball', follow: ballRig.group, drop: 0.5 },
-			...sheep.map((s) => ({ obj: s.g, stage: 'sheep' })),
+			// T Party: the first two sheep arrive with the grass (stage 'sheep'); the rest of the flock comes later ('flock')
+			...sheep.map((s, i) => ({ obj: s.g, stage: i < 2 ? 'sheep' : 'flock' })),
 			...clouds.map((c) => ({ obj: c.pivot, stage: 'cloud' })),
 			...windProps.items,
 			...water.items,
