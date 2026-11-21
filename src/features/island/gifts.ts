@@ -9,6 +9,8 @@ export type Gift = {
   id: string;
   /** True for the placeholders. The ticket labels demo gifts and says their code works nowhere. */
   demo: boolean;
+  /** A few words for the floating label next to the gift in the scene. */
+  short: string;
   merchant: string;
   benefit: string;
   expires: string;
@@ -20,9 +22,10 @@ export type Gift = {
   instructions?: string;
 };
 
-const demo = (id: string, merchant: string, benefit: string, code: string): Gift => ({
+const demo = (id: string, short: string, merchant: string, benefit: string, code: string): Gift => ({
   id,
   demo: true,
+  short,
   merchant: `${merchant} (not a real place)`,
   benefit: `${benefit}, as an example`,
   expires: "Never valid. This is only a picture of an offer.",
@@ -33,7 +36,7 @@ const demo = (id: string, merchant: string, benefit: string, code: string): Gift
 
 /** One per cloud, in the same order as `giftMilestones`. */
 export const demoGifts: Gift[] = [
-  demo("demo-surprise", "Example Café", "A free cookie with any hot drink", "EXAMPLE-ONLY-1"),
-  demo("demo-pastry", "Example Bakery", "A free pastry with a coffee", "EXAMPLE-ONLY-2"),
-  demo("demo-ride", "Example Bike Shop", "A free tyre check", "EXAMPLE-ONLY-3"),
+  demo("demo-surprise", "A free cookie", "Example Café", "A free cookie with any hot drink", "EXAMPLE-ONLY-1"),
+  demo("demo-pastry", "A free pastry", "Example Bakery", "A free pastry with a coffee", "EXAMPLE-ONLY-2"),
+  demo("demo-ride", "A free tyre check", "Example Bike Shop", "A free tyre check", "EXAMPLE-ONLY-3"),
 ];

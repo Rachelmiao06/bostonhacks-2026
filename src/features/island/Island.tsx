@@ -5,6 +5,7 @@ import { markLeftForIsland } from "@/features/explore/viewMemory";
 import { refreshProgress, stampCount, useMyProgress, type ProgressState } from "@/features/explore/progress";
 import { allowedFor, content, giftMilestones, giftStatesFor, isIn, unlockSteps, type GiftState } from "./content";
 import { demoGifts } from "./gifts";
+import { GiftLabels } from "./GiftLabels";
 import { GiftTicket } from "./GiftTicket";
 import { IslandHelp } from "./IslandHelp";
 import { IslandScene } from "./IslandLoader";
@@ -208,6 +209,7 @@ function IslandView({
       <header className="pointer-events-none absolute top-20 left-4 max-w-[min(20rem,calc(100%-2rem))] sm:left-6">
         <h1 className="font-serif text-2xl leading-tight font-semibold tracking-tight">{content.title}</h1>
         <p className="text-xs text-taupe sm:text-sm">{preview ? content.help.previewNote : content.subtitle}</p>
+        <p className="mt-0.5 text-[0.7rem] text-taupe/90 sm:text-xs">{content.giftsLine}</p>
       </header>
 
       {/* One small status at a time, never a wall of errors */}
@@ -255,6 +257,17 @@ function IslandView({
             </button>
           ))}
         </div>
+      )}
+
+      {phase === "idle" && (
+        <GiftLabels
+          gifts={demoGifts}
+          states={giftStates}
+          known={plan.progressKnown ? known : null}
+          handle={handle}
+          hidden={ticket !== null}
+          onOpen={(i) => onGift(i, handle.current?.openGift(i) ?? "locked")}
+        />
       )}
 
       {ticket !== null && (

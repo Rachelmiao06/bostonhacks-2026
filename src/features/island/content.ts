@@ -1,6 +1,7 @@
 export const content = {
   title: "Your Little World",
   subtitle: "A little world shaped by your contributions.",
+  giftsLine: "Little gifts from local places hang in the clouds. Contribute to open more.",
   loading: "Winding the yarn…",
 
   // One small status at a time. The scene and the rider's progress fail for different reasons.
@@ -50,6 +51,16 @@ export const content = {
     codeNote: "Example only. This code works nowhere.",
     locked: (need: number) => `Locked. ${need} more ${need === 1 ? "contribution" : "contributions"} on the map opens it.`,
     close: "Close and go back to the island",
+  },
+
+  // The small glass labels that float next to each gift in the scene
+  label: {
+    aria: (n: number, title: string, sub: string) => `Gift ${n}: ${title}. ${sub}`,
+    readySub: (demo: boolean) => `${demo ? "Example gift" : "Local treat"} · tap to open`,
+    openedSub: "Opened · tap to see it again",
+    lockedTitle: (n: number) => `Gift ${n}`,
+    lockedSub: (need: number) => `${need} more ${need === 1 ? "contribution" : "contributions"} to open`,
+    unknownSub: "Opens as your world grows",
   },
 
   journey: {
