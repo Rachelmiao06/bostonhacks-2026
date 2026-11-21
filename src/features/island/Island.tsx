@@ -5,14 +5,27 @@ import { markLeftForIsland } from "@/features/explore/viewMemory";
 import { refreshProgress, stampCount, useMyProgress, type ProgressState } from "@/features/explore/progress";
 import { allowedFor, content, giftMilestones, giftStatesFor, isIn, unlockSteps, type GiftState } from "./content";
 import { demoGifts } from "./gifts";
-import { GiftLabels } from "./GiftLabels";
 import { GiftTicket } from "./GiftTicket";
+import { HotspotLabel } from "./HotspotLabel";
 import { IslandHelp } from "./IslandHelp";
+import { JournalTicket } from "./JournalTicket";
 import { IslandScene } from "./IslandLoader";
 import type { IslandHandle } from "./IslandScene";
 import { readParcelOpened, readSeen, writeParcelOpened, writeSeen } from "./seen";
 
 const total = unlockSteps.length;
+
+const hotspotIds = ["journal", "gift-0", "gift-1", "gift-2"];
+
+/** What the compact label for an object says. */
+function labelFor(id: string | null, states: GiftState[], known: number | null): { title: string; sub: string } {
+  const l = content.label;
+  if (id === "journal") return l.journal;
+  const i = Number((id ?? "gift-0").slice(5));
+  const gift = demoGifts[i];
+  if (states[i] === "locked") return { title: l.lockedTitle, sub: known === null ? l.unknownSub : l.lockedSub(Math.max(0, giftMilestones[i] - known)) };
+  return { title: gift.short, sub: states[i] === "opened" ? l.openedSub : l.readySub(gift.demo) };
+}
 
 /** What this visit shows: the opening, or the island as it was plus the pieces earned since last time dropping in. */
 type Plan = { mode: "first" | "return"; known: number; earned: number; progressKnown: boolean };
@@ -75,6 +88,7 @@ export function Island() {
     <IslandView
       key={`${preview}-${visit}`}
       plan={plan}
+      progress={progress}
       preview={preview}
       unavailable={progress.status === "unavailable"}
       sceneFailed={sceneFailed}
@@ -87,6 +101,7 @@ export function Island() {
 
 function IslandView({
   plan,
+  progress,
   preview,
   unavailable,
   sceneFailed,
@@ -95,6 +110,7 @@ function IslandView({
   onTogglePreview,
 }: {
   plan: Plan;
+  progress: ProgressState;
   preview: boolean;
   unavailable: boolean;
   sceneFailed: boolean;
@@ -105,7 +121,9 @@ function IslandView({
   const [phase, setPhase] = useState("ball");
   const [known, setKnown] = useState(plan.known); // journey steps on the island right now
   const [note, setNote] = useState("");
-  const [ticket, setTicket] = useState<number | null>(null); // the gift whose ticket is open
+  const [ticket, setTicket] = useState<string | null>(null); // the hotspot whose ticket is open
+  const [hover, setHover] = useState<string | null>(null); // the hotspot under the pointer
+  const [focused, setFocused] = useState<string | null>(null); // the hotspot whose keyboard control has focus
   const [opened, setOpened] = useState<boolean[]>(() => demoGifts.map((g) => readParcelOpened(g.id)));
   const openedRef = useRef(opened);
   useEffect(() => {
@@ -178,15 +196,18 @@ function IslandView({
     [plan, preview, unavailable],
   );
 
-  // A gift was poked in the scene (or opened with the keyboard): show its ticket, camera held where it is.
-  const onGift = useCallback((index: number, state: string) => {
-    if (state === "opened") {
+  // An object was poked or tapped in the scene (or opened with the keyboard): show its ticket, camera held where it is.
+  const onHotspot = useCallback((id: string, state: string) => {
+    if (id.startsWith("gift-") && state === "opened") {
+      const index = Number(id.slice(5));
       writeParcelOpened(demoGifts[index].id);
       setOpened((o) => o.map((v, i) => v || i === index));
     }
     handle.current?.holdCamera(true);
-    setTicket(index);
+    setHover(null);
+    setTicket(id);
   }, []);
+  const onHover = useCallback((id: string, on: boolean) => setHover((h) => (on ? id : h === id ? null : h)), []);
   const closeTicket = useCallback(() => {
     handle.current?.holdCamera(false);
     setTicket(null);
@@ -204,12 +225,11 @@ function IslandView({
 
   return (
     <section className="fixed inset-0 z-30 bg-stone font-ui text-graphite">
-      <IslandScene unlocked={unlocked} instant={plan.mode === "return"} onReady={onReady} onPhase={onPhase} onGift={onGift} onFail={onSceneFailed} />
+      <IslandScene unlocked={unlocked} instant={plan.mode === "return"} onReady={onReady} onPhase={onPhase} onHotspot={onHotspot} onHover={onHover} onFail={onSceneFailed} />
 
       <header className="pointer-events-none absolute top-20 left-4 max-w-[min(20rem,calc(100%-2rem))] sm:left-6">
         <h1 className="font-serif text-2xl leading-tight font-semibold tracking-tight">{content.title}</h1>
         <p className="text-xs text-taupe sm:text-sm">{preview ? content.help.previewNote : content.subtitle}</p>
-        <p className="mt-0.5 text-[0.7rem] text-taupe/90 sm:text-xs">{content.giftsLine}</p>
       </header>
 
       {/* One small status at a time, never a wall of errors */}
@@ -243,35 +263,43 @@ function IslandView({
         )}
       </div>
 
-      {/* Keyboard and screen-reader way to each gift; they show when focused */}
+      {/* Keyboard and screen-reader way to each object; they show when focused, and focusing one highlights it */}
       {phase === "idle" && ticket === null && (
         <div className="pointer-events-none absolute inset-x-0 bottom-16 z-10 flex flex-col items-center gap-1 not-focus-within:sr-only">
-          {demoGifts.map((_, i) => (
+          {hotspotIds.map((id, n) => (
             <button
-              key={i}
+              key={id}
               type="button"
-              onClick={() => onGift(i, handle.current?.openGift(i) ?? "locked")}
+              onClick={() => onHotspot(id, handle.current?.openHotspot(id) ?? "locked")}
+              onFocus={() => {
+                setFocused(id);
+                handle.current?.highlightHotspot(id, true);
+              }}
+              onBlur={() => {
+                setFocused(null);
+                handle.current?.highlightHotspot(id, false);
+              }}
               className="pointer-events-auto cursor-pointer rounded-full bg-graphite px-4 py-2 text-xs font-medium text-ivory shadow-float outline-none focus-visible:ring-4 focus-visible:ring-graphite/25"
             >
-              {content.gift.label(i + 1, giftStates[i] === "locked")}
+              {id === "journal" ? content.gift.journalLabel : content.gift.label(n, giftStates[n - 1] === "locked")}
             </button>
           ))}
         </div>
       )}
 
-      {phase === "idle" && (
-        <GiftLabels
-          gifts={demoGifts}
-          states={giftStates}
+      {/* A compact glass label for the one object under the pointer or focused, never for all of them at once */}
+      {phase === "idle" && ticket === null && (hover ?? focused) && <HotspotLabel key={hover ?? focused} id={(hover ?? focused) as string} {...labelFor(hover ?? focused, giftStates, plan.progressKnown ? known : null)} handle={handle} />}
+
+      {ticket === "journal" && <JournalTicket progress={progress} known={plan.progressKnown ? known : null} handle={handle} onClose={closeTicket} onRetry={onRetry} />}
+      {ticket?.startsWith("gift-") && (
+        <GiftTicket
+          gift={demoGifts[Number(ticket.slice(5))]}
+          index={Number(ticket.slice(5))}
+          state={giftStates[Number(ticket.slice(5))]}
           known={plan.progressKnown ? known : null}
           handle={handle}
-          hidden={ticket !== null}
-          onOpen={(i) => onGift(i, handle.current?.openGift(i) ?? "locked")}
+          onClose={closeTicket}
         />
-      )}
-
-      {ticket !== null && (
-        <GiftTicket gift={demoGifts[ticket]} index={ticket} state={giftStates[ticket]} known={plan.progressKnown ? known : null} handle={handle} onClose={closeTicket} />
       )}
 
       <IslandHelp preview={preview} onTogglePreview={onTogglePreview} />

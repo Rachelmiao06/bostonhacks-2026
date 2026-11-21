@@ -20,6 +20,7 @@ import { setupMeadow } from './meadow.js';
 import { setupKite } from './kite.js';
 import { buildBlanket } from './blanket.js';
 import { buildParcel } from './parcel.js';
+import { buildJournal } from './journal.js';
 import { LAYOUT, L, S, H, ROLL, HOUSE, BALL, FLOWER_CLUSTERS } from './layout.js';
 
 // ---------------------------------------------------------------------------
@@ -915,12 +916,10 @@ function buildClouds(parent, rand) {
 		[-0.3, 0.34, 0.25, 0.4],
 		[0.05, -0.1, 0.55, 0.4],
 	];
-	// Lower and nearer the middle than the original, so the three gifts that hang from them stay in view
-	// whichever way the slow camera is turned (checked at 1280x800 over a full turn).
 	const specs = [
-		{ x: -4.49, y: 4.3, z: -2.2, s: 0.8 },
-		{ x: 4.43, y: 4.7, z: -2.3, s: 0.9 },
-		{ x: -0.15, y: 4.5, z: 5.0, s: 0.7 },
+		{ x: S(-5.2), y: 5.6, z: S(-4.6), s: 1.0 },
+		{ x: S(5.4), y: 6.2, z: S(-2.8), s: 1.15 },
+		{ x: S(-1.0), y: 6.6, z: S(-6.2), s: 0.85 },
 	];
 	const ANCHOR_Y = 11;
 	const pivots = [];
@@ -1089,7 +1088,7 @@ function buildThreadPath() {
 // ---------------------------------------------------------------------------
 // World
 // ---------------------------------------------------------------------------
-export function buildWorld(scene, { isUnlocked, onGift } = {}) {
+export function buildWorld(scene, { isUnlocked, onHotspot, onHover } = {}) {
 	const rand = mulberry32(20261031);
 	const root = new THREE.Group();
 	scene.add(root);
@@ -1127,25 +1126,43 @@ export function buildWorld(scene, { isUnlocked, onGift } = {}) {
 	const { posts, runs: fenceRuns } = buildFence(root);
 	const stones = buildStones(root);
 
-	// Three little gifts hang from the three clouds on strings. The page sets each one's state
-	// ('locked' | 'ready' | 'opened'); poking one tells the page which (onGift(index, state)).
-	const gifts = clouds.map((c, i) => {
-		const g = buildParcel({
-			parent: c.cloud,
-			kit: { mat, P },
-			y: -1.62,
-			hang: 0.62,
-			yaw: 0.8 * i,
-			wrap: 'cream',
-			ribbon: ['coral', 'blue', 'green'][i % 3],
-		});
-		g.group.scale.setScalar(1 / c.s); // the same size on every cloud
-		g.group.userData.onPoke = () => {
-			if (weave.busy) return;
-			onGift?.(i, g.open());
-		};
+	// Four things to explore, on the near side of the island, each one a small object in the knitted world:
+	// a journal (your history), a gift (a local treat) and two wrapped parcels (discoveries still to open).
+	// The page sets each gift's state ('locked' | 'ready' | 'opened'); poking an object, or hovering it with a
+	// pointer, tells the page which one (onHotspot(id, state), onHover(id, on)).
+	const SPOTS = {
+		journal: { at: L(-2.6, 3.0), yaw: 0.5 },
+		'gift-0': { at: L(1.6, 4.0), yaw: -0.5 },
+		'gift-1': { at: L(3.6, 3.0), yaw: 0.9 },
+		'gift-2': { at: L(-0.4, 5.0), yaw: 0.2 },
+	};
+	const ground = ([x, z]) => {
+		const [sx, sz] = settle(x, z, 0.9);
+		return { x: sx, z: sz, y: heightAt(sx, sz) - 0.02 };
+	};
+	const journalSpot = ground(SPOTS.journal.at);
+	const journal = buildJournal({ parent: root, kit: { mat, P }, ...journalSpot, yaw: SPOTS.journal.yaw });
+	const ribbons = ['coral', 'blue', 'green'];
+	const gifts = ['gift-0', 'gift-1', 'gift-2'].map((id, i) => {
+		const g = buildParcel({ parent: root, kit: { mat, P }, ...ground(SPOTS[id].at), yaw: SPOTS[id].yaw, wrap: 'cream', ribbon: ribbons[i] });
 		return g;
 	});
+	const hotspots = [
+		{ id: 'journal', ...journal, open: () => 'ready' },
+		...gifts.map((g, i) => ({ id: `gift-${i}`, ...g, open: () => g.open() })),
+	];
+	for (const h of hotspots) {
+		h.group.scale.setScalar(1.3); // small enough to belong to the world, big enough to find
+		const inner = h.group.userData.onHover;
+		h.group.userData.onHover = (on) => {
+			inner?.(on);
+			onHover?.(h.id, on);
+		};
+		h.group.userData.onPoke = () => {
+			if (weave.busy) return;
+			onHotspot?.(h.id, h.open());
+		};
+	}
 
 	// ground a sheep may trot over: on the island, off the river, clear of trees, house, ball, fence and stones
 	const blockers = [
@@ -1307,7 +1324,7 @@ export function buildWorld(scene, { isUnlocked, onGift } = {}) {
 		smoke.update(t, dt);
 		kite.update(t, dt);
 		meadow.update(t, dt);
-		for (const g of gifts) g.update(t, dt);
+		for (const h of hotspots) h.update(t, dt);
 		weave.update(t, dt);
 		// the first gust sweeps over the island as soon as the knit-in finishes; cloud shadows fade in with it
 		const busy = weave.busy;
@@ -1353,6 +1370,8 @@ export function buildWorld(scene, { isUnlocked, onGift } = {}) {
 			{ obj: ballG, stage: 'ball', follow: ballRig.group, drop: 0.5 },
 			...sheep.map((s) => ({ obj: s.g, stage: 'sheep' })),
 			...clouds.map((c) => ({ obj: c.pivot, stage: 'cloud' })),
+			{ obj: journal.group, stage: 'journal' },
+			...gifts.map((g) => ({ obj: g.group, stage: 'gift' })),
 			...windProps.items,
 			...water.items,
 			...groundArt.items,
@@ -1409,7 +1428,7 @@ export function buildWorld(scene, { isUnlocked, onGift } = {}) {
 		dropIn: (pick, onDone) => weave.dropIn(pick, onDone),
 		acceptGift: () => weave.acceptGift(),
 		setPullSpan: (v) => weave.setPullSpan(v),
-		gifts,
+		hotspots,
 		get phase() {
 			return weave.phase;
 		},

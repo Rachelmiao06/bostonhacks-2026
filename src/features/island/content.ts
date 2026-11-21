@@ -1,7 +1,6 @@
 export const content = {
   title: "Your Little World",
   subtitle: "A little world shaped by your contributions.",
-  giftsLine: "Little gifts from local places hang in the clouds. Contribute to open more.",
   loading: "Winding the yarn…",
 
   // One small status at a time. The scene and the rider's progress fail for different reasons.
@@ -37,6 +36,7 @@ export const content = {
 
   gift: {
     label: (n: number, locked: boolean) => `Open gift ${n}${locked ? " (locked)" : ""}`,
+    journalLabel: "Open your journal",
     kicker: "Demo surprise · example only",
     realKicker: "A gift for you",
     title: "A Little Gift from Boston",
@@ -53,27 +53,48 @@ export const content = {
     close: "Close and go back to the island",
   },
 
-  // The small glass labels that float next to each gift in the scene
+  // The compact glass label that appears when you hover, focus or select an object on the island
   label: {
-    aria: (n: number, title: string, sub: string) => `Gift ${n}: ${title}. ${sub}`,
+    journal: { title: "Your journal", sub: "Reports and checks" },
     readySub: (demo: boolean) => `${demo ? "Example gift" : "Local treat"} · tap to open`,
-    openedSub: "Opened · tap to see it again",
-    lockedTitle: (n: number) => `Gift ${n}`,
+    openedSub: "Opened · tap to see it",
+    lockedTitle: "New discovery",
     lockedSub: (need: number) => `${need} more ${need === 1 ? "contribution" : "contributions"} to open`,
     unknownSub: "Opens as your world grows",
+  },
+
+  // The in-world journal: your real history, truthfully worded
+  history: {
+    title: "Your journal",
+    subtitle: "What you have done on the map",
+    loading: "Opening your journal…",
+    unavailable: "Could not load your history just now.",
+    empty: "Nothing here yet. Pick a problem on the map and your journal starts.",
+    reports: "Reports",
+    checks: "Fixes you checked",
+    draft: "Draft, not finished",
+    needsRevision: "Coach has suggestions",
+    passed: "Passed the coach's check, not finished",
+    completed: (date: string) => `Completed in Tada${date ? ` on ${date}` : ""}`,
+    handedOff: "You also opened the MBTA's page",
+    nowFixed: "MBTA has since marked this fixed",
+    working: (date: string) => `You said it is working again${date ? ` · ${date}` : ""}`,
+    stillBroken: (date: string) => `You said it is still broken${date ? ` · ${date}` : ""}`,
+    honest: "Finishing a mission here does not send anything to the MBTA.",
+    viewOnMap: "Continue on the map",
   },
 
   journey: {
     title: "Your journey",
     summary: (known: number, total: number) => `${known} of ${total} pieces on your island`,
     next: (need: number) => `Next gift after ${need} more ${need === 1 ? "contribution" : "contributions"}`,
-    allGifts: "Every gift is hanging in your clouds.",
+    allGifts: "Every gift on your island is open.",
     unknown: "Could not check your progress just now.",
     start: "A quilt, a river and a ball of yarn",
     gift: (n: number) => `Gift ${n}`,
     more: "More contributions are still counted. There is nothing more to add to the island yet.",
   },
-  giftUnlocked: "A new gift is hanging in the clouds.",
+  giftUnlocked: "A new gift on your island just woke up.",
 };
 
 /**
@@ -93,14 +114,14 @@ export const unlockSteps: { name: string; add: Record<string, number> }[] = [
   { name: "a sheep", add: { sheep: 1 } },
   { name: "more trees and flowers", add: { tree: Infinity, pine: Infinity, flower: Infinity } },
   { name: "the rest of the flock", add: { sheep: Infinity } },
-  { name: "the bridge", add: { bridge: Infinity } },
-  { name: "the river's little life", add: { water: Infinity } },
+  { name: "the bridge and the river's little life", add: { bridge: Infinity, water: Infinity } },
   { name: "a kite, laundry and pinwheels", add: { prop: Infinity } },
+  { name: "clouds", add: { cloud: Infinity } },
 ];
 
-/** How many pieces of each stage exist after `steps` contributions. The yarn ball and the clouds (which carry the gifts) are always there. */
+/** How many pieces of each stage exist after `steps` contributions. The yarn ball, the journal and the gifts are always there. */
 export function allowedFor(steps: number): Record<string, number> {
-  const allowed: Record<string, number> = { ball: Infinity, cloud: Infinity };
+  const allowed: Record<string, number> = { ball: Infinity, journal: Infinity, gift: Infinity };
   unlockSteps.slice(0, Math.max(0, steps)).forEach((step) => {
     for (const [stage, n] of Object.entries(step.add)) allowed[stage] = Math.max(allowed[stage] ?? 0, n);
   });
@@ -111,7 +132,7 @@ export function allowedFor(steps: number): Record<string, number> {
 export const isIn = (allowed: Record<string, number>) => (stage: string, k: number) => (allowed[stage] ?? 0) > k;
 
 /**
- * The gifts hanging from the three clouds. Gift i can be opened once the journey has reached `giftMilestones[i]` steps:
+ * The three gifts on the island. Gift i can be opened once the journey has reached `giftMilestones[i]` steps:
  * the first is always there; more gifts come with more contributions. Until then a gift hangs faint ('locked').
  */
 export const giftMilestones = [0, 5, 10];

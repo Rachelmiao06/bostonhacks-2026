@@ -23,9 +23,9 @@ const BACKGROUND = '#ebe5d9'; // warm stone
 
 /**
  * @param {HTMLElement} container
- * @param {{ isUnlocked: (stage: string, k: number) => boolean, onPhase?: (phase: string) => void, instant?: boolean, onGift?: (index: number, state: string) => void }} options
+ * @param {{ isUnlocked: (stage: string, k: number) => boolean, onPhase?: (phase: string) => void, instant?: boolean, onHotspot?: (id: string, state: string) => void, onHover?: (id: string, on: boolean) => void }} options
  */
-export function mountIsland(container, { isUnlocked, onPhase, onGift, instant = false }) {
+export function mountIsland(container, { isUnlocked, onPhase, onHotspot, onHover, instant = false }) {
 	const size = () => ({ w: Math.max(1, container.clientWidth), h: Math.max(1, container.clientHeight) });
 	let { w, h } = size();
 
@@ -67,22 +67,65 @@ export function mountIsland(container, { isUnlocked, onPhase, onGift, instant = 
 	scene.add(sun);
 	scene.add(new THREE.HemisphereLight('#fde8d2', '#7a6a5c', 0.55));
 
-	const world = buildWorld(scene, { isUnlocked, onGift });
+	const world = buildWorld(scene, {
+		isUnlocked,
+		onHotspot,
+		onHover: (id, on) => {
+			pointerOnObject = on;
+			onHover?.(id, on);
+		},
+	});
 	if (instant) world.snapIsland();
 	const focus = world.focusTarget ?? new THREE.Vector3(0, 0.6, 0);
 
 	const camera = new THREE.PerspectiveCamera(28, w / h, 0.1, 100);
 	camera.position.set(S(9), S(6.5), S(11));
 	// on tall (phone) screens the island is wider than the view: back the camera off to fit it
-	camera.position.multiplyScalar(Math.max(1, 1.1 / camera.aspect));
+	camera.position.multiplyScalar(Math.max(0.88, 1.1 / camera.aspect)); // a little closer than before on wide screens, backed off on tall ones
+	// on a tall (phone) screen, look down a bit more steeply so the island fills the screen instead of leaving empty sky
+	if (camera.aspect < 0.9) camera.position.y *= 1.4;
 	// the fog starts relative to the default camera distance: push it back by the same factor or the whole scene looks washed out
 	scene.fog.near *= Math.max(1, 1.1 / camera.aspect);
 	scene.fog.far *= Math.max(1, 1.1 / camera.aspect);
 	const controls = new OrbitControls(camera, renderer.domElement);
 	controls.target.copy(focus);
 	controls.enableDamping = true;
-	controls.autoRotate = true;
-	controls.autoRotateSpeed = 0.35;
+	// A gentle sway instead of a full spin: the near side of the island, where the journal and gifts are, never turns
+	// out of view, so their labels stay attached and on screen. It pauses while you drag and while a ticket is open.
+	controls.autoRotate = false;
+	const SWAY_AMPLITUDE = 0.5; // radians, about 29 degrees each way
+	const SWAY_PERIOD = 46; // seconds for a full there-and-back
+	const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+	let swayHeld = false;
+	let pointerOnObject = false; // hold still while a pointer is on an object, so it cannot drift from under it
+	let userActive = false;
+	let idleAt = 0;
+	let swayLast = 0;
+	let swayResume = true;
+	controls.addEventListener('start', () => {
+		userActive = true;
+	});
+	controls.addEventListener('end', () => {
+		userActive = false;
+		idleAt = performance.now() / 1000;
+	});
+	const swayAxis = new THREE.Vector3(0, 1, 0);
+	const swayOffset = new THREE.Vector3();
+	function sway() {
+		const now = performance.now() / 1000;
+		if (swayHeld || pointerOnObject || userActive || reducedMotion.matches || now - idleAt < 2.5) {
+			swayResume = true;
+			return;
+		}
+		const az = SWAY_AMPLITUDE * Math.sin((now * Math.PI * 2) / SWAY_PERIOD);
+		if (swayResume) {
+			swayResume = false;
+		} else {
+			swayOffset.copy(camera.position).sub(controls.target).applyAxisAngle(swayAxis, az - swayLast);
+			camera.position.copy(controls.target).add(swayOffset);
+		}
+		swayLast = az;
+	}
 	controls.maxPolarAngle = Math.PI * 0.47;
 	controls.minDistance = 4;
 	controls.maxDistance = S(30) * Math.max(1, 1.1 / camera.aspect);
@@ -175,13 +218,14 @@ export function mountIsland(container, { isUnlocked, onPhase, onGift, instant = 
 	addEventListener('keydown', onKey);
 
 	const anchorPoint = new THREE.Vector3();
-	let spinWas = true;
+	const hotspot = (id) => world.hotspots.find((h) => h.id === id);
 	let lastPhase = '';
 	renderer.setAnimationLoop(() => {
 		timer.update();
 		const rawDt = timer.getDelta();
 		const dt = Math.min(rawDt, 0.05);
 		const t = timer.getElapsed();
+		sway();
 		controls.update(dt);
 		if (t < focusLock.until) {
 			focusDist = camera.position.distanceTo(focusLock.point);
@@ -212,26 +256,23 @@ export function mountIsland(container, { isUnlocked, onPhase, onGift, instant = 
 		/** New pieces fall onto the island from above. pick(stage, k) chooses which. */
 		dropIn: (pick, onDone) => world.dropIn(pick, onDone),
 		acceptGift: () => world.acceptGift(),
-		/** The gifts hanging from the clouds. States: 'locked' | 'ready' | 'opened'. */
-		setGiftStates: (states, instant) => states.forEach((st, i) => world.gifts[i]?.setState(st, instant)),
-		/** Open gift `index` (animation); returns the state it ends in. */
-		openGift: (index) => world.gifts[index]?.open(),
-		/** Where gift `index` is on screen, in container pixels, so the ticket can sit next to it. */
-		giftScreen: (index, out) => {
-			world.gifts[index].anchor(anchorPoint).project(camera);
+		/** The three gifts. States: 'locked' | 'ready' | 'opened'. */
+		setGiftStates: (states, instant) => states.forEach((st, i) => hotspot(`gift-${i}`)?.setState?.(st, instant)),
+		/** Open a hotspot (journal or a gift) with its little animation; returns the state it ends in. */
+		openHotspot: (id) => hotspot(id)?.open(),
+		/** Glow a hotspot, e.g. while its page control has keyboard focus. */
+		highlightHotspot: (id, on) => hotspot(id)?.highlight?.(on),
+		/** Where a hotspot is on screen, in container pixels, so labels and tickets can sit next to it. */
+		hotspotScreen: (id, out) => {
+			hotspot(id).anchor(anchorPoint).project(camera);
 			out.x = (anchorPoint.x * 0.5 + 0.5) * container.clientWidth;
 			out.y = (0.5 - anchorPoint.y * 0.5) * container.clientHeight;
 			out.visible = anchorPoint.z < 1;
 			return out;
 		},
-		/** Hold the slow auto-rotation while the ticket is open, so the camera stays where it is. */
+		/** Hold the gentle camera sway while a ticket is open, so the camera stays where it is. */
 		holdCamera: (hold) => {
-			if (hold) {
-				spinWas = controls.autoRotate;
-				controls.autoRotate = false;
-			} else {
-				controls.autoRotate = spinWas;
-			}
+			swayHeld = hold;
 		},
 		dispose() {
 			renderer.setAnimationLoop(null);

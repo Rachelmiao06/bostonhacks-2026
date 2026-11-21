@@ -1,4 +1,4 @@
-// A small wool-wrapped gift that hangs from a cloud on a string. Part of the knitted world, not a UI icon:
+// A small wool-wrapped gift that sits on the island (or hangs on a string if `hang` > 0). Part of the knitted world, not a UI icon:
 // knit box, ribbon bands, a bow, a lid that lifts when it is opened, a soft glow and an occasional wiggle
 // while it is ready to open.
 //
@@ -37,7 +37,7 @@ function glowTexture() {
 	return tex;
 }
 
-export function buildParcel({ parent, kit, x = 0, y = 0, z = 0, yaw = 0, hang = 0.5, wrap = 'cream', ribbon = 'coral' }) {
+export function buildParcel({ parent, kit, x = 0, y = 0, z = 0, yaw = 0, hang = 0, wrap = 'cream', ribbon = 'coral' }) {
 	const { mat, P } = kit;
 	const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 
@@ -69,8 +69,10 @@ export function buildParcel({ parent, kit, x = 0, y = 0, z = 0, yaw = 0, hang = 
 	};
 
 	// the string it hangs from, tied to the bow and running up into the cloud
-	const string = add(shake, new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, hang, 6), stringMat));
-	string.position.y = TOP + hang / 2 - 0.02;
+	if (hang > 0) {
+		const string = add(shake, new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, hang, 6), stringMat));
+		string.position.y = TOP + hang / 2 - 0.02;
+	}
 
 	// body, with a ribbon band round it
 	add(shake, new THREE.Mesh(new RoundedBoxGeometry(BODY.w, BODY.h, BODY.d, 4, 0.045), wrapMat)).position.y = BODY.h / 2;
@@ -158,9 +160,10 @@ export function buildParcel({ parent, kit, x = 0, y = 0, z = 0, yaw = 0, hang = 
 		}
 	};
 
-	group.userData.onHover = (on) => {
+	const highlight = (on) => {
 		hoverTarget = on ? 1 : 0;
 	};
+	group.userData.onHover = highlight;
 
 	function setState(next, instant = false) {
 		const was = state;
@@ -170,7 +173,6 @@ export function buildParcel({ parent, kit, x = 0, y = 0, z = 0, yaw = 0, hang = 
 		shake.scale.set(1, 1, 1);
 		fade(next === 'locked');
 		setLid(next === 'opened' ? 1 : 0);
-		if (next !== 'ready') glowMat.opacity = 0;
 		// just earned: a happy little hop
 		if (was === 'locked' && next === 'ready' && !instant) unlockT = 0;
 	}
@@ -228,9 +230,12 @@ export function buildParcel({ parent, kit, x = 0, y = 0, z = 0, yaw = 0, hang = 
 			if (unlockT > 0.6) unlockT = -1;
 		}
 
+		// a soft glow: gently breathing while ready, brighter under the pointer or keyboard focus
+		const idleGlow = state === 'ready' ? (reduced.matches ? 0.3 : 0.28 + 0.12 * Math.sin(t * 1.6 + x)) : 0;
+		glowMat.opacity += (idleGlow + 0.4 * hover - glowMat.opacity) * Math.min(1, dt * 8);
+
 		if (state === 'ready') {
-			// breathe a soft glow, and wiggle now and then
-			glowMat.opacity = reduced.matches ? 0.3 : 0.28 + 0.12 * Math.sin(t * 1.6 + x);
+			// wiggle now and then
 			if (!reduced.matches && wiggleT < 0 && t > nextWiggle) {
 				wiggleT = 0;
 				nextWiggle = t + 6 + (Math.sin(t * 12.9898 + x) * 0.5 + 0.5) * 3;
@@ -244,14 +249,12 @@ export function buildParcel({ parent, kit, x = 0, y = 0, z = 0, yaw = 0, hang = 
 					shake.rotation.z = 0;
 				}
 			}
-		} else {
-			glowMat.opacity += (0 - glowMat.opacity) * Math.min(1, dt * 4);
 		}
 	}
 
 	const tmp = new THREE.Vector3();
 	function anchor(out) {
-		return group.getWorldPosition(out ?? tmp).add(new THREE.Vector3(0, 0.15, 0));
+		return group.getWorldPosition(out ?? tmp).add(new THREE.Vector3(0, 0.55, 0)); // the top of the box, for labels and tickets
 	}
 
 	return {
@@ -259,6 +262,7 @@ export function buildParcel({ parent, kit, x = 0, y = 0, z = 0, yaw = 0, hang = 
 		update,
 		open,
 		setState,
+		highlight,
 		anchor,
 		get state() {
 			return state;

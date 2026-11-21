@@ -1,19 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Check, Gift as GiftIcon, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TicketFrame, closeButtonClass } from "./TicketFrame";
 import { content, giftMilestones, nextGift, unlockSteps, type GiftState } from "./content";
 import type { Gift } from "./gifts";
 import type { IslandHandle } from "./IslandScene";
 
-const MARGIN = 12;
-const TOP_MIN = 76; // keep clear of the nav
-const GAP = 22; // below the gift
-
 type Props = {
   gift: Gift;
-  /** Which cloud's gift this is (0-based). */
+  /** Which gift this is (0-based). */
   index: number;
   state: GiftState;
   /** Journey steps on the island now. Null when the server could not be reached: nothing is claimed about progress. */
@@ -23,53 +20,11 @@ type Props = {
 };
 
 /**
- * One small paper ticket next to the gift in the sky: the offer on one side, your journey on the other, so you can see
- * what you have and what opens next. It follows the gift if the camera moves and never leaves the island:
- * closing it (button, Esc) returns straight to the same view. Demo gifts are labelled, and their code works nowhere.
+ * The gift's ticket: the offer on one side, your journey on the other, so you can see what you have and what opens next.
+ * Demo gifts are labelled, and their code works nowhere. A real, server-issued offer would show its real code and status.
  */
 export function GiftTicket({ gift, index, state, known, handle, onClose }: Props) {
-  const box = useRef<HTMLDivElement>(null);
-  const tail = useRef<HTMLSpanElement>(null);
-  const closeBtn = useRef<HTMLButtonElement>(null);
-  const [shown, setShown] = useState(false);
   const [revealed, setRevealed] = useState(false);
-
-  useEffect(() => {
-    closeBtn.current?.focus({ preventScroll: true });
-    const raf = requestAnimationFrame(() => setShown(true));
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKey);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [onClose]);
-
-  // Follow the gift on screen, kept inside the view. Written straight to the element: no re-render per frame.
-  useEffect(() => {
-    const out = { x: 0, y: 0, visible: true };
-    let id = 0;
-    const tick = () => {
-      const el = box.current;
-      const h = handle.current;
-      const parent = el?.parentElement;
-      if (el && h && parent) {
-        h.giftScreen(index, out);
-        const w = el.offsetWidth;
-        const ht = el.offsetHeight;
-        const left = Math.min(Math.max(out.x - w / 2, MARGIN), Math.max(MARGIN, parent.clientWidth - w - MARGIN));
-        const top = Math.min(Math.max(out.y + GAP, TOP_MIN), Math.max(TOP_MIN, parent.clientHeight - ht - MARGIN));
-        el.style.transform = `translate3d(${Math.round(left)}px, ${Math.round(top)}px, 0)`;
-        if (tail.current) {
-          tail.current.style.left = `${Math.min(Math.max(out.x - left - 6, 14), w - 26)}px`;
-          tail.current.style.display = out.y + GAP >= TOP_MIN ? "block" : "none";
-        }
-      }
-      id = requestAnimationFrame(tick);
-    };
-    id = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(id);
-  }, [handle, index]);
 
   const g = content.gift;
   const locked = state === "locked";
@@ -84,15 +39,7 @@ export function GiftTicket({ gift, index, state, known, handle, onClose }: Props
   ];
 
   return (
-    <div ref={box} className="pointer-events-none absolute top-0 left-0 z-20 w-[min(35rem,calc(100%-1.5rem))] will-change-transform">
-      <div
-        role="dialog"
-        aria-label={g.title}
-        className={cn(
-          "pointer-events-auto relative max-h-[calc(100svh-6.5rem)] overflow-y-auto rounded-2xl border border-hairline bg-ivory font-ui text-graphite shadow-float transition-[opacity,translate] duration-300 ease-out motion-reduce:transition-none",
-          shown ? "translate-y-0 opacity-100" : "-translate-y-2 opacity-0",
-        )}
-      >
+    <TicketFrame id={`gift-${index}`} label={g.title} handle={handle} onClose={onClose} wide>
         <div className="grid gap-0 sm:grid-cols-[1.15fr_1fr]">
           {/* The offer */}
           <section className="p-4">
@@ -137,12 +84,7 @@ export function GiftTicket({ gift, index, state, known, handle, onClose }: Props
               </>
             )}
 
-            <button
-              ref={closeBtn}
-              type="button"
-              onClick={onClose}
-              className="mt-4 inline-flex h-9 cursor-pointer items-center rounded-full bg-graphite px-4 text-xs font-medium text-ivory outline-none hover:opacity-90 focus-visible:ring-4 focus-visible:ring-graphite/25"
-            >
+            <button data-autofocus type="button" onClick={onClose} className={cn("mt-4", closeButtonClass)}>
               {g.close}
             </button>
           </section>
@@ -150,10 +92,7 @@ export function GiftTicket({ gift, index, state, known, handle, onClose }: Props
           {/* The journey */}
           <Journey known={known} highlight={index} />
         </div>
-        {/* a small tab pointing up at the gift */}
-        <span ref={tail} aria-hidden className="absolute -top-1.5 size-3 rotate-45 border-t border-l border-hairline bg-ivory" />
-      </div>
-    </div>
+    </TicketFrame>
   );
 }
 
