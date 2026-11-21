@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import gsap from "gsap";
-import { LoaderCircle, LocateFixed } from "lucide-react";
+import { ArrowLeft, LoaderCircle, LocateFixed, Search } from "lucide-react";
+import stationData from "@/lib/data/stations.json";
 import { cn } from "@/lib/utils";
 import { dive } from "./content";
 import { prefersReducedMotion } from "./world";
@@ -10,12 +11,13 @@ import { AtlasButton } from "./ui";
 
 export type LoadStatus = { streets: boolean; lines: boolean; problems: boolean; failed?: boolean };
 export type GatePhase = "gate" | "locating" | "waiting" | "revealing";
+export type LocateError = "denied" | "unavailable" | "timeout" | "unsupported";
 
 type Props = {
   phase: GatePhase;
   status: LoadStatus;
-  /** Shown when the browser would not share a location. */
-  denied: boolean;
+  /** Why the browser would not share a location, if it would not. */
+  error: LocateError | null;
   onLocate: () => void;
   onSpot: (stationId: string) => void;
   onSkip: () => void;
@@ -23,17 +25,23 @@ type Props = {
   onGone: () => void;
 };
 
+const stationList = (stationData.stations as { id: string; name: string; lines: string[] }[])
+  .map((s) => ({ id: s.id, name: s.name, lines: s.lines }))
+  .sort((a, b) => a.name.localeCompare(b.name));
+
 /**
- * A small invitation over the map, not a page of its own. The map loads behind it and stays visible;
- * the rider picks how to start (or just ignores the card and uses the map). When the camera starts to
- * fall, the card slips away.
+ * The welcome: a small frosted-glass card floating over the live map, low in the corner on wide screens and
+ * as a bottom sheet on phones. The map loads behind it and stays visible. Three honest choices, location
+ * optional. When the camera starts to move, the card fades away.
  */
-export function DiveGate({ phase, status, denied, onLocate, onSpot, onSkip, onGone }: Props) {
+export function DiveGate({ phase, status, error, onLocate, onSpot, onSkip, onGone }: Props) {
   const card = useRef<HTMLDivElement>(null);
+  const [choosing, setChoosing] = useState(false);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     if (prefersReducedMotion()) return;
-    const tween = gsap.fromTo(card.current, { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "power3.out", clearProps: "transform,opacity" });
+    const tween = gsap.fromTo(card.current, { y: 14, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "power2.out", clearProps: "transform,opacity" });
     return () => {
       tween.kill();
     };
@@ -45,74 +53,121 @@ export function DiveGate({ phase, status, denied, onLocate, onSpot, onSkip, onGo
       onGone();
       return;
     }
-    const tween = gsap.to(card.current, { y: 28, opacity: 0, duration: 0.45, ease: "power2.in", onComplete: onGone });
+    const tween = gsap.to(card.current, { y: 12, opacity: 0, duration: 0.4, ease: "power2.in", onComplete: onGone });
     return () => {
       tween.kill();
     };
   }, [phase, onGone]);
 
+  const matches = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return q ? stationList.filter((s) => s.name.toLowerCase().includes(q)).slice(0, 12) : [];
+  }, [query]);
+
   const busy = phase !== "gate";
   const ready = [status.streets, status.lines, status.problems].filter(Boolean).length;
+  const note = status.failed ? dive.failed : error ? dive.errors[error] : phase === "waiting" && ready < 3 ? dive.waiting : "";
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-[35] flex items-end justify-center p-3 pb-4 sm:pb-8">
+    <div className="pointer-events-none fixed inset-0 z-[35] flex items-end justify-center px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:justify-start sm:px-6 sm:pb-6">
       <div
         ref={card}
         role="region"
         aria-label={dive.title}
         className={cn(
-          "pointer-events-auto w-full max-w-md space-y-3 rounded-2xl border border-hairline bg-ivory/95 p-4 sm:space-y-4 sm:p-5 text-graphite shadow-ticket backdrop-blur-md",
-          "font-ui",
+          "pointer-events-auto w-full max-w-[24rem] rounded-3xl border border-ivory/70 bg-ivory/75 p-4 font-ui text-graphite shadow-ticket backdrop-blur-xl backdrop-saturate-150 sm:p-5",
           phase === "revealing" && "pointer-events-none",
         )}
       >
-        <div className="space-y-2">
-          <p className="font-mono text-[0.62rem] tracking-[0.14em] text-taupe uppercase">{dive.eyebrow}</p>
-          <p className="text-sm font-medium text-graphite">{dive.pitch}</p>
-          <ol className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-taupe">
-            {dive.steps.map((step, i) => (
-              <li key={step} className="inline-flex items-center gap-1.5">
-                <span aria-hidden className="grid size-4 place-items-center rounded-full bg-stone-deep font-mono text-[0.6rem] text-graphite">
-                  {i + 1}
-                </span>
-                {step}
-              </li>
-            ))}
-          </ol>
-        </div>
+        <p className="font-mono text-[0.62rem] tracking-[0.14em] text-taupe uppercase">{dive.eyebrow}</p>
+        <h2 className="mt-1 font-serif text-2xl leading-tight font-semibold tracking-tight">{dive.title}</h2>
+        <p className="mt-1 text-sm text-taupe">{dive.intro}</p>
 
-        <div className="space-y-1 border-t border-hairline pt-3">
-          <h2 className="font-serif text-xl leading-tight sm:text-2xl font-semibold tracking-tight">{dive.title}</h2>
-          <p className="text-sm text-taupe">{dive.intro}</p>
-        </div>
-        <div className="space-y-2">
-          <AtlasButton size="lg" className="w-full" disabled={busy} onClick={onLocate}>
-            {phase === "locating" ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : <LocateFixed className="size-4" aria-hidden />}
-            {phase === "locating" ? dive.locating : dive.useLocation}
-          </AtlasButton>
-          <p role="status" className={cn("min-h-4 text-xs", denied ? "font-medium text-cat-service" : "text-taupe")}>
-            {denied ? dive.denied : phase === "waiting" && ready < 3 ? dive.waiting : ""}
-          </p>
-        </div>
+        {/* A ticket's tear line */}
+        <div aria-hidden className="my-3.5 border-t border-dashed border-graphite/25" />
 
-        <div className="-mx-1 flex items-center gap-1.5 overflow-x-auto px-1 pb-0.5 [scrollbar-width:none]">
-          <span className="mr-1 shrink-0 font-mono text-[0.62rem] tracking-[0.14em] text-taupe uppercase">{dive.orStart}</span>
-          {dive.spots.map((spot) => (
-            <AtlasButton key={spot.stationId} tone="outline" size="sm" className="shrink-0" disabled={busy} onClick={() => onSpot(spot.stationId)}>
-              {spot.label}
+        {choosing ? (
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <p className="font-mono text-[0.62rem] tracking-[0.14em] text-taupe uppercase">{dive.pickTitle}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setChoosing(false);
+                  setQuery("");
+                }}
+                className="inline-flex cursor-pointer items-center gap-1 rounded-full px-1.5 py-0.5 text-xs text-taupe outline-none hover:text-graphite focus-visible:ring-2 focus-visible:ring-graphite/30"
+              >
+                <ArrowLeft className="size-3" aria-hidden />
+                {dive.back}
+              </button>
+            </div>
+            <label className="relative block">
+              <span className="sr-only">{dive.search}</span>
+              <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-taupe" />
+              <input
+                // On a phone the keyboard would cover the map, so only wide screens focus the box for you.
+                autoFocus={window.matchMedia("(min-width: 640px)").matches}
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={dive.search}
+                className="h-10 w-full rounded-full border border-graphite/20 bg-ivory/80 pr-3 pl-9 text-sm text-graphite outline-none placeholder:text-taupe/80 focus-visible:border-graphite/50 focus-visible:ring-4 focus-visible:ring-graphite/10"
+              />
+            </label>
+            {query.trim() ? (
+              <ul className="max-h-44 space-y-0.5 overflow-y-auto overscroll-contain" aria-label={dive.pickTitle}>
+                {matches.length === 0 && <li className="px-2 py-2 text-sm text-taupe">{dive.noMatch}</li>}
+                {matches.map((s) => (
+                  <li key={s.id}>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => onSpot(s.id)}
+                      className="flex w-full cursor-pointer items-center justify-between rounded-xl px-2.5 py-2 text-left text-sm outline-none hover:bg-stone-deep/50 focus-visible:ring-2 focus-visible:ring-graphite/30 disabled:opacity-40"
+                    >
+                      {s.name}
+                      <span className="text-xs text-taupe">{s.lines.join(" · ")}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="space-y-1.5">
+                <p className="text-xs text-taupe">{dive.popular}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {dive.spots.map((spot) => (
+                    <AtlasButton key={spot.stationId} tone="outline" size="sm" disabled={busy} onClick={() => onSpot(spot.stationId)}>
+                      {spot.label}
+                    </AtlasButton>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <AtlasButton size="lg" className="w-full" disabled={busy} onClick={onLocate}>
+              {phase === "locating" ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : <LocateFixed className="size-4" aria-hidden />}
+              {phase === "locating" ? dive.locating : dive.useLocation}
             </AtlasButton>
-          ))}
-        </div>
+            <AtlasButton tone="outline" size="lg" className="w-full bg-ivory/40" disabled={busy} onClick={() => setChoosing(true)}>
+              {dive.chooseStation}
+            </AtlasButton>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={onSkip}
+              className="block w-full cursor-pointer rounded-full py-1.5 text-center text-sm text-taupe underline decoration-graphite/25 underline-offset-4 outline-none hover:text-graphite focus-visible:ring-4 focus-visible:ring-graphite/25 disabled:opacity-40"
+            >
+              {dive.skip}
+            </button>
+          </div>
+        )}
 
-        <div className="flex items-center justify-between gap-3 border-t border-hairline pt-3 text-xs text-taupe">
-          <span className="inline-flex items-center gap-1.5">
-            <span aria-hidden className={cn("size-1.5 rounded-full", ready >= 3 ? "bg-cat-verify" : "animate-pulse bg-taupe/60")} />
-            {status.failed ? dive.failed : dive.status(ready, 3)}
-          </span>
-          <AtlasButton tone="outline" size="sm" className="shrink-0" disabled={busy} onClick={onSkip} title={dive.skipHint}>
-            {dive.skip}
-          </AtlasButton>
-        </div>
+        <p role="status" className={cn("text-xs leading-snug", note ? "mt-2.5" : "hidden", error ? "font-medium text-cat-service" : "text-taupe")}>
+          {note}
+        </p>
       </div>
     </div>
   );

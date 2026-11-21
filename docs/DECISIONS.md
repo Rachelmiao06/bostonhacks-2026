@@ -43,3 +43,4 @@ One line each: date · what · why.
 - 2026-11-21 · GSAP only, no Lenis · Lenis smooths page scrolling, but the map owns the wheel (zoom) and the quest card scrolls natively; both would fight it. Revisit only if a scrolling landing page is added.
 - 2026-11-21 · 3D buildings use MapLibre `distance` (not `within`, which ignores building outlines), heights capped at 46 m, only inside the district · keeps the world light and stops towers hiding stops.
 - 2026-11-21 · Location is read once in the browser to pick the nearest stop; never sent, never stored · privacy, and the app needs nothing more.
+- 2026-11-21: Onboarding is one small welcome card plus two one-time hints (map pin, first ticket), tracked in localStorage  v1; a welcomed browser skips the card and does not auto-dive. Bump VERSION in onboarding.ts to show it all again.

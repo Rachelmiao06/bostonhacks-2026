@@ -76,6 +76,8 @@ export const content = {
     honest: "Completed in T Party. This does not send anything to the MBTA.",
     collection: "Visit my world",
     another: "Continue exploring",
+    /** Only for the very first recorded contribution: the little world is discovered, not explained. */
+    first: { title: "Your little world just grew!", body: "Your contribution added something new to your world.", keep: "Keep exploring" },
     newPiece: (name: string) => `Your island has a new piece waiting: ${name}.`,
     stampsSoFar: (n: number, total: number) => `${n} of ${total} stamps toward your island`,
   },
@@ -152,32 +154,46 @@ export const landmarks: Landmark[] = [
   { id: "td-garden", name: "TD Garden", longitude: -71.0621, latitude: 42.3662, stationId: "place-north" },
 ];
 
-/** The arrival gate: the first thing a new rider sees, while the map loads behind it. */
+/** The welcome card: the one thing a first-time rider sees, floating over the map while it loads. */
 export const dive = {
-  /** What the app is, in one line, before anything is asked of the rider. */
-  eyebrow: "T Party",
-  pitch: "Real MBTA problems, near you. Tell us what you see and earn a stamp.",
-  steps: ["Pick a spot", "Tap a pin", "Say what you see"],
-  title: "Where are you right now?",
-  intro: "We use it only to find your nearest T stop, so the problems around you show first. Your location stays in your browser.",
+  eyebrow: "T Party · Welcome aboard",
+  title: "Where should we start?",
+  intro: "Find T issues near you. Your location stays in your browser.",
   useLocation: "Use my location",
   locating: "Finding the nearest stop…",
-  denied: "We could not get your location. Pick a place below instead.",
-  orStart: "Or start at",
-  skip: "Skip: just show the map",
-  skipHint: "No location needed",
+  chooseStation: "Choose a station",
+  skip: "Just explore the map",
+  pickTitle: "Pick a station",
+  search: "Search stations",
+  popular: "Popular starts",
+  noMatch: "No station matches that.",
+  back: "Back",
+  /** Why location did not work, kept calm, always with a way forward. */
+  errors: {
+    denied: "Location is blocked for this site. Choose a station, or allow it from the lock icon in the address bar.",
+    unavailable: "We could not work out where you are. Choose a station, or just explore the map.",
+    timeout: "That took too long. Try again, choose a station, or just explore the map.",
+    unsupported: "This browser cannot share a location. Choose a station instead.",
+  },
   flying: "Finding problems near you…",
-  /** One quiet status line, so waiting never feels like nothing is happening. */
-  status: (ready: number, total: number) => (ready >= total ? "Map ready" : `Loading the map · ${ready} of ${total}`),
   waiting: "Almost there…",
   failed: "The map data did not load. Refresh to try again.",
-  /** The starting places on the gate. Each is the stop of a landmark in `landmarks`. */
+  /** The quick picks above the station search. Each is the stop of a landmark in `landmarks`. */
   spots: [
     { label: "Park Street", stationId: "place-pktrm" },
     { label: "Kenmore · Fenway", stationId: "place-kencl" },
     { label: "South Station", stationId: "place-sstat" },
     { label: "North Station", stationId: "place-north" },
   ],
+};
+
+/** One-time hints, shown where they matter and never again. */
+export const hints = {
+  map: { title: "Every pin has a story.", body: "Tap a station to see what riders are experiencing.", dismiss: "Got it" },
+  ticket: {
+    report: { title: "Seen this too?", body: "Share what you noticed. It stays in T Party." },
+    verify: { title: "Seen this too?", body: "Help verify whether it is working again." },
+  },
 };
 
 /** The small 3D world around one stop, and the questions asked inside it. */
@@ -190,7 +206,6 @@ export const world = {
   far: "You are outside the T area, so we started you at Park Street.",
   quiet: (from: string) =>
     `Nothing is broken near ${from} right now. We moved you to the closest problem.`,
-  coach: "Tap a pin. Type what you see. Get a stamp.",
   legend: {
     open: "What are the pins?",
     close: "Hide",

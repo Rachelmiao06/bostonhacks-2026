@@ -8,6 +8,7 @@ import { Stamp } from "@/components/shared/stamp";
 import { cn } from "@/lib/utils";
 import { categoryInfo, categoryOf, categoryStyle } from "./category";
 import { content, kindLabels, type Landmark } from "./content";
+import { TicketHint } from "./Hints";
 import type { SubwayLine, SubwayStation } from "./types";
 
 type Props = {
@@ -203,6 +204,8 @@ function ProblemBody({ quest, done, onContribute }: { quest: Quest; done: boolea
           <dd>{content.ticket.reward(quest.rewardTokens)}</dd>
         </div>
       </dl>
+
+      {!done && <TicketHint verify={verify} className="mt-3.5" />}
 
       <div className="mt-3.5 flex flex-wrap items-center gap-x-4 gap-y-2">
         <button

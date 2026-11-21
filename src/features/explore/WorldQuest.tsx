@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { categoryInfo, categoryOf, categoryStyle } from "./category";
 import { Celebration } from "./Celebration";
 import { content, kindLabels, world } from "./content";
+import { TicketHint } from "./Hints";
 import { refreshProgress } from "./progress";
 import { AtlasButton, AtlasTextarea, ErrorNote, Eyebrow } from "./ui";
 import { VerifyFlow } from "./VerifyFlow";
@@ -113,7 +114,10 @@ export function WorldQuest({ quests, index, onIndex, onClose, onFullForm }: Prop
         </p>
 
         {verify ? (
-          <VerifyFlow key={`verify-${quest.id}`} quest={quest} onDone={onClose} />
+          <>
+            <TicketHint verify />
+            <VerifyFlow key={`verify-${quest.id}`} quest={quest} onDone={onClose} />
+          </>
         ) : (
           <ReportBody key={`report-${quest.id}`} quest={quest} onDone={onClose} onFullForm={() => onFullForm(quest)} />
         )}
@@ -208,6 +212,8 @@ function ReportBody({ quest, onDone, onFullForm }: { quest: Quest; onDone: () =>
           </button>
         ))}
       </div>
+
+      <TicketHint verify={false} />
 
       <div className="space-y-1">
         <label htmlFor="world-answer" className="sr-only">
