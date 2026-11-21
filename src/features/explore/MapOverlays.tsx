@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { PixelTrain } from "@/components/shared/pixel-train";
 import { categoryStyle } from "./category";
 import { categories, content, type CategoryId } from "./content";
-import { stampCount, useMyProgress } from "./progress";
+import { useMyProgress } from "./progress";
 
 type FilterProps = {
   counts: Record<CategoryId, number>;
@@ -62,19 +62,19 @@ const Count = ({ children }: { children: React.ReactNode }) => (
   <span className="font-mono text-[0.65rem] text-taupe tabular-nums">{children}</span>
 );
 
-/** The rider's real stamps and tokens from /api/submissions. Hidden when that data is unavailable. */
+/** A small door to My World. Hidden while the rider's progress cannot be confirmed. */
 export function ProgressChip() {
   const progress = useMyProgress();
   if (progress.status !== "ready") return null;
   return (
     <Link
       href="/world"
-      aria-label={`${content.progress.title}: ${content.progress.label(stampCount(progress.data), progress.data.tokenBalance)}`}
+      aria-label={content.progress.label}
       className="flex items-center gap-2 rounded-2xl border border-hairline bg-ivory/92 py-1.5 pr-3 pl-2 font-ui text-xs font-medium text-graphite shadow-float backdrop-blur-md outline-none hover:bg-ivory focus-visible:ring-2 focus-visible:ring-graphite/30"
     >
       <PixelTrain size={22} body="fill-cat-verify" />
       <span className="font-pixel text-[0.5rem] leading-none tracking-tight">
-        {content.progress.label(stampCount(progress.data), progress.data.tokenBalance)}
+        {content.progress.label}
       </span>
     </Link>
   );

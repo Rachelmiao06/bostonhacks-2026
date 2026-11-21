@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { content } from "./content";
 
 export type IslandHandle = {
   dispose: () => void;
@@ -11,6 +10,13 @@ export type IslandHandle = {
   offerGift: (stages: string[], label: string, onKnitted: () => void) => boolean;
   /** Knit the waiting piece in without dragging. */
   acceptGift: () => void;
+  /** The little gift: open it (lid lifts), or show it already opened. */
+  openParcel: () => void;
+  setParcelOpened: (opened: boolean) => void;
+  /** Where the gift is on screen, in pixels of the scene, so the offer ticket can sit beside it. */
+  parcelScreen: (out: { x: number; y: number; visible: boolean }) => { x: number; y: number; visible: boolean };
+  /** Hold the slow auto-rotation while the ticket is open, so the camera stays where it is. */
+  holdCamera: (hold: boolean) => void;
 };
 
 type Props = {
@@ -20,10 +26,14 @@ type Props = {
   instant?: boolean;
   onReady?: (handle: IslandHandle) => void;
   onPhase?: (phase: string) => void;
+  /** The gift was poked (opened) in the scene. */
+  onParcel?: () => void;
+  /** The scene could not start (no WebGL). */
+  onFail?: () => void;
 };
 
 // Mounts the three.js island into a div and cleans it up when you leave.
-export default function IslandScene({ stages, instant = false, onReady, onPhase }: Props) {
+export default function IslandScene({ stages, instant = false, onReady, onPhase, onParcel, onFail }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const stagesRef = useRef(stages);
   const handle = useRef<IslandHandle | null>(null);
@@ -43,12 +53,16 @@ export default function IslandScene({ stages, instant = false, onReady, onPhase 
         const h = mountIsland(el, {
           isUnlocked: (stage: string) => stagesRef.current.has(stage),
           onPhase,
+          onParcel,
           instant,
         }) as IslandHandle;
         handle.current = h;
         onReady?.(h);
       })
-      .catch(() => setFailed(true));
+      .catch(() => {
+        setFailed(true);
+        onFail?.();
+      });
     return () => {
       cancelled = true;
       handle.current?.dispose();
@@ -58,6 +72,6 @@ export default function IslandScene({ stages, instant = false, onReady, onPhase 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (failed) return <p className="p-6 text-graphite">{content.error}</p>;
+  if (failed) return null; // the page shows one small status for this
   return <div ref={box} className="absolute inset-0" />;
 }

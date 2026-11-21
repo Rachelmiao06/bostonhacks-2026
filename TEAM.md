@@ -4,7 +4,7 @@
 |---|---|---|---|
 | Home | `/` | `src/features/home/` | TBD |
 | Explore (pixel map) | `/explore` | `src/features/explore/` | TBD |
-| My World (journey, stamps, island, community) | `/world` | `src/features/world/` | Rachel |
+| My World (the knitted island, whole screen) | `/world` | `src/features/island/` | Rachel |
 | Challenge details + submit | `/challenges/[id]` (not created yet) | `src/features/challenge/` | TBD |
 | About | `/about` | `src/features/about/` | TBD |
 

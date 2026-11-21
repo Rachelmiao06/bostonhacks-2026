@@ -11,7 +11,7 @@ Explore, discover a challenge, submit feedback, AI review, complete, track, earn
 1. Explore: pixel map, MBTA line colours, challenge markers. `features/explore`
 2. Challenge details: background, source, station, instructions, deadline, token reward. `features/challenge`
 3. Submit feedback: one form for every challenge (text, one photo, or both), "Check with AI", revise and re-check. `features/challenge`
-4. My World (replaces My Challenges and Rewards): island, token balance, my journey, community with like stamps. `features/world`
+4. My World (replaces My Challenges and Rewards): the knitted island as the whole screen; contributions grow it; a small gift can wait on it. `features/island`
 
 ## Two kinds of challenge, always labelled
 - Official Opportunity: a real, verifiable MBTA request for public input.

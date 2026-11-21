@@ -1,39 +1,64 @@
 export const content = {
-  title: "Your island",
-  eyebrow: "Reward world",
+  title: "Your Little World",
+  subtitle: "A little world shaped by your contributions.",
   loading: "Winding the yarn…",
-  error: "The island could not start in this browser (it needs WebGL).",
-  progress: (stamps: number, total: number) => `${stamps} of ${total} stamps`,
-  progressUnknown: "Checking your stamps…",
-  hint: "Drag to look around and poke things.",
-  hintOpening: "Drag the loose thread to knit your island, or use the button. Drag anywhere else to look around.",
-  pullInstruction: "Pull the thread.",
-  allReady: "Every piece you have earned is ready to knit in.",
-  knitButton: "Knit the island for me",
-  knitting: "Knitting your island…",
-  knitted: "Your island is knitted. Drag to look around, poke things, or pull the loose end to unravel it.",
-  waiting: "Pull the thread to start. You can also use the button.",
-  nextUnlock: (name: string) => `Next stamp knits in: ${name}`,
-  allUnlocked: "Everything is knitted. Pull the loose end to unravel it.",
-  previewLabel: "Preview the full island",
-  previewOffLabel: "Back to my island",
-  previewNote: "Preview only. Your stamps are not changed.",
-  soundHint: "Press M to mute.",
+
+  // One small status at a time. The scene and the rider's progress fail for different reasons.
+  sceneFailed: "The island could not start in this browser. It needs WebGL.",
+  progressFailed: "Could not check your progress just now.",
+  retry: "Retry",
+
+  knitButton: "Knit it for me",
+  giftButton: "Knit it in for me",
+  giftReady: "A new piece is ready to knit.",
+  giftMore: "Another piece is ready to knit.",
+  giftKnitted: "Your little world just grew!",
+
+  // Read aloud only
+  waiting: "Pull the thread to start. You can also use the knit button.",
+  knitting: "Knitting your world…",
+  knitted: "Your world is knitted. Drag to look around, poke things, or pull the loose end to unravel it.",
+
+  help: {
+    open: "Help",
+    close: "Close help",
+    title: "Around your world",
+    lines: [
+      "Drag to look around, and poke things.",
+      "Pull a loose thread to knit in a new piece.",
+      "Every contribution on the map helps your world grow.",
+    ],
+    sound: "Press M to mute.",
+    previewLabel: "Preview the full island",
+    previewOffLabel: "Back to my island",
+    previewNote: "Preview only. Nothing about your world changes.",
+  },
+
   credit: "Island by Kris Yang (Yarn World, MIT licence). Sounds are CC0 from freesound.org.",
   creditUrl: "https://github.com/krisyangdev/yarn-world",
-  fromRewards: "See your island",
-  welcomeBack: (stamps: number, total: number) => `Welcome back. ${stamps} of ${total} stamps are knitted in.`,
-  giftReady: (name: string) => `New stamp: ${name} is ready. Pull the loose thread on the quilt to knit it in.`,
-  giftButton: "Knit it in for me",
-  giftKnitted: (name: string) => `Knitted in: ${name}.`,
-  giftMore: "Another stamp is waiting. Look for the next loose thread.",
-  unavailable: "Your stamps could not load right now, so the island shows what is saved here.",
+
+  parcel: {
+    label: "A little gift is waiting. Open it.",
+    kicker: "Demo surprise · example only",
+    realKicker: "A gift for you",
+    title: "A Little Gift from Boston",
+    subtitle: "A treat for your next ride",
+    merchant: "Merchant",
+    benefit: "Benefit",
+    expires: "Expires",
+    conditions: "Conditions",
+    status: "Status",
+    code: "Code",
+    instructions: "How to redeem",
+    close: "Close and go back to the island",
+  },
 };
 
 /**
- * What each stamp knits into the island. Stage names are the ones Yarn World uses.
- * 1 stamp unlocks the first tier, 2 stamps the first two, and so on; 5 stamps is the whole island.
+ * What each contribution knits into the island. Stage names are the ones Yarn World uses.
+ * 1 contribution unlocks the first tier, 2 the first two, and so on; 5 is the whole island.
  * The yarn ball (stage "ball") and the quilt with its river are always there: that is how you start.
+ * More contributions are still recorded by the server; there are simply no more pieces to knit yet.
  */
 export const unlockTiers: { name: string; stages: string[] }[] = [
   { name: "grass, trees and flowers", stages: ["grass", "flower", "tree", "pine"] },
@@ -45,8 +70,10 @@ export const unlockTiers: { name: string; stages: string[] }[] = [
 
 export const alwaysStages = ["ball"];
 
-export function stagesFor(stamps: number): Set<string> {
+/** The pieces that may knit in. `parcel` is the little gift, present only when the server has confirmed one is available. */
+export function stagesFor(contributions: number, withParcel = false): Set<string> {
   const stages = new Set(alwaysStages);
-  unlockTiers.slice(0, Math.max(0, stamps)).forEach((tier) => tier.stages.forEach((s) => stages.add(s)));
+  unlockTiers.slice(0, Math.max(0, contributions)).forEach((tier) => tier.stages.forEach((s) => stages.add(s)));
+  if (withParcel) stages.add("parcel");
   return stages;
 }

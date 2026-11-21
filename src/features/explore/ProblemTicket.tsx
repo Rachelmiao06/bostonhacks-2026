@@ -173,18 +173,7 @@ function ProblemBody({ quest, done, onContribute }: { quest: Quest; done: boolea
             tone={cn(style.text, style.border)}
             className="mt-1"
           />
-        ) : (
-          <span
-            aria-hidden
-            className={cn(
-              "mt-1 grid size-14 shrink-0 -rotate-12 place-items-center rounded-full border-2 border-dashed font-mono text-[0.6rem] font-semibold opacity-70",
-              style.text,
-              style.border,
-            )}
-          >
-            +{quest.rewardTokens}
-          </span>
-        )}
+        ) : null}
       </div>
 
       <dl className="mt-3 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[0.62rem] tracking-wide text-taupe uppercase">
@@ -198,10 +187,6 @@ function ProblemBody({ quest, done, onContribute }: { quest: Quest; done: boolea
             <dd>{content.ticket.failures(quest.failuresLast90Days)}</dd>
           </div>
         )}
-        <div>
-          <dt className="sr-only">Reward</dt>
-          <dd>{content.ticket.reward(quest.rewardTokens)}</dd>
-        </div>
       </dl>
 
       <div className="mt-3.5 flex flex-wrap items-center gap-x-4 gap-y-2">

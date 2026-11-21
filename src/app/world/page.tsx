@@ -1,5 +1,5 @@
-import { World } from "@/features/world/World";
+import { Island } from "@/features/island/Island";
 
 export default function Page() {
-  return <World />;
+  return <Island />;
 }

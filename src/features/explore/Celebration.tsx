@@ -17,7 +17,8 @@ import { AtlasButton } from "./ui";
 
 type Props = {
   quest: Quest;
-  tokens: number;
+  /** The server's reward for this contribution. Kept for callers; My World shows island growth, not a balance. */
+  tokens?: number;
   /** Finished on an earlier visit: no fanfare, just the stamp. */
   already: boolean;
   /** Report quests can save "opened the MBTA page"; verify quests have nowhere to save it. */
@@ -31,7 +32,7 @@ type Props = {
  * After a contribution: a tiny pixel train pulls in along a track, the ticket gets stamped,
  * a few pixel sparks pop. About 1.5 seconds. With Reduced Motion, everything is simply there.
  */
-export function Celebration({ quest, tokens, already, handedOff, onHandOff, extra, onDone }: Props) {
+export function Celebration({ quest, already, handedOff, onHandOff, extra, onDone }: Props) {
   const reduce = useReducedMotion() ?? false;
   const animate = !reduce && !already;
   const category = categoryOf(quest);
@@ -97,15 +98,10 @@ export function Celebration({ quest, tokens, already, handedOff, onHandOff, extr
         <h3 className="font-serif text-2xl leading-tight font-semibold tracking-tight">
           {already ? content.celebrate.already : content.celebrate.title}
         </h3>
-        {!already && <p className="font-pixel text-[0.7rem] leading-relaxed text-graphite">{content.celebrate.tokens(tokens)}</p>}
-        {!already && <p className="text-sm text-taupe">{content.celebrate.stamp(info.label)}</p>}
         {piece && stamps !== null && (
           <p className="flex items-start gap-2 rounded-xl border border-hairline bg-ivory px-3 py-2 text-sm">
             <span aria-hidden className="mt-1 size-2 shrink-0 rotate-45 bg-cat-station" />
-            <span>
-              <span className="block font-medium">{content.celebrate.newPiece(piece.name)}</span>
-              <span className="block text-xs text-taupe">{content.celebrate.stampsSoFar(stamps, unlockTiers.length)}</span>
-            </span>
+            <span className="block font-medium">{content.celebrate.newPiece(piece.name)}</span>
           </p>
         )}
       </div>

@@ -240,7 +240,7 @@ function ReportBody({ quest, onDone, onFullForm }: { quest: Quest; onDone: () =>
           {r.checking ? flow.checking : world.send}
         </AtlasButton>
         <AtlasButton fill="bg-cat-verify" disabled={!r.canComplete} onClick={r.complete}>
-          {r.completing ? flow.completing : (<>{world.stamp}<span className="max-sm:hidden"> · {content.ticket.reward(quest.rewardTokens)}</span></>)}
+          {r.completing ? flow.completing : world.stamp}
         </AtlasButton>
         <button
           type="button"

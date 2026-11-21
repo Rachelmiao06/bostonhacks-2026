@@ -19,6 +19,7 @@ import { setupSmoke } from './smoke.js';
 import { setupMeadow } from './meadow.js';
 import { setupKite } from './kite.js';
 import { buildBlanket } from './blanket.js';
+import { buildParcel } from './parcel.js';
 import { LAYOUT, L, S, H, ROLL, HOUSE, BALL, FLOWER_CLUSTERS } from './layout.js';
 
 // ---------------------------------------------------------------------------
@@ -1086,7 +1087,7 @@ function buildThreadPath() {
 // ---------------------------------------------------------------------------
 // World
 // ---------------------------------------------------------------------------
-export function buildWorld(scene, { isUnlocked } = {}) {
+export function buildWorld(scene, { isUnlocked, onParcel } = {}) {
 	const rand = mulberry32(20261031);
 	const root = new THREE.Group();
 	scene.add(root);
@@ -1123,6 +1124,23 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 	const flowerClusters = buildFlowers(root, rand);
 	const { posts, runs: fenceRuns } = buildFence(root);
 	const stones = buildStones(root);
+
+	// a little gift waiting under the mustard tree on the near side. Stage 'parcel' only knits in when the
+	// page says a gift is available (isUnlocked('parcel')); poking it opens it and tells the page.
+	const [parcelX, parcelZ] = settle(...L(4.55, -0.35), 1.0);
+	const parcel = buildParcel({
+		parent: root,
+		kit: { mat, P },
+		x: parcelX,
+		z: parcelZ,
+		y: heightAt(parcelX, parcelZ) - 0.02,
+		yaw: -0.6,
+	});
+	parcel.group.userData.onPoke = () => {
+		if (weave.busy || !isUnlocked?.('parcel')) return;
+		parcel.open();
+		onParcel?.();
+	};
 
 	// ground a sheep may trot over: on the island, off the river, clear of trees, house, ball, fence and stones
 	const blockers = [
@@ -1284,6 +1302,7 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 		smoke.update(t, dt);
 		kite.update(t, dt);
 		meadow.update(t, dt);
+		parcel.update(t, dt);
 		weave.update(t, dt);
 		// the first gust sweeps over the island as soon as the knit-in finishes; cloud shadows fade in with it
 		const busy = weave.busy;
@@ -1326,6 +1345,7 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 			...trees.map((tr) => ({ obj: tr.g, stage: 'tree' })),
 			...pines.map((pn) => ({ obj: pn.g, stage: 'pine' })),
 			...flowerClusters.map(({ group, base }) => ({ obj: group, stage: 'flower', clip: true, base })),
+			{ obj: parcel.group, stage: 'parcel' },
 			{ obj: ballG, stage: 'ball', follow: ballRig.group, drop: 0.5 },
 			...sheep.map((s) => ({ obj: s.g, stage: 'sheep' })),
 			...clouds.map((c) => ({ obj: c.pivot, stage: 'cloud' })),
@@ -1383,6 +1403,7 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 		offerGift: (stages, label, onKnitted) => weave.offerGift(stages, label, onKnitted),
 		acceptGift: () => weave.acceptGift(),
 		setPullSpan: (v) => weave.setPullSpan(v),
+		parcel,
 		get phase() {
 			return weave.phase;
 		},

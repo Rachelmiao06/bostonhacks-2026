@@ -23,9 +23,9 @@ const BACKGROUND = '#ebe5d9'; // warm stone
 
 /**
  * @param {HTMLElement} container
- * @param {{ isUnlocked: (stage: string) => boolean, onPhase?: (phase: string) => void, instant?: boolean }} options
+ * @param {{ isUnlocked: (stage: string) => boolean, onPhase?: (phase: string) => void, instant?: boolean, onParcel?: () => void }} options
  */
-export function mountIsland(container, { isUnlocked, onPhase, instant = false }) {
+export function mountIsland(container, { isUnlocked, onPhase, onParcel, instant = false }) {
 	const size = () => ({ w: Math.max(1, container.clientWidth), h: Math.max(1, container.clientHeight) });
 	let { w, h } = size();
 
@@ -67,7 +67,7 @@ export function mountIsland(container, { isUnlocked, onPhase, instant = false })
 	scene.add(sun);
 	scene.add(new THREE.HemisphereLight('#fde8d2', '#7a6a5c', 0.55));
 
-	const world = buildWorld(scene, { isUnlocked });
+	const world = buildWorld(scene, { isUnlocked, onParcel });
 	if (instant) world.snapIsland();
 	const focus = world.focusTarget ?? new THREE.Vector3(0, 0.6, 0);
 
@@ -174,6 +174,8 @@ export function mountIsland(container, { isUnlocked, onPhase, instant = false })
 	};
 	addEventListener('keydown', onKey);
 
+	const anchorPoint = new THREE.Vector3();
+	let spinWas = true;
 	let lastPhase = '';
 	renderer.setAnimationLoop(() => {
 		timer.update();
@@ -208,6 +210,26 @@ export function mountIsland(container, { isUnlocked, onPhase, instant = false })
 		replay: () => world.playIntro(),
 		offerGift: (stages, label, onKnitted) => world.offerGift(stages, label, onKnitted),
 		acceptGift: () => world.acceptGift(),
+		/** The little gift: open it (lid lifts), or show it already opened. */
+		openParcel: () => world.parcel.open(),
+		setParcelOpened: (on) => world.parcel.setOpened(on),
+		/** Where the gift is on screen, in container pixels, so the offer ticket can sit next to it. */
+		parcelScreen: (out) => {
+			world.parcel.anchor(anchorPoint).project(camera);
+			out.x = (anchorPoint.x * 0.5 + 0.5) * container.clientWidth;
+			out.y = (0.5 - anchorPoint.y * 0.5) * container.clientHeight;
+			out.visible = anchorPoint.z < 1;
+			return out;
+		},
+		/** Hold the slow auto-rotation while the ticket is open, so the camera stays where it is. */
+		holdCamera: (hold) => {
+			if (hold) {
+				spinWas = controls.autoRotate;
+				controls.autoRotate = false;
+			} else {
+				controls.autoRotate = spinWas;
+			}
+		},
 		dispose() {
 			renderer.setAnimationLoop(null);
 			observer.disconnect();

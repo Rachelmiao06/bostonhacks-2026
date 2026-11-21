@@ -23,8 +23,7 @@ export const content = {
   },
 
   progress: {
-    label: (stamps: number, tokens: number) => `${stamps} ${stamps === 1 ? "stamp" : "stamps"} · ${tokens} tokens`,
-    title: "Your collection",
+    label: "My World",
   },
 
   cluster: (n: number) => `${n} problems here. Zoom in`,
@@ -46,7 +45,6 @@ export const content = {
     openFor: (days: number) => (days < 1 ? "Opened today" : days === 1 ? "Open 1 day" : `Open ${days} days`),
     failures: (n: number) => (n === 1 ? "First time out in 90 days" : `Out ${n} times in 90 days`),
     fixedAgo: "MBTA alert resolved",
-    reward: (n: number) => `+${n} tokens`,
     report: "Report what you see",
     verify: "Check it’s working",
     continue: "Continue your report",
@@ -69,15 +67,12 @@ export const content = {
   },
 
   celebrate: {
-    title: "Ticket stamped",
-    already: "Already in your collection",
-    tokens: (n: number) => `+${n} tokens`,
-    stamp: (category: string) => `${category} stamp added to your collection`,
+    title: "Your little world just grew!",
+    already: "Already part of your world",
     honest: "Completed in T Party. This does not send anything to the MBTA.",
     collection: "Visit my world",
     another: "Continue exploring",
-    newPiece: (name: string) => `Your island has a new piece waiting: ${name}.`,
-    stampsSoFar: (n: number, total: number) => `${n} of ${total} stamps toward your island`,
+    newPiece: (name: string) => `A new piece is ready to knit: ${name}.`,
   },
 
   /** Below this zoom the landmark models are hidden, so the far-out view stays clean. */
@@ -184,7 +179,7 @@ export const world = {
   far: "You are outside the T area, so we started you at Park Street.",
   quiet: (from: string) =>
     `Nothing is broken near ${from} right now. We moved you to the closest problem.`,
-  coach: "Tap a pin. Type what you see. Get a stamp.",
+  coach: "Tap a pin. Type what you see. Help your little world grow.",
   seeCity: "See the whole city",
   backToBlock: "Back to my block",
   you: "You are here",
@@ -214,5 +209,5 @@ export const world = {
   placeholder: "Type what you see…",
   enterHint: "Enter to check · Shift+Enter for a new line",
   coachName: "AI coach",
-  edited: "You changed your answer. Check it again to unlock the stamp.",
+  edited: "You changed your answer. Check it again to finish.",
 };

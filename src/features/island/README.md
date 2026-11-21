@@ -1,11 +1,11 @@
 # Island
 
-What: a knitted island you can play with that grows as the rider earns stamps. Full screen, and it is the whole of My World (`/world`, see `features/world`): `<Island>` takes the panel as children and draws it over the scene. `/island` redirects there.
+What: **My World**, the whole screen at `/world`: a knitted island that grows as the rider contributes on the map, with a small gift that can wait on it. `/island`, `/rewards` and `/my-challenges` redirect here.
 Owner: Rachel. Only the owner edits this folder.
 
 ## How it fits together
-- `Island.tsx`: the page. Full screen under the nav (like the map). Reads stamps with `stampCount(useMyProgress())` from `features/explore/progress`.
-- `content.ts`: all text and `unlockTiers`: what each stamp knits in (1 stamp = first tier, 5 stamps = the whole island).
+- `Island.tsx`: the page. Full screen under the nav (like the map). Reads the rider's contribution count with `stampCount(useMyProgress())` from `features/explore/progress`. UI is only a title, one contextual knit button, one small status (with Retry) and a help button (`IslandHelp.tsx`: tips, sound, preview, credit). No counters, balances, feeds or tabs.
+- `content.ts`: all text and `unlockTiers`: what each contribution knits in (1 = first tier, 5 = the whole island). More contributions are still recorded by the server; there are no more pieces to knit yet.
 - `IslandLoader.tsx` / `IslandScene.tsx`: load the three.js scene in the browser only, and clean it up when you leave.
 - `yarn-world/`: **Yarn World by Kris Yang** (https://github.com/krisyangdev/yarn-world, MIT, see `yarn-world/LICENSE-yarn-world`).
   Our changes: `mount.js` (replaces `main.js`: sized to its container, cleaned up on leave), `weave.js` + `world.js` (`isUnlocked` keeps locked pieces hidden; `scrub` makes the pull drive the knit-in; palette `P` retuned to warm stone, ivory, sage and sandstone with MBTA accents),
@@ -28,3 +28,12 @@ Owner: Rachel. Only the owner edits this folder.
 - "Preview the full island" shows everything without touching real stamps (good for the demo).
 - Keys: `M` mutes. Sound starts after the first touch on the scene (browsers require it).
 - The scene is about 480 KB of JavaScript, loaded only on `/world`.
+
+## The little gift (parcel)
+- `yarn-world/parcel.js`: a wool-wrapped box with a bow, a lid that lifts, a pompom that pops out, a soft halo and an occasional wiggle while closed (still under reduced motion). `buildParcel({ x, z, wrap, ribbon })` is reusable for more gifts. It is one more weave item (stage `parcel`), so it knits in with the world. Fixed spot: under the golden tree on the near side (`world.js`).
+- It is present only when the server has confirmed at least one contribution (`plan.parcel` in `Island.tsx`). If progress cannot be loaded there is no gift and no new piece, and the page shows one small status with Retry.
+- Poke or tap it (the target is larger than the box), or use the hidden "A little gift is waiting" button (it shows on keyboard focus). `GiftTicket.tsx` draws a small paper ticket next to the gift in the scene, following it on screen; close with the button or Esc. Nothing navigates, and the camera is held while the ticket is open.
+- **There is no real offer source yet.** `gifts.ts` holds one clearly labelled demo (not redeemable, no code, no email asked). "Opened" is remembered in the browser only (`seen.ts`), which is fine because the demo has no value. A real offer needs a server-issued entitlement, claim and redemption state in the database, server-enforced expiry and abuse prevention; `Gift` in `gifts.ts` already has the fields (`status`, `code`, `instructions`).
+
+## Behind the scenes (not shown on this page)
+Submissions, verifications, token balance and like stamps are still recorded and returned by `/api/submissions`, `/api/community` and `/api/likes`. My World does not show them.
