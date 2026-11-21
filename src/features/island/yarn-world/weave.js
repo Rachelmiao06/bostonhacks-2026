@@ -45,6 +45,7 @@ const CLOUD_LAND_T = 1.3; // s a cloud takes to drop in
 
 const WARM_FRAMES = 2; // frames the hidden world renders at page load to compile its shaders
 
+let pullSpan = 3.2; // further pull (world units beyond PULL_TRIGGER) that knits the whole island while the thread is held; the page sets it from the camera distance
 const PULL_TRIGGER = 0.3; // thread pull beyond its reach that starts the unravel / the intro
 
 const THREAD_RADIUS = 0.06;
@@ -296,6 +297,11 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 	const { mat, sphereRep, P } = kit;
 	let state = 'ball'; // intro | idle | unravel | ball
 	let clock = 0;
+	// scrub: the intro was started by dragging the ball thread, so the drag distance sets the knit-in progress
+	// (it only moves forward; once the thread is let go the rest plays on its own)
+	let scrub = false;
+	let scrubP = 0;
+	let reelUntil = BALL_REEL_T;
 
 	const group = new THREE.Group();
 	group.name = 'weave';
@@ -811,6 +817,7 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 	const introRho = []; // per unknownHidden child: radius where the front gives it back
 
 	function playIntro() {
+		const fromPull = state === 'ball' && ballH.live && ballH.held;
 		state = 'intro';
 		clock = 0;
 		popCount = 0;
@@ -839,7 +846,12 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 
 		clearStreaks();
 		hideHandle(edgeH);
-		if (ballH.live) startReel(ballH);
+		scrub = fromPull;
+		scrubP = 0;
+		reelUntil = BALL_REEL_T;
+		if (scrub) {
+			// keep the thread live and in the hand: it stays attached to the ball while the world grows
+		} else if (ballH.live) startReel(ballH);
 		else if (!ballH.reel) hideHandle(ballH);
 
 		// start from the finished ball on its mat (a no-op when coming from the ball state)
@@ -922,8 +934,21 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 			playPop({ pitch: 1.2 });
 		}
 
-		const moving = clock >= INTRO_START;
-		const p = clamp01((clock - INTRO_START) / INTRO_T);
+		let moving = clock >= INTRO_START;
+		let p = clamp01((clock - INTRO_START) / INTRO_T);
+		if (scrub) {
+			if (ballH.live) {
+				if (ballH.held) scrubP = Math.max(scrubP, clamp01((ballH.rope.pullExcess(pullDir) - PULL_TRIGGER) / pullSpan));
+				if (!ballH.held || scrubP >= 1) {
+					// let go (or pulled all the way): wind the thread in and let the rest knit by itself
+					startReel(ballH);
+					reelUntil = clock + BALL_REEL_T;
+				}
+			}
+			if (!ballH.live) scrubP = Math.min(1, scrubP + dt / INTRO_T);
+			moving = scrubP > 0 || !ballH.live;
+			p = scrubP;
+		}
 		const rhoF = lerp(RHO1, RHO0, 1 - easeUnravel(1 - p));
 		if (moving && p < 1) {
 			// front: steady radius plus a notch that circles and leads; only ever grows
@@ -1154,8 +1179,9 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 		// the ball thread follows the ball surface (after updateBall)
 		if (ballH.live || ballH.reel) {
 			ballAnchor(ballH.anchor);
-			if (ballH.reel) stepReel(ballH, dt, BALL_REEL_T);
+			if (ballH.reel) stepReel(ballH, dt, reelUntil);
 			else if (state === 'ball') stepBall(dt);
+			else if (state === 'intro' && scrub) stepHandle(ballH, dt);
 		}
 	}
 
@@ -1179,6 +1205,13 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 		grabbable,
 		get busy() {
 			return state !== 'idle';
+		},
+		setPullSpan(v) {
+			pullSpan = Math.max(0.5, v);
+		},
+		// 'ball' (waiting for the pull) | 'intro' | 'idle' (the finished island) | 'unravel'
+		get phase() {
+			return state;
 		},
 		get hint() {
 			if (state === 'ball' && ballH.live && !ballH.held) return fillHint('start', ballH);

@@ -23,9 +23,9 @@ const BACKGROUND = '#ebe5d9'; // warm stone
 
 /**
  * @param {HTMLElement} container
- * @param {{ isUnlocked: (stage: string) => boolean }} options
+ * @param {{ isUnlocked: (stage: string) => boolean, onPhase?: (phase: string) => void }} options
  */
-export function mountIsland(container, { isUnlocked }) {
+export function mountIsland(container, { isUnlocked, onPhase }) {
 	const size = () => ({ w: Math.max(1, container.clientWidth), h: Math.max(1, container.clientHeight) });
 	let { w, h } = size();
 
@@ -68,6 +68,8 @@ export function mountIsland(container, { isUnlocked }) {
 
 	const camera = new THREE.PerspectiveCamera(28, w / h, 0.1, 100);
 	camera.position.set(S(9), S(6.5), S(11));
+	// on tall (phone) screens the island is wider than the view: back the camera off to fit it
+	camera.position.multiplyScalar(Math.max(1, 1.1 / camera.aspect));
 	const controls = new OrbitControls(camera, renderer.domElement);
 	controls.target.copy(focus);
 	controls.enableDamping = true;
@@ -75,7 +77,7 @@ export function mountIsland(container, { isUnlocked }) {
 	controls.autoRotateSpeed = 0.35;
 	controls.maxPolarAngle = Math.PI * 0.47;
 	controls.minDistance = 4;
-	controls.maxDistance = S(30);
+	controls.maxDistance = S(30) * Math.max(1, 1.1 / camera.aspect);
 
 	const pr = renderer.getPixelRatio();
 	const composer = new EffectComposer(renderer, makeDepthTarget(w * pr, h * pr));
@@ -163,6 +165,7 @@ export function mountIsland(container, { isUnlocked }) {
 	};
 	addEventListener('keydown', onKey);
 
+	let lastPhase = '';
 	renderer.setAnimationLoop(() => {
 		timer.update();
 		const rawDt = timer.getDelta();
@@ -177,7 +180,10 @@ export function mountIsland(container, { isUnlocked }) {
 			if (hit) focusDist = hit.distance;
 		}
 		bokeh.uniforms.focus.value += (focusDist - bokeh.uniforms.focus.value) * Math.min(1, dt * 6);
+		// a pull of about half the window height knits the whole island, whatever the zoom
+		world.setPullSpan(0.5 * 2 * Math.tan((camera.fov * Math.PI) / 360) * camera.position.distanceTo(controls.target));
 		world.update?.(t, dt);
+		if (world.phase !== lastPhase) onPhase?.((lastPhase = world.phase));
 		guide.update(world.hint, dt);
 		ambience(dt);
 		composer.render(dt);

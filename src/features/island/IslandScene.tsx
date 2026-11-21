@@ -7,7 +7,15 @@ type Handle = { dispose: () => void; replay: () => void };
 
 // Mounts the three.js island into a div. `stages` is the set of pieces that may knit in.
 // The scene is built once; a change in `stages` shows the next time the thread is pulled.
-export default function IslandScene({ stages, onReady }: { stages: Set<string>; onReady?: (replay: () => void) => void }) {
+export default function IslandScene({
+  stages,
+  onReady,
+  onPhase,
+}: {
+  stages: Set<string>;
+  onReady?: (replay: () => void) => void;
+  onPhase?: (phase: string) => void;
+}) {
   const box = useRef<HTMLDivElement>(null);
   const stagesRef = useRef(stages);
   const handle = useRef<Handle | null>(null);
@@ -24,7 +32,7 @@ export default function IslandScene({ stages, onReady }: { stages: Set<string>; 
     import("./yarn-world/mount.js")
       .then(({ mountIsland }) => {
         if (cancelled) return;
-        const h = mountIsland(el, { isUnlocked: (stage: string) => stagesRef.current.has(stage) }) as Handle;
+        const h = mountIsland(el, { isUnlocked: (stage: string) => stagesRef.current.has(stage), onPhase }) as Handle;
         handle.current = h;
         onReady?.(h.replay);
       })
