@@ -9,7 +9,7 @@ export function SiteNav() {
       <nav className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
         <Link href="/" className="flex items-center gap-2 outline-none focus-visible:ring-4 focus-visible:ring-sky/60 rounded-lg">
           <Pawn tone="sun" size={22} />
-          <span className="max-sm:sr-only font-pixel text-[0.65rem] leading-none text-paper">
+          <span className="max-sm:sr-only font-pixel text-[0.65rem] leading-none text-foreground">
             {site.name}
           </span>
         </Link>

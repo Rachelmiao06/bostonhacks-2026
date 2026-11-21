@@ -10,6 +10,6 @@ export const content = {
     { href: "/explore", label: "Explore", blurb: "Wander the pixel map and find a challenge.", tone: "sun" },
     { href: "/my-challenges", label: "My Challenges", blurb: "Drafts, reviews and completed missions.", tone: "sky" },
     { href: "/rewards", label: "Rewards", blurb: "Your tokens and how you earned them.", tone: "leaf" },
-    { href: "/about", label: "About", blurb: "What T Party is, and what it is not.", tone: "cherry" },
+    { href: "/about", label: "About", blurb: "What T Party is, and what it is not.", tone: "blossom" },
   ],
 } as const;

@@ -15,6 +15,7 @@ const NUMBER_TONES = {
   sky: "bg-sky",
   leaf: "bg-leaf",
   cherry: "bg-cherry",
+  blossom: "bg-blossom",
 } as const;
 
 export function Home() {
@@ -24,7 +25,7 @@ export function Home() {
       <section className="relative isolate mx-auto max-w-3xl px-2 pt-8 pb-10 text-center sm:pb-16">
         <div
           aria-hidden
-          className="absolute inset-0 -z-10 -rotate-2 rounded-3xl border-2 border-ink bg-sky shadow-tile"
+          className="absolute inset-0 -z-10 -rotate-2 rounded-3xl border-2 border-ink bg-dusk shadow-tile"
         />
 
         <h1 className="font-pixel text-2xl leading-snug text-paper [text-shadow:3px_3px_0_var(--ink)] sm:text-5xl sm:leading-snug sm:[text-shadow:4px_4px_0_var(--ink)]">
@@ -61,7 +62,7 @@ export function Home() {
           size={46}
           className="absolute right-3 -bottom-6 animate-float [--tilt:5deg] [animation-delay:-2s] sm:right-10 sm:bottom-0"
         />
-        <p className="absolute left-4 -bottom-12 hidden font-pixel text-[0.5rem] text-paper/70 sm:block">
+        <p className="absolute left-4 -bottom-12 hidden font-pixel text-[0.5rem] text-foreground/70 sm:block">
           {content.diceHint}
         </p>
       </section>

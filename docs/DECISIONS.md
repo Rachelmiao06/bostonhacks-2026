@@ -9,3 +9,4 @@ One line each: date · what · why.
 - 2026-11-21 · Keep Next.js instead of the spec's React + Vite · the repo, CI and Vercel setup already exist on Next.js.
 - 2026-11-21 · Renamed `main-app` to `explore`, route `/app` to `/explore`, and added `my-challenges`, `rewards`, `challenge` folders · they match the five screens in the spec.
 - 2026-11-21 · No `/challenges/[id]` route yet · Cache Components needs `generateStaticParams` or Suspense for dynamic routes; the challenge owner decides how.
+- 2026-11-21 · Look: blueprint-map palette (pale paper, blue ink, flat bright panels) plus a dusk sky from the pixel-train reference, set as values in the existing token names · real map underneath, cute pixel pieces on top; fonts and components unchanged.

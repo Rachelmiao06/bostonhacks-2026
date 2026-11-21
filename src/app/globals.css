@@ -2,7 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/* One theme only (the game table). Keeps `dark:` classes inert so OS dark mode changes nothing. */
+/* One theme only (the blueprint map). Keeps `dark:` classes inert so OS dark mode changes nothing. */
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -44,9 +44,11 @@
   --color-board: var(--board);
   --color-paper: var(--paper);
   --color-sky: var(--sky);
+  --color-dusk: var(--dusk);
   --color-sun: var(--sun);
   --color-cherry: var(--cherry);
   --color-leaf: var(--leaf);
+  --color-blossom: var(--blossom);
   --color-wood: var(--wood);
   --color-steel: var(--steel);
 
@@ -75,22 +77,26 @@
 }
 
 :root {
-  /* Raw palette (the only place colours are typed in) */
-  --ink: oklch(0.2 0.06 285); /* navy outline and extruded edge */
-  --board: oklch(0.28 0.035 265); /* charcoal game table */
-  --paper: oklch(0.96 0.03 90); /* cream map paper */
-  --sky: oklch(0.76 0.12 238); /* cover-art blue */
-  --sun: oklch(0.87 0.17 92); /* START-button yellow */
-  --cherry: oklch(0.62 0.22 27); /* dice red */
-  --leaf: oklch(0.72 0.17 145); /* pipe green */
-  --wood: oklch(0.5 0.08 55); /* treasure-chest brown */
-  --steel: oklch(0.78 0.012 250); /* chest metal */
-  --shade: oklch(0 0 0 / 0.5); /* soft drop shadow */
-  --dot: oklch(1 0 0 / 0.07); /* table dots */
+  /* Raw palette (the only place colours are typed in).
+     Taken from the blueprint-map reference: pale paper, blue ink lines, flat bright panels.
+     --dusk comes from the pixel-train reference. Names are kept from the board-game theme. */
+  --ink: oklch(0.34 0.13 262); /* blueprint blue: lines, outlines, text */
+  --board: oklch(0.955 0.012 95); /* map paper: the page */
+  --paper: oklch(0.985 0.008 95); /* panel white: cards */
+  --sky: oklch(0.8 0.075 245); /* water blue */
+  --dusk: oklch(0.6 0.105 277); /* pixel-train evening sky */
+  --sun: oklch(0.8 0.15 75); /* amber plaza */
+  --cherry: oklch(0.62 0.2 32); /* red tiles */
+  --leaf: oklch(0.63 0.12 165); /* court green */
+  --blossom: oklch(0.8 0.1 350); /* pink paving */
+  --wood: oklch(0.68 0.16 52); /* orange boardwalk */
+  --steel: oklch(0.84 0.03 250); /* faint drawing lines */
+  --shade: oklch(0.34 0.13 262 / 0.22); /* soft blue drop shadow */
+  --dot: oklch(0.34 0.13 262 / 0.1); /* map grid lines */
 
   /* shadcn tokens */
   --background: var(--board);
-  --foreground: var(--paper);
+  --foreground: var(--ink);
   --card: var(--paper);
   --card-foreground: var(--ink);
   --popover: var(--paper);
@@ -99,8 +105,8 @@
   --primary-foreground: var(--ink);
   --secondary: var(--sky);
   --secondary-foreground: var(--ink);
-  --muted: oklch(0.91 0.035 88);
-  --muted-foreground: oklch(0.4 0.04 280);
+  --muted: oklch(0.92 0.018 95);
+  --muted-foreground: oklch(0.48 0.07 262);
   --accent: var(--leaf);
   --accent-foreground: var(--ink);
   --destructive: var(--cherry);
@@ -111,10 +117,10 @@
   --chart-2: var(--sky);
   --chart-3: var(--cherry);
   --chart-4: var(--leaf);
-  --chart-5: var(--wood);
-  --radius: 1rem;
+  --chart-5: var(--blossom);
+  --radius: 0.5rem;
   --sidebar: var(--board);
-  --sidebar-foreground: var(--paper);
+  --sidebar-foreground: var(--ink);
   --sidebar-primary: var(--sun);
   --sidebar-primary-foreground: var(--ink);
   --sidebar-accent: var(--sky);
@@ -152,9 +158,11 @@
   }
   body {
     @apply overflow-x-clip bg-background text-foreground;
-    /* dotted game-table surface */
-    background-image: radial-gradient(circle, var(--dot) 2px, transparent 2.5px);
-    background-size: 32px 32px;
+    /* map-sheet grid, like the tiles of the reference map */
+    background-image:
+      linear-gradient(var(--dot) 1px, transparent 1px),
+      linear-gradient(90deg, var(--dot) 1px, transparent 1px);
+    background-size: 96px 96px;
   }
   @media (prefers-reduced-motion: reduce) {
     *,
