@@ -17,4 +17,6 @@ jobs:
       # Next.js generates route types (LayoutProps etc.); tsc needs them first.
       - run: npx next typegen
       - run: npx tsc --noEmit
+      # Behaviour tests: they fail if a redesign breaks drafts, checks, photos, tokens, stats states or the nav.
+      - run: npm test
       - run: npm run build
