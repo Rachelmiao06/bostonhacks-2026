@@ -52,6 +52,11 @@ One form for every quest; AI never confirms facts or treats a photo as proof; "c
 - A small photo from the picker is stored exactly as given.
 - Not covered: HEIC files (the type check rejects them), and a live in-page camera preview (`getUserMedia`). Needs a real phone to confirm `capture` opens the camera app.
 
+## How other screens link here
+Always use `challengeHref(quest.id)` from `links.ts` (no id gives the quest list). It is the only place that knows the URL (`/challenge?id=<quest id>`), so the route can change without breaking links. The page is also in the nav (`src/lib/config.ts`, "Quests").
+
+**For the map (`features/explore`, Rachel's folder):** the mission ticket / station sheet still uses its own placeholder challenges and a "Mark as completed" stand-in (`challengeFor` in `explore/content.ts`). To send a rider from a station to a quest, fetch `/api/quests`, pick the quests whose `stationId` matches the tapped station, and render `<Link href={challengeHref(quest.id)}>` in place of the stand-in. Quest ids are MBTA alert ids, so the map and this page agree as long as both use `quest.id` from `/api/quests`. The page currently only knows the three sample quests in `sample-quests.ts`; once it reads live quests, any `quest.id` from the map will open.
+
 ## Decisions made here (also belong in docs/DECISIONS.md, left out to avoid a merge conflict)
 - Quest page is `/challenge?id=<id>`, read on the client, not `/challenges/[id]`: live quests are unknown at build time and Cache Components rejects unknown dynamic params.
 - Sample quests and the offline practice reviewer stand in until `/api/quests` and `/api/review` are wired in.
