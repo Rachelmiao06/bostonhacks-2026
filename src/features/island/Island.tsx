@@ -7,7 +7,9 @@ import { allowedFor, content, giftMilestones, giftStatesFor, isIn, unlockSteps, 
 import { attributions } from "@/lib/places";
 import { demoGifts } from "./gifts";
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { CoachMark } from "./CoachMark";
+import { Collection } from "./Collection";
 import { glass } from "./glass";
 import { GiftTicket } from "./GiftTicket";
 import { HotspotLabel, type TagIcon } from "./HotspotLabel";
@@ -136,6 +138,8 @@ function IslandView({
     openedRef.current = opened;
   }, [opened]);
   const places = useNearbyPlaces(true);
+  const [collectionOpen, setCollectionOpen] = useState(false);
+  const collectionButton = useRef<HTMLButtonElement>(null);
   // First-visit tips, one at a time: 0 the gift, 1 the journal, 2 how the world grows, 3 done. Not shown in the preview.
   const [coach, setCoach] = useState(() => (preview ? 3 : readOnboard()));
   const [readyStep, setReadyStep] = useState<number | null>(null); // the tip that has finished its camera move and may show
@@ -220,6 +224,17 @@ function IslandView({
     setTicket(id);
   }, []);
   const onHover = useCallback((id: string, on: boolean) => setHover((h) => (on ? id : h === id ? null : h)), []);
+  // The collection gallery floats above the island. The island's camera stays exactly where it is (held, never moved).
+  const openCollection = useCallback(() => {
+    handle.current?.holdCamera(true);
+    setHover(null);
+    setCollectionOpen(true);
+  }, []);
+  const closeCollection = useCallback(() => {
+    handle.current?.holdCamera(false);
+    setCollectionOpen(false);
+    window.setTimeout(() => collectionButton.current?.focus({ preventScroll: true }), 0);
+  }, []);
   const closeTicket = useCallback(() => {
     handle.current?.holdCamera(false);
     setTicket(null);
@@ -233,7 +248,7 @@ function IslandView({
   // The tour: for each tip the camera first flies to its object (or back to the overview for the last one), and only then
   // does the tip show. A tip is remembered once done (display memory only). Opening a ticket pauses the tour.
   useEffect(() => {
-    if (phase !== "idle" || preview || ticket !== null || coach >= 3) return;
+    if (phase !== "idle" || preview || ticket !== null || collectionOpen || coach >= 3) return;
     const first = prevCoach.current === coach && readyStep === null;
     const t0 = window.setTimeout(() => {
       const h = handle.current;
@@ -246,14 +261,14 @@ function IslandView({
       window.clearTimeout(t0);
       window.clearTimeout(t1);
     };
-  }, [phase, preview, ticket, coach, readyStep]);
+  }, [phase, preview, ticket, collectionOpen, coach, readyStep]);
   useEffect(() => {
     if (!preview) writeOnboard(coach);
     // the tour is over (finished or skipped): back to the overview
     if (prevCoach.current < 3 && coach >= 3 && !preview) handle.current?.resetCamera();
     prevCoach.current = coach;
   }, [coach, preview]);
-  const coachTarget = readyStep === coach && phase === "idle" && ticket === null ? (coach === 0 ? "gift-0" : coach === 1 ? "journal" : null) : null;
+  const coachTarget = readyStep === coach && phase === "idle" && ticket === null && !collectionOpen ? (coach === 0 ? "gift-0" : coach === 1 ? "journal" : null) : null;
   useEffect(() => {
     if (!coachTarget) return;
     const h = handle.current;
@@ -275,6 +290,16 @@ function IslandView({
       <header className="pointer-events-none absolute top-20 left-4 max-w-[min(20rem,calc(100%-2rem))] sm:left-6">
         <h1 className="font-serif text-2xl leading-tight font-semibold tracking-tight">{content.title}</h1>
         <p className="text-xs text-taupe sm:text-sm">{preview ? content.help.previewNote : content.subtitle}</p>
+        {phase === "idle" && (
+          <button
+            ref={collectionButton}
+            type="button"
+            onClick={openCollection}
+            className="pointer-events-auto mt-1.5 inline-flex cursor-pointer items-center gap-0.5 text-xs font-medium underline decoration-graphite/30 underline-offset-4 outline-none hover:decoration-graphite focus-visible:ring-2 focus-visible:ring-graphite/40 sm:text-sm"
+          >
+            {content.collection.title} <ChevronRight className="size-3.5" aria-hidden />
+          </button>
+        )}
       </header>
 
       {/* One small status at a time, never a wall of errors */}
@@ -310,7 +335,7 @@ function IslandView({
 
       {/* First-visit tips: point at the gift, then the journal, then say how the world grows */}
       {coachTarget && <CoachMark key={coachTarget} id={coachTarget} text={coach === 0 ? content.coach.gift : content.coach.journal} skipLabel={content.coach.skip} onSkip={() => setCoach(3)} handle={handle} />}
-      {readyStep === 2 && phase === "idle" && ticket === null && coach === 2 && (
+      {readyStep === 2 && phase === "idle" && ticket === null && !collectionOpen && coach === 2 && (
         <div className={`absolute inset-x-3 bottom-16 z-20 mx-auto flex max-w-sm flex-col gap-2 rounded-3xl p-3.5 text-graphite sm:bottom-20 ${glass}`}>
           <p role="status" className="text-sm leading-snug font-medium">
             {content.coach.grow}
@@ -351,7 +376,7 @@ function IslandView({
       )}
 
       {/* Every object wears a small glass tag that follows it, so you can tell what it is; hover or focus grows it */}
-      {phase === "idle" && ticket === null && (
+      {phase === "idle" && ticket === null && !collectionOpen && (
         <div className="pointer-events-none absolute inset-0 z-10">
           {hotspotIds.filter((id) => id !== coachTarget).map((id) => (
             <HotspotLabel key={id} id={id} expanded={(hover ?? focused) === id} handle={handle} {...labelFor(id, giftStates, plan.progressKnown ? known : null, hasPlace)} />
@@ -374,6 +399,8 @@ function IslandView({
           onClose={closeTicket}
         />
       )}
+
+      {collectionOpen && <Collection known={plan.progressKnown ? known : null} handle={handle} onClose={closeCollection} />}
 
       <IslandHelp preview={preview} onTogglePreview={onTogglePreview} />
 

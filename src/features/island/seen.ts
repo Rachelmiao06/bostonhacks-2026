@@ -64,3 +64,23 @@ export function writeOnboard(step: number) {
     // storage blocked: the tips simply show again next time
   }
 }
+
+/** How many collection pieces this browser has already seen unlocked, so a piece earned since then can rise into view once. */
+export function readCollectionSeen(): number | null {
+  try {
+    const raw = window.localStorage.getItem(`tparty.island.collection:${getRiderId()}`);
+    if (raw === null) return null;
+    const n = Number(raw);
+    return Number.isInteger(n) && n >= 0 ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+export function writeCollectionSeen(n: number) {
+  try {
+    window.localStorage.setItem(`tparty.island.collection:${getRiderId()}`, String(Math.max(0, Math.floor(n))));
+  } catch {
+    // storage blocked: a newly earned piece may rise into view again next time
+  }
+}

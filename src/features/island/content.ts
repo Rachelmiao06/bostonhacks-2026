@@ -111,6 +111,25 @@ export const content = {
     skip: "Skip tips",
   },
 
+  // The collection gallery: a row of floating knitted pieces and one progress line
+  collection: {
+    title: "Unlock more of your island",
+    subtitle: "Every contribution brings something new to your little world.",
+    close: "Close the collection",
+    prev: "Previous piece",
+    next: "Next piece",
+    progress: (n: number, total: number) => `${n} of ${total} pieces unlocked`,
+    nextUnlock: (name: string) => `Next unlock: ${name}`,
+    allDone: "Every piece is unlocked.",
+    unknown: "Could not check your progress just now.",
+    lockedDetail: "Keep contributing to unlock this piece.",
+    lockedNeed: (n: number) => `${n} more ${n === 1 ? "contribution" : "contributions"} to go`,
+    unlocked: "Unlocked",
+    locked: "Locked",
+    unavailableDetail: "Your progress could not be checked, so nothing is shown as unlocked.",
+    noScene: "The collection could not start in this browser.",
+  },
+
   journey: {
     title: "Your journey",
     summary: (known: number, total: number) => `${known} of ${total} pieces on your island`,
@@ -133,19 +152,19 @@ export const content = {
  * Only existing pieces are used, so there are 12 steps; more contributions are still recorded by the server,
  * there is simply nothing more to add yet.
  */
-export const unlockSteps: { name: string; add: Record<string, number> }[] = [
-  { name: "grass and the first flowers", add: { grass: Infinity, flower: 2 } },
-  { name: "a round tree", add: { tree: 1 } },
-  { name: "two pine trees", add: { pine: 2 } },
-  { name: "stones by the river", add: { stone: Infinity } },
-  { name: "the cottage", add: { house: Infinity } },
-  { name: "its garden and fence", add: { garden: Infinity, fence: Infinity } },
-  { name: "a sheep", add: { sheep: 1 } },
-  { name: "more trees and flowers", add: { tree: Infinity, pine: Infinity, flower: Infinity } },
-  { name: "the rest of the flock", add: { sheep: Infinity } },
-  { name: "the bridge and the river's little life", add: { bridge: Infinity, water: Infinity } },
-  { name: "a kite, laundry and pinwheels", add: { prop: Infinity } },
-  { name: "clouds", add: { cloud: Infinity } },
+export const unlockSteps: { name: string; label: string; blurb: string; add: Record<string, number> }[] = [
+  { name: "grass and the first flowers", label: "Grass & flowers", blurb: "A first patch of green, dotted with wool flowers.", add: { grass: Infinity, flower: 2 } },
+  { name: "a round tree", label: "Round tree", blurb: "A soft, round tree for your little world.", add: { tree: 1 } },
+  { name: "two pine trees", label: "Pine trees", blurb: "Two pines standing tall by the quilt.", add: { pine: 2 } },
+  { name: "stones by the river", label: "Stones", blurb: "Stepping stones beside the river.", add: { stone: Infinity } },
+  { name: "the cottage", label: "Cottage", blurb: "A cozy new home for your little world.", add: { house: Infinity } },
+  { name: "its garden and fence", label: "Garden & fence", blurb: "A garden and a fence for the cottage.", add: { garden: Infinity, fence: Infinity } },
+  { name: "a sheep", label: "Sheep", blurb: "Your first woolly sheep.", add: { sheep: 1 } },
+  { name: "more trees and flowers", label: "More trees", blurb: "More trees and flowers fill the meadow.", add: { tree: Infinity, pine: Infinity, flower: Infinity } },
+  { name: "the rest of the flock", label: "The flock", blurb: "The rest of the flock joins in.", add: { sheep: Infinity } },
+  { name: "the bridge and the river's little life", label: "Bridge", blurb: "A little bridge over the river, and ducks floating by.", add: { bridge: Infinity, water: Infinity } },
+  { name: "a kite, laundry and pinwheels", label: "Pinwheel", blurb: "A pinwheel turning in the breeze, with a kite and laundry nearby.", add: { prop: Infinity } },
+  { name: "clouds", label: "Clouds", blurb: "Soft clouds drifting above the island.", add: { cloud: Infinity } },
 ];
 
 /** How many pieces of each stage exist after `steps` contributions. The yarn ball, the journal and the gifts are always there. */

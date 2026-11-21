@@ -310,6 +310,8 @@ export function mountIsland(container, { isUnlocked, onPhase, onHotspot, onHover
 			out.visible = anchorPoint.z < 1;
 			return out;
 		},
+		/** The existing island objects that stand for each journey step, to clone into the collection gallery. */
+		getCollectibleSources: () => world.collectibles(),
 		/** Fly the camera toward a hotspot (the journal or a gift), smoothly. */
 		focusHotspot: (id) => focusOn(id),
 		/** Fly the camera back to the overview it started with. */
@@ -317,6 +319,8 @@ export function mountIsland(container, { isUnlocked, onPhase, onHotspot, onHover
 		/** Hold the gentle camera sway while a ticket is open, so the camera stays where it is. */
 		holdCamera: (hold) => {
 			swayHeld = hold;
+			// after letting go, wait a moment before swaying again, so the view is exactly as it was when it was held
+			if (!hold) idleAt = performance.now() / 1000;
 		},
 		dispose() {
 			renderer.setAnimationLoop(null);

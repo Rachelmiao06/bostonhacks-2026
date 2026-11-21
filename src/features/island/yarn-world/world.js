@@ -1407,6 +1407,25 @@ export function buildWorld(scene, { isUnlocked, onHotspot, onHover } = {}) {
 	// the thread and the sheep are only grabbable while the world is fully there
 	const gate = (g) => ({ pick: (ray, camera) => (weave.busy ? null : g.pick(ray, camera)), grab: () => g.grab() });
 
+	// Pieces of the island for the collection gallery: for each journey step (same order as `unlockSteps` in the page),
+	// the existing objects that stand for it. The page CLONES them into its own preview scene (same geometry and
+	// materials), so the island itself is never touched or moved.
+	const propItems = windProps.items.filter((i) => i.stage === 'prop');
+	const collectibleSources = [
+		() => [flowerClusters[0].group], // grass and the first flowers
+		() => [trees[0].g], // a round tree
+		() => [pines[0].g, pines[1].g], // two pine trees
+		() => [stones[0], stones[1], stones[3]], // stones by the river
+		() => [houseAnchor], // the cottage
+		() => [groundArt.items.find((i) => i.stage === 'garden').obj, fenceRuns[0].group], // its garden and fence
+		() => [sheep[0].g], // a sheep
+		() => [trees[1].g, flowerClusters[1].group], // more trees and flowers
+		() => [sheep[1].g, sheep[2].g], // the rest of the flock
+		() => [bridgeG], // the bridge and the river's little life
+		() => [propItems[propItems.length - 1].obj], // a kite, laundry and pinwheels (a pinwheel stands for them)
+		() => [clouds[0].cloud, clouds[1].cloud], // clouds
+	];
+
 	return {
 		update,
 		focusTarget: new THREE.Vector3(0, 0.6, 0),
@@ -1429,6 +1448,7 @@ export function buildWorld(scene, { isUnlocked, onHotspot, onHover } = {}) {
 		acceptGift: () => weave.acceptGift(),
 		setPullSpan: (v) => weave.setPullSpan(v),
 		hotspots,
+		collectibles: () => collectibleSources.map((f) => f()),
 		get phase() {
 			return weave.phase;
 		},
