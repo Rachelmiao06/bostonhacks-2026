@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import gsap from "gsap";
 import { MotionConfig } from "motion/react";
 import type { Quest } from "@/lib/mbta";
 import {
@@ -10,6 +11,7 @@ import {
   MAX_PITCH,
   MIN_ZOOM,
   Map,
+  Marker,
   NavigationControl,
   Source,
   addStickerLayers,
@@ -23,25 +25,48 @@ import {
 } from "@/lib/map";
 import { categoryOf } from "./category";
 import { ContributePanel } from "./ContributePanel";
-import { categories, content, landmarks, type CategoryId, type Landmark } from "./content";
+import { categories, content, landmarks, world as worldText, type CategoryId, type Landmark } from "./content";
+import type { LoadStatus } from "./DiveGate";
 import { LandmarkMarker, type LandmarkProblems } from "./LandmarkMarker";
 import { FilterBar, ProgressChip, StatusChip } from "./MapOverlays";
+import { subwayDownload } from "./prefetch";
 import { ClusterPin, ProblemPin } from "./ProblemMarker";
+import { verifiedOf } from "./verified";
 import { ProblemTicket } from "./ProblemTicket";
+import { loadView, saveView } from "./viewMemory";
 import { useMyProgress } from "./progress";
 import { clusterStops, problemStops, useQuests, type Cluster, type ProblemStop } from "./quests";
 import { StationMarker } from "./StationMarker";
 import { TrainsLayer } from "./TrainsLayer";
 import type { LiveData, SubwayData, SubwayStation } from "./types";
+import { AtlasButton, Eyebrow } from "./ui";
+import { WorldQuest } from "./WorldQuest";
+import {
+  overviewView,
+  chooseWorld,
+  flyCamera,
+  insideWorld,
+  leash,
+  prefersReducedMotion,
+  setWorldBuildingsOpacity,
+  showWorldBuildings,
+  worldView,
+  type CameraView,
+  type Entry,
+  type World,
+} from "./world";
 
 type MapStyle = Awaited<ReturnType<typeof loadMapStyle>>;
 
 const getJson = <T,>(url: string): Promise<T> =>
   fetch(url).then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))));
 
-// Both downloads start the moment this file arrives in the browser, before React has drawn anything.
+// The streets start downloading the moment this file arrives in the browser, before React has drawn anything.
+// The T lines and the problem list were already started by prefetch.ts, as soon as the page loaded.
 const stylePromise = loadMapStyle();
-const subwayPromise = getJson<SubwayData>("/api/subway");
+const subwayPromise = subwayDownload();
+const BUILDING_OPACITY = 0.92;
+const DIVE_SECONDS = 4.2;
 
 const landmarkOfStation = new globalThis.Map(landmarks.map((landmark) => [landmark.stationId, landmark]));
 const pixelLandmarkStations = new Set(landmarks.filter((l) => l.pixel).map((l) => l.stationId));
@@ -63,6 +88,13 @@ function addHaze(map: Parameters<typeof addStickerLayers>[0]) {
 }
 const ALL = new Set<CategoryId>(categories.map((c) => c.id));
 const NOTHING_DONE: ReadonlySet<string> = new Set();
+/** The camera the map opens on behind the gate (Boston from high above). */
+function openingView() {
+  const view = overviewView(window.innerWidth < 640);
+  return { longitude: view.center[0], latitude: view.center[1], zoom: view.zoom, pitch: view.pitch, bearing: view.bearing };
+}
+type Mode = "intro" | "world" | "atlas";
+const lngLat = (s: SubwayStation): [number, number] => [s.longitude, s.latitude];
 
 /** True on screens at least 640px wide (tickets pin to the map there; on phones they dock at the bottom). */
 function useWide() {
@@ -82,9 +114,34 @@ function useWide() {
  * Pick a pin to read its ticket; from the ticket, contribute. Browser only.
  * It fills the whole screen (fixed, under the floating nav) so other UI can be layered on top of it.
  */
-export default function ExploreMap() {
+type Props = {
+  /** How the rider chose to start (from the gate). */
+  entry: Entry;
+  /** Reports what has finished loading, for the gate's checklist. */
+  onStatus: (status: LoadStatus) => void;
+  /** Called when the gate can lift because the camera is about to move. */
+  onReveal: () => void;
+};
+
+export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
   const mapRef = useRef<MapRef>(null);
   const wide = useWide();
+  // intro = hidden behind the gate; world = the small 3D district; atlas = the whole city (the original map).
+  const [mode, setMode] = useState<Mode>(entry.kind === "atlas" ? "atlas" : "intro");
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [patient, setPatient] = useState(false);
+  const [worldInfo, setWorldInfo] = useState<World | null>(null);
+  const [arrived, setArrived] = useState(false);
+  const [coached, setCoached] = useState(false);
+  const fogRef = useRef<HTMLDivElement>(null);
+  const flight = useRef<gsap.core.Timeline | null>(null);
+  const unleash = useRef<(() => void) | null>(null);
+  const started = useRef(false);
+  const [startsInAtlas] = useState(entry.kind === "atlas");
+  const modeRef = useRef(mode);
+  useEffect(() => {
+    modeRef.current = mode;
+  });
   const [style, setStyle] = useState<MapStyle | null>(null);
   const [data, setData] = useState<SubwayData | null>(null);
   const [live, setLive] = useState<LiveData | null>(null);
@@ -95,6 +152,11 @@ export default function ExploreMap() {
   const [show, setShow] = useState<ReadonlySet<CategoryId>>(ALL);
   // Rounded to half steps, so markers only redraw when the zoom has really changed.
   const [zoom, setZoom] = useState(12);
+  // Back from another page: the camera starts where the rider left it (see viewMemory.ts).
+  const [startView] = useState(() => {
+    const saved = loadView();
+    return saved ? { longitude: saved.longitude, latitude: saved.latitude, zoom: saved.zoom, pitch: saved.pitch, bearing: saved.bearing, padding: saved.padding } : initialView();
+  });
   const quests = useQuests();
   const progress = useMyProgress();
   const done = progress.status === "ready" ? progress.done : NOTHING_DONE;
@@ -110,7 +172,9 @@ export default function ExploreMap() {
   }, []);
 
   // Train positions: refreshed every few seconds. If a refresh fails we keep the last one.
+  // Not while the gate is up: the first seconds belong to the map and the dive.
   useEffect(() => {
+    if (mode === "intro") return;
     let cancelled = false;
     const load = () =>
       getJson<LiveData>("/api/subway/live")
@@ -122,7 +186,7 @@ export default function ExploreMap() {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, []);
+  }, [mode]);
 
   const lineGeoJSON = useMemo(() => {
     if (!data) return null;
@@ -140,6 +204,23 @@ export default function ExploreMap() {
   const stopById = useMemo(() => new globalThis.Map(stops.map((stop) => [stop.station.id, stop])), [stops]);
   const clusters = useMemo(() => clusterStops(stops, zoom), [stops, zoom]);
 
+  // The small world only shows what is inside its circle: a handful of stops, not the whole T.
+  const allStops = useMemo(() => problemStops(questList, stationById, ALL), [questList, stationById]);
+  const worldStops = useMemo(
+    () => (worldInfo ? allStops.filter((stop) => insideWorld(worldInfo.center, lngLat(stop.station), 1.05)) : []),
+    [allStops, worldInfo],
+  );
+  const worldStationList = useMemo(
+    () => (worldInfo && data ? data.stations.filter((station) => insideWorld(worldInfo.center, lngLat(station), 1.05)) : []),
+    [data, worldInfo],
+  );
+  // Pixel landmarks that stand inside the small world: they replace that stop's pin there too.
+  const worldLandmarkIds = useMemo(
+    () => new Set(landmarks.filter((l) => l.pixel && worldStationList.some((s) => s.id === l.stationId)).map((l) => l.id)),
+    [worldStationList],
+  );
+  const worldProblemCount = worldStops.reduce((sum, stop) => sum + stop.quests.length, 0);
+
   // Counts per category ignore the filter, so every chip always says how many there are.
   const counts = useMemo(() => {
     const all = problemStops(questList, stationById, ALL).flatMap((stop) => stop.quests);
@@ -151,6 +232,18 @@ export default function ExploreMap() {
     (station: SubwayStation) => {
       const map = mapRef.current?.getMap();
       if (!map) return;
+      if (mode === "world") {
+        // The question card sits at the bottom: lift the stop above it and lean in.
+        map.flyTo({
+          center: [station.longitude, station.latitude],
+          zoom: wide ? 16.8 : 16.4,
+          pitch: 64,
+          // Top room keeps the pin clear of the floating nav.
+          padding: wide ? { top: 90, bottom: 340, left: 0, right: 0 } : { top: 120, bottom: 430, left: 0, right: 0 },
+          duration: 1000,
+        });
+        return;
+      }
       // Wide: the ticket stands above the stop, under the nav and filters. Phone: it docks at the bottom.
       map.flyTo({
         center: [station.longitude, station.latitude],
@@ -160,13 +253,15 @@ export default function ExploreMap() {
         duration: 1200,
       });
     },
-    [wide],
+    [wide, mode],
   );
 
   const selectStation = useCallback(
     (station: SubwayStation, index = 0) => {
       setSelected(station);
       setQuestIndex(index);
+      saveView({ stationId: station.id, questIndex: index });
+      setCoached(true);
       focus(station);
     },
     [focus],
@@ -177,9 +272,12 @@ export default function ExploreMap() {
   const selectLandmark = useCallback(
     (landmark: Landmark) => {
       const station = stationById.get(landmark.stationId);
-      if (station) selectStation(station);
+      if (!station) return;
+      // Like the station dots in the world: only a stop with a problem leads anywhere.
+      if (mode === "world" && !(stopById.get(station.id) ?? allStops.find((s) => s.station.id === station.id))) return;
+      selectStation(station);
     },
-    [stationById, selectStation],
+    [stationById, selectStation, mode, stopById, allStops],
   );
 
   const expandCluster = useCallback((cluster: Cluster) => {
@@ -198,9 +296,47 @@ export default function ExploreMap() {
 
   const clearSelection = useCallback(() => {
     setSelected(null);
+    saveView({ stationId: null, questIndex: 0 });
     const map = mapRef.current?.getMap();
-    if (map) clearCameraPadding(map);
+    if (!map) return;
+    if (mode === "world" && worldInfo) {
+      // Back out to the whole district instead of staying nose-to-glass with one building.
+      const view = worldView(worldInfo.center, !wide);
+      map.easeTo({ center: view.center, zoom: view.zoom, pitch: view.pitch, padding: { top: 0, right: 0, bottom: 0, left: 0 }, duration: 900 });
+    } else clearCameraPadding(map);
+  }, [mode, worldInfo, wide]);
+
+  // Next keeps this page mounted but hidden while the rider is on another page, and a hidden map loses its camera.
+  // Effects run again when the page is shown, so put the camera back exactly where it was left.
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const saved = loadView();
+      const map = mapRef.current?.getMap();
+      // Only the regular map is remembered; the gate and the dive into the 3D district run their own camera.
+      if (!saved || !map || modeRef.current !== "atlas") return;
+      map.resize();
+      map.jumpTo({ center: [saved.longitude, saved.latitude], zoom: saved.zoom, pitch: saved.pitch, bearing: saved.bearing, ...(saved.padding ? { padding: saved.padding } : {}) });
+    }, 60);
+    return () => window.clearTimeout(timer);
   }, []);
+
+  // Back from another page: bring back the selected stop's ticket without moving the camera.
+  const restored = useRef(false);
+  useEffect(() => {
+    if (restored.current || !style || !data || !startsInAtlas) return;
+    restored.current = true;
+    if (new URLSearchParams(window.location.search).get("quest")) return; // a deep link wins
+    const saved = loadView();
+    const station = saved?.stationId ? stationById.get(saved.stationId) : undefined;
+    if (!station) return;
+    // Wait a frame so the map has mounted (same as the deep link below).
+    requestAnimationFrame(() => {
+      setSelected(station);
+      setQuestIndex(saved?.questIndex ?? 0);
+      const map = mapRef.current?.getMap();
+      if (map) map.jumpTo({ padding: wide ? { top: 420, bottom: 0, left: 0, right: 0 } : { top: 120, bottom: 340, left: 0, right: 0 } });
+    });
+  }, [style, data, stationById, wide, startsInAtlas]);
 
   // A link like /?quest=<id> (from My Journey) opens that problem's ticket once everything has loaded.
   const deepLinked = useRef(false);
@@ -227,15 +363,133 @@ export default function ExploreMap() {
     (quest: Quest) => {
       setPanelQuest(quest);
       const map = mapRef.current?.getMap();
-      if (map && wide) map.easeTo({ padding: { top: 420, right: 460, bottom: 0, left: 0 }, duration: 600 });
+      const top = mode === "world" ? 0 : 420;
+      if (map && wide) map.easeTo({ padding: { top, right: 460, bottom: 0, left: 0 }, duration: 600 });
     },
-    [wide],
+    [wide, mode],
   );
   const closePanel = useCallback(() => {
     setPanelQuest(null);
     const map = mapRef.current?.getMap();
-    if (map && wide) map.easeTo({ padding: { top: 420, right: 0, bottom: 0, left: 0 }, duration: 600 });
-  }, [wide]);
+    // In the world the question card comes back for the same stop, so keep room for it.
+    if (map && wide) map.easeTo({ padding: mode === "world" ? { top: 90, right: 0, bottom: 340, left: 0 } : { top: 420, right: 0, bottom: 0, left: 0 }, duration: 600 });
+  }, [wide, mode]);
+
+  // ---- The dive: gate -> fall from above Boston -> a small 3D world around one stop ----
+
+  const atlasView = useCallback((): CameraView => {
+    const view = initialView();
+    return { center: [view.longitude, view.latitude], zoom: view.zoom, pitch: view.pitch, bearing: view.bearing };
+  }, []);
+
+  /** Falls from high above the city to the district and builds the world while falling. */
+  const playWorld = useCallback(
+    (map: ReturnType<NonNullable<MapRef["getMap"]>>, w: World) => {
+      unleash.current?.();
+      unleash.current = null;
+      flight.current?.kill();
+      setWorldInfo(w);
+      setMode("world");
+      setArrived(false);
+      showWorldBuildings(map, w.center);
+      const fog = fogRef.current;
+      const buildings = { v: 0 };
+      const settle = () => {
+        map.setMinZoom(14.6);
+        gsap.set(fog, { opacity: 1 });
+        setWorldBuildingsOpacity(map, BUILDING_OPACITY);
+        unleash.current = leash(map, w.center);
+        setArrived(true);
+      };
+      flight.current = flyCamera(map, worldView(w.center, !wide), {
+        duration: DIVE_SECONDS,
+        instant: prefersReducedMotion(),
+        decorate: (timeline) => {
+          // In the last seconds of the fall: the fog closes in around the district and the buildings rise.
+          timeline.fromTo(fog, { opacity: 0 }, { opacity: 1, duration: 1.5, ease: "power1.inOut" }, DIVE_SECONDS - 1.8);
+          timeline.to(buildings, { v: BUILDING_OPACITY, duration: 1.4, ease: "power1.out", onUpdate: () => setWorldBuildingsOpacity(map, buildings.v) }, DIVE_SECONDS - 1.6);
+        },
+        onComplete: settle,
+      });
+    },
+    [wide],
+  );
+
+  /** The whole city, as the map always was. */
+  const playAtlas = useCallback(
+    (map: ReturnType<NonNullable<MapRef["getMap"]>>) => {
+      unleash.current?.();
+      unleash.current = null;
+      flight.current?.kill();
+      setArrived(false);
+      setSelected(null);
+      setPanelQuest(null);
+      map.setMinZoom(MIN_ZOOM);
+      const buildings = { v: BUILDING_OPACITY };
+      flight.current = flyCamera(map, atlasView(), {
+        duration: 2.4,
+        instant: prefersReducedMotion(),
+        decorate: (timeline) => {
+          timeline.to(fogRef.current, { opacity: 0, duration: 0.9 }, 0);
+          timeline.to(buildings, { v: 0, duration: 1.1, onUpdate: () => setWorldBuildingsOpacity(map, buildings.v) }, 0);
+        },
+        onComplete: () => {
+          gsap.set(fogRef.current, { opacity: 0 });
+          setWorldBuildingsOpacity(map, 0);
+          // The city's markers appear only once the camera has settled, so nothing pops in mid-flight.
+          setMode("atlas");
+        },
+      });
+    },
+    [atlasView],
+  );
+
+  // The gate's checklist.
+  const problemsReady = quests.status !== "loading";
+  useEffect(() => {
+    onStatus({ streets: Boolean(style) && mapLoaded, lines: Boolean(data), problems: problemsReady, failed });
+  }, [onStatus, style, mapLoaded, data, problemsReady, failed]);
+
+  // If the problem list is slow, start without waiting for it forever.
+  const chose = entry.kind !== "pending";
+  useEffect(() => {
+    if (!chose) return;
+    const timer = window.setTimeout(() => setPatient(true), 7000);
+    return () => window.clearTimeout(timer);
+  }, [chose]);
+
+  // Once the rider has chosen and the map is ready: lift the gate and start moving.
+  useEffect(() => {
+    if (started.current || entry.kind === "pending" || !style || !mapLoaded || !data) return;
+    if (quests.status === "loading" && !patient) return;
+    const map = mapRef.current?.getMap();
+    if (!map) return;
+    started.current = true;
+    onReveal();
+    if (entry.kind === "atlas") {
+      if (!startsInAtlas) playAtlas(map);
+      return;
+    }
+    playWorld(map, chooseWorld(entry, data.stations, allStops));
+  }, [entry, style, mapLoaded, data, quests.status, patient, allStops, onReveal, playWorld, playAtlas, startsInAtlas]);
+
+  const backToBlock = useCallback(() => {
+    const map = mapRef.current?.getMap();
+    if (map && worldInfo) playWorld(map, worldInfo);
+  }, [playWorld, worldInfo]);
+  const seeCity = useCallback(() => {
+    const map = mapRef.current?.getMap();
+    if (map) playAtlas(map);
+  }, [playAtlas]);
+
+  // Leaving the page mid-flight: stop the animation and the leash.
+  useEffect(
+    () => () => {
+      flight.current?.kill();
+      unleash.current?.();
+    },
+    [],
+  );
 
   // The selected station's lines come forward; the rest step back.
   const selectedLineKey = selected?.lineIds.join(",") ?? "";
@@ -245,10 +499,12 @@ export default function ExploreMap() {
   // PROTOTYPE: a pixel-art landmark is its stop's mission marker, so that stop's pin steps aside while landmarks show.
   const showLandmarks = zoom >= content.landmarkMinZoom;
   const pinHiddenFor = (stationId: string) => showLandmarks && pixelLandmarkStations.has(stationId);
+  // The world only holds the stops inside its circle (`allStops`), the atlas the filtered ones (`stopById`).
+  const stopOf = (stationId: string) => stopById.get(stationId) ?? allStops.find((s) => s.station.id === stationId);
   const problemsAt = (stationId: string): LandmarkProblems | undefined => {
-    const stop = stopById.get(stationId);
+    const stop = stopOf(stationId);
     if (!stop || !pixelLandmarkStations.has(stationId)) return undefined;
-    return { count: stop.quests.length, done: stop.quests.filter((q) => done.has(q.id)).length, top: stop.top };
+    return { count: stop.quests.length, done: stop.quests.filter((q) => done.has(q.id)).length, top: stop.top, verified: verifiedOf(stop) };
   };
   const selectedStop = selected ? stopById.get(selected.id) : undefined;
   const selectedQuests = selectedStop?.quests ?? [];
@@ -259,7 +515,7 @@ export default function ExploreMap() {
         {style && (
           <Map
             ref={mapRef}
-            initialViewState={initialView()}
+            initialViewState={startsInAtlas ? startView : openingView()}
             attributionControl={{ compact: true }}
             mapStyle={style}
             maxBounds={MAX_BOUNDS}
@@ -268,9 +524,16 @@ export default function ExploreMap() {
             style={{ width: "100%", height: "100%" }}
             onLoad={(event) => {
               addStickerLayers(event.target);
+              setMapLoaded(true);
               addHaze(event.target);
             }}
             onZoom={(event) => setZoom(Math.round(event.viewState.zoom * 2) / 2)}
+            onMoveEnd={(event) => {
+              // A hidden map (the rider is on another page) is 0 px wide and its camera is meaningless: never save that.
+              if (event.target.getContainer().clientWidth === 0 || modeRef.current !== "atlas") return;
+              const { longitude, latitude, zoom: z, pitch, bearing, padding } = event.viewState;
+              saveView({ longitude, latitude, zoom: z, pitch, bearing, padding });
+            }}
             onClick={(event) => {
               // Taps on markers and tickets also reach the map; only a tap on bare map clears the selection.
               const target = event.originalEvent.target as HTMLElement | null;
@@ -284,8 +547,8 @@ export default function ExploreMap() {
                 <Layer {...lineLayers.line} />
               </Source>
             )}
-            {data && <TrainsLayer trains={live?.trains ?? []} lines={data.lines} />}
-            {data?.stations.map((station) => (
+            {data && (mode === "atlas" || arrived) && <TrainsLayer trains={live?.trains ?? []} lines={data.lines} />}
+            {(mode === "atlas" ? data?.stations : arrived ? worldStationList : [])?.map((station) => (
               <StationMarker
                 key={station.id}
                 station={station}
@@ -293,12 +556,19 @@ export default function ExploreMap() {
                 color={colorOfLine.get(station.lineIds[0]) ?? ""}
                 selected={selected?.id === station.id}
                 compact={zoom < 12}
-                onSelect={selectStation}
+                onSelect={(picked) => {
+                  if (mode !== "world") return selectStation(picked);
+                  // In the world only stops with a problem lead anywhere.
+                  const stop = stopById.get(picked.id) ?? allStops.find((s) => s.station.id === picked.id);
+                  if (stop) selectStop(stop);
+                }}
               />
             ))}
             {data &&
-              showLandmarks &&
-              landmarks.map((landmark) => (
+              ((mode === "atlas" && showLandmarks) || (mode === "world" && arrived)) &&
+              landmarks
+                .filter((landmark) => mode === "atlas" || worldLandmarkIds.has(landmark.id))
+                .map((landmark) => (
                 <LandmarkMarker
                   key={landmark.id}
                   landmark={landmark}
@@ -308,21 +578,47 @@ export default function ExploreMap() {
                   onSelect={selectLandmark}
                 />
               ))}
-            {clusters.map((cluster) =>
-              cluster.stops.length === 1 && pinHiddenFor(cluster.id) ? null : cluster.stops.length > 1 ? (
-                <ClusterPin key={`c-${cluster.id}`} cluster={cluster} onExpand={expandCluster} />
-              ) : (
+            {mode === "atlas" &&
+              clusters.map((cluster) =>
+                cluster.stops.length > 1 ? (
+                  <ClusterPin key={`c-${cluster.id}`} cluster={cluster} onExpand={expandCluster} />
+                ) : pinHiddenFor(cluster.id) ? null : (
+                  <ProblemPin
+                    key={cluster.id}
+                    stop={cluster.stops[0]}
+                    doneCount={cluster.stops[0].quests.filter((q) => done.has(q.id)).length}
+                    selected={selected?.id === cluster.id}
+                    compact={zoom < 11.5}
+                    verified={verifiedOf(cluster.stops[0])}
+                    onSelect={selectStop}
+                  />
+                ),
+              )}
+            {mode === "world" &&
+              arrived &&
+              worldStops
+                .filter((stop) => !pixelLandmarkStations.has(stop.station.id))
+                .map((stop) => (
                 <ProblemPin
-                  key={cluster.id}
-                  stop={cluster.stops[0]}
-                  doneCount={cluster.stops[0].quests.filter((q) => done.has(q.id)).length}
-                  selected={selected?.id === cluster.id}
-                  compact={zoom < 11.5}
+                  key={stop.station.id}
+                  stop={stop}
+                  doneCount={stop.quests.filter((q) => done.has(q.id)).length}
+                  selected={selected?.id === stop.station.id}
+                  compact={false}
+                  beacon
+                  verified={verifiedOf(stop)}
                   onSelect={selectStop}
                 />
-              ),
+              ))}
+            {mode === "world" && arrived && worldInfo?.you && (
+              <Marker longitude={worldInfo.you[0]} latitude={worldInfo.you[1]} anchor="center" style={{ zIndex: 7 }}>
+                <span role="img" aria-label={worldText.you} title={worldText.you} className="relative block size-4">
+                  <span aria-hidden className="absolute inset-0 rounded-full bg-graphite/30 motion-safe:animate-ping" />
+                  <span className="absolute inset-0 rounded-full border-2 border-ivory bg-graphite shadow-float" />
+                </span>
+              </Marker>
             )}
-            {data && selected && wide && (
+            {data && selected && wide && mode === "atlas" && (
               <ProblemTicket
                 station={selected}
                 lines={data.lines}
@@ -331,6 +627,7 @@ export default function ExploreMap() {
                 onIndex={setQuestIndex}
                 done={done}
                 landmark={landmarkOfStation.get(selected.id)}
+                landmarkScale={landmarkScale}
                 docked={false}
                 onContribute={contribute}
                 onClose={clearSelection}
@@ -339,18 +636,44 @@ export default function ExploreMap() {
           </Map>
         )}
 
-        {/* Overlays: filters and progress under the nav, status at the bottom. */}
+        {/* The fog: the edge of the small world fades into the city's own colour, like a diorama on a table. */}
+        <div
+          ref={fogRef}
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-0"
+          style={{ background: "radial-gradient(ellipse 64% 60% at 50% 52%, transparent 52%, color-mix(in oklab, var(--atlas-land) 60%, transparent) 76%, var(--atlas-land) 100%)" }}
+        />
+
+        {/* Overlays under the nav: the filters (city) or the name tag (world) on the left; the way out and progress on the right. */}
         <div className="pointer-events-none absolute inset-x-0 top-[3.75rem] flex flex-col gap-2 px-2 sm:top-[4.75rem] sm:flex-row sm:items-start sm:justify-between sm:px-4">
           <div className="pointer-events-auto min-w-0">
-            {quests.status === "ready" && <FilterBar counts={counts} show={show} onToggle={toggleFilter} />}
+            {mode === "atlas" && quests.status === "ready" && <FilterBar counts={counts} show={show} onToggle={toggleFilter} />}
+            {mode === "world" && arrived && worldInfo && (
+              <div aria-live="polite" className="max-w-72 rounded-2xl border border-hairline bg-ivory/92 px-3.5 py-2 shadow-float backdrop-blur-md">
+                <Eyebrow>{worldText.near(worldInfo.station.name)}</Eyebrow>
+                <p className="font-ui text-sm font-medium text-graphite">{worldText.problems(worldProblemCount)}</p>
+                {worldInfo.note && <p className="mt-1 font-ui text-xs text-taupe">{worldInfo.note.kind === "far" ? worldText.far : worldText.quiet(worldInfo.note.from)}</p>}
+                {!selected && !coached && worldProblemCount > 0 && <p className="mt-1 font-ui text-xs font-medium text-graphite">{worldText.coach}</p>}
+              </div>
+            )}
           </div>
-          <div className="pointer-events-auto self-start">
-            <ProgressChip />
+          <div className="pointer-events-auto flex items-center gap-2 self-start">
+            {mode === "atlas" && worldInfo && (
+              <AtlasButton tone="outline" size="sm" className="shadow-float" onClick={backToBlock}>
+                {worldText.backToBlock}
+              </AtlasButton>
+            )}
+            {mode === "world" && arrived && (
+              <AtlasButton tone="outline" size="sm" className="shadow-float" onClick={seeCity}>
+                {worldText.seeCity}
+              </AtlasButton>
+            )}
+            {mode !== "intro" && <ProgressChip />}
           </div>
         </div>
 
         <div className="pointer-events-none absolute bottom-3 left-2 flex flex-col items-start gap-1.5 sm:left-4">
-          {live && data && (!selected || wide) && (
+          {mode === "atlas" && live && data && (!selected || wide) && (
             <StatusChip live={live.source === "live"}>
               {live.source === "live" ? content.liveChip(live.trains.length) : content.sampleChip}
             </StatusChip>
@@ -359,7 +682,7 @@ export default function ExploreMap() {
           {quests.status === "failed" && <StatusChip live={false}>{content.questsFailed}</StatusChip>}
         </div>
 
-        {!data && (
+        {!data && mode !== "intro" && (
           <p className="absolute inset-x-0 bottom-6 mx-auto w-fit rounded-full border border-hairline bg-ivory px-4 py-2 font-ui text-sm text-graphite shadow-float">
             {failed ? content.error : content.loading}
           </p>
@@ -367,7 +690,18 @@ export default function ExploreMap() {
 
         <ContributePanel quest={panelQuest} onClose={closePanel} />
 
-        {data && selected && !wide && !panelQuest && (
+        {mode === "world" && arrived && selected && !panelQuest && selectedQuests.length > 0 && (
+          <WorldQuest
+            key={selected.id}
+            quests={selectedQuests}
+            index={Math.min(questIndex, selectedQuests.length - 1)}
+            onIndex={setQuestIndex}
+            onClose={clearSelection}
+            onFullForm={contribute}
+          />
+        )}
+
+        {mode === "atlas" && data && selected && !wide && !panelQuest && (
           <ProblemTicket
             station={selected}
             lines={data.lines}

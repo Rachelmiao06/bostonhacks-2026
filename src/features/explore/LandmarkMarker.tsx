@@ -9,9 +9,10 @@ import { cn } from "@/lib/utils";
 import { categoryStyle } from "./category";
 import { content, type CategoryId, type Landmark } from "./content";
 import { PixelLandmark } from "./PixelLandmark";
+import { verifiedText, type Verified } from "./verified";
 
 /** Open problems at the landmark's stop. When set, the building itself is the mission marker. */
-export type LandmarkProblems = { count: number; done: number; top: CategoryId };
+export type LandmarkProblems = { count: number; done: number; top: CategoryId; verified: Verified | null };
 
 type Props = {
   landmark: Landmark;
@@ -42,10 +43,15 @@ export const LandmarkMarker = memo(function LandmarkMarker({ landmark, scale, se
   const train = useTrainOnNewDone(problems?.done ?? 0);
   const style = problems ? categoryStyle[problems.top] : undefined;
   const allDone = problems ? problems.done >= problems.count : false;
-  const label = problems ? content.landmarkProblems(landmark.name, problems.count, problems.done) : landmark.name;
+  const verified = problems?.verified ?? null;
+  const label = !problems
+    ? landmark.name
+    : verified
+      ? content.verified.marker(landmark.name, verifiedText(verified))
+      : content.landmarkProblems(landmark.name, problems.count, problems.done);
 
   return (
-    <Marker longitude={landmark.longitude} latitude={landmark.latitude} anchor="bottom" style={{ zIndex: selected ? 7 : 5 }}>
+    <Marker longitude={landmark.longitude} latitude={landmark.latitude} anchor="bottom" style={{ zIndex: selected ? 6 : 5 }}>
       <motion.button
         type="button"
         aria-label={label}
@@ -85,10 +91,10 @@ export const LandmarkMarker = memo(function LandmarkMarker({ landmark, scale, se
               aria-hidden
               className={cn(
                 "absolute top-[34%] right-0 grid size-6 place-items-center rounded-full font-pixel text-[0.5rem] text-ivory ring-2 ring-ivory shadow-float",
-                allDone ? "bg-taupe" : style.bg,
+                verified ? "bg-cat-verify" : allDone ? "bg-taupe" : style.bg,
               )}
             >
-              {allDone ? <Check className="size-3.5" strokeWidth={3} /> : problems.count}
+              {verified || allDone ? <Check className="size-3.5" strokeWidth={3} /> : problems.count}
             </span>
           )}
         </motion.span>

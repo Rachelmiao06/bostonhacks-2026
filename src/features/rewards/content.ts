@@ -14,5 +14,6 @@ export const content = {
   emptyBody: "Each problem you report or check earns one stamp. Find your first one on the map.",
   cta: "Find a problem",
   journey: "See the details in My Journey",
+  island: "See your island",
   honest: "Stamps and tokens live in T Party only. They do not mean the MBTA received or fixed anything.",
 };

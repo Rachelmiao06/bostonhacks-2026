@@ -31,6 +31,13 @@ export const content = {
   marker: (station: string, n: number, done: number) =>
     `${station}: ${n} ${n === 1 ? "problem" : "problems"}${done ? `, ${done} done by you` : ""}`,
 
+  /** Green marker: always says who the status comes from. Never "fixed", never "sent to MBTA". Shown only when the data supports it (see verified.ts). */
+  verified: {
+    mbta: (ago: string) => `MBTA marked this working again · ${ago}`,
+    riders: (n: number) => `Riders report it is working · ${n} ${n === 1 ? "rider" : "riders"}`,
+    marker: (station: string, label: string) => `${station}: ${label}`,
+  },
+
   ticket: {
     issuer: "T Party · Boston",
     number: (n: number, total: number) => `${n} of ${total}`,
@@ -38,7 +45,7 @@ export const content = {
     next: "Next problem",
     openFor: (days: number) => (days < 1 ? "Opened today" : days === 1 ? "Open 1 day" : `Open ${days} days`),
     failures: (n: number) => (n === 1 ? "First time out in 90 days" : `Out ${n} times in 90 days`),
-    fixedAgo: "MBTA marked this fixed",
+    fixedAgo: "MBTA alert resolved",
     reward: (n: number) => `+${n} tokens`,
     report: "Report what you see",
     verify: "Check it’s working",
@@ -67,8 +74,10 @@ export const content = {
     tokens: (n: number) => `+${n} tokens`,
     stamp: (category: string) => `${category} stamp added to your collection`,
     honest: "Completed in T Party. This does not send anything to the MBTA.",
-    collection: "View collection",
-    another: "Find another problem",
+    collection: "Visit my world",
+    another: "Continue exploring",
+    newPiece: (name: string) => `Your island has a new piece waiting: ${name}.`,
+    stampsSoFar: (n: number, total: number) => `${n} of ${total} stamps toward your island`,
   },
 
   /** Below this zoom the landmark models are hidden, so the far-out view stays clean. */
@@ -89,12 +98,12 @@ export const categories = [
   { id: "service", label: "Service changes", short: "Service", stamp: "Service" },
   { id: "access", label: "Accessibility", short: "Access", stamp: "Access" },
   { id: "station", label: "Escalators & station", short: "Station", stamp: "Station" },
-  { id: "verify", label: "Check it’s fixed", short: "Fixed?", stamp: "Verify" },
+  { id: "verify", label: "Check if it’s working", short: "Working?", stamp: "Verify" },
 ] as const;
 
 export type CategoryId = (typeof categories)[number]["id"];
 
-/** Report quests are filed by kind. Verify quests (MBTA says fixed) always go under "verify". */
+/** Report quests are filed by kind. Verify quests (MBTA resolved the alert) always go under "verify". */
 export const categoryOfKind: Record<QuestKind, Exclude<CategoryId, "verify">> = {
   closure: "service",
   shuttle: "service",
@@ -142,3 +151,68 @@ export const landmarks: Landmark[] = [
   { id: "south-station", name: "South Station", longitude: -71.0552, latitude: 42.3519, stationId: "place-sstat" },
   { id: "td-garden", name: "TD Garden", longitude: -71.0621, latitude: 42.3662, stationId: "place-north" },
 ];
+
+/** The arrival gate: the first thing a new rider sees, while the map loads behind it. */
+export const dive = {
+  title: "Where are you right now?",
+  intro: "We drop you into the nearest T stop. Your location stays in your browser.",
+  useLocation: "Use my location",
+  locating: "Finding the nearest stop…",
+  denied: "We could not get your location. Pick a place instead.",
+  orStart: "Or start at",
+  skip: "Just show the map",
+  /** One quiet status line, so waiting never feels like nothing is happening. */
+  status: (ready: number, total: number) => (ready >= total ? "Map ready" : `Loading the map · ${ready} of ${total}`),
+  waiting: "Almost there…",
+  failed: "The map data did not load. Refresh to try again.",
+  /** The starting places on the gate. Each is the stop of a landmark in `landmarks`. */
+  spots: [
+    { label: "Park Street", stationId: "place-pktrm" },
+    { label: "Kenmore · Fenway", stationId: "place-kencl" },
+    { label: "South Station", stationId: "place-sstat" },
+    { label: "North Station", stationId: "place-north" },
+  ],
+};
+
+/** The small 3D world around one stop, and the questions asked inside it. */
+export const world = {
+  near: (station: string) => `Near ${station}`,
+  problems: (n: number) =>
+    n === 1
+      ? "1 problem within a short walk"
+      : `${n} problems within a short walk`,
+  far: "You are outside the T area, so we started you at Park Street.",
+  quiet: (from: string) =>
+    `Nothing is broken near ${from} right now. We moved you to the closest problem.`,
+  coach: "Tap a pin. Type what you see. Get a stamp.",
+  seeCity: "See the whole city",
+  backToBlock: "Back to my block",
+  you: "You are here",
+  question: "The question",
+  asks: {
+    elevator:
+      "The MBTA says this elevator is out. Have you been past it? Was it running, closed off, or was there a sign?",
+    escalator:
+      "This escalator is listed as out of service. What did you see when you walked by?",
+    access:
+      "An accessibility problem is reported here. What is it like on the ground?",
+    station:
+      "A change is posted at this station. What do riders actually run into?",
+    closure:
+      "The MBTA says this stop is closed. What did you see at the entrance?",
+    shuttle:
+      "Shuttle buses are replacing trains here. How easy was it to find the shuttle?",
+    suspension:
+      "Service is suspended on this stretch. How did you find out, and what did you do?",
+  } satisfies Record<QuestKind, string>,
+  askVerify:
+    "The MBTA says this one is fixed. Go and look: is it really working again?",
+  send: "Check my answer",
+  stamp: "Stamp the ticket",
+  fullForm: "Add a photo in the full form",
+  close: "Close",
+  placeholder: "Type what you see…",
+  enterHint: "Enter to check · Shift+Enter for a new line",
+  coachName: "AI coach",
+  edited: "You changed your answer. Check it again to unlock the stamp.",
+};

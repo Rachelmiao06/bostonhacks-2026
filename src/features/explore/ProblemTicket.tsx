@@ -19,6 +19,8 @@ type Props = {
   onIndex: (index: number) => void;
   done: ReadonlySet<string>;
   landmark?: Landmark;
+  /** The map's current landmark scale: a pixel landmark grows with zoom, so the ticket floats above it by the same amount. */
+  landmarkScale?: number;
   /** Wide screens pin the ticket above the stop; phones dock it at the bottom. */
   docked: boolean;
   onContribute: (quest: Quest) => void;
@@ -44,7 +46,7 @@ export function ProblemTicket(props: Props) {
       longitude={props.station.longitude}
       latitude={props.station.latitude}
       anchor="bottom"
-      offset={[0, props.landmark?.pixel ? -150 : -48]}
+      offset={[0, props.landmark?.pixel ? -Math.round(93 * (props.landmarkScale ?? 1) + 30) : -48]}
       style={{ zIndex: 10 }}
     >
       {ticket}
