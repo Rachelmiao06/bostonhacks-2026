@@ -1,51 +1,44 @@
 # Explore
 
-What: a real map of Boston with the T lines and one floating marker per station (Screen 1). Route `/explore`.
+What: a real, interactive map of Boston styled as a small architectural atlas (Screen 1). Route `/explore`.
 Issue: #2. Owner: Rachel. Only the owner edits this folder.
 
 ## How it fits together
-- `Explore.tsx`: just the map, full screen under the site nav, so other UI can be layered on top (server). `ExploreLoader.tsx`: loads the map in the browser only (`next/dynamic`, `ssr: false`).
-- `ExploreMap.tsx`: the map, the T lines, the markers. All map settings come from `src/lib/map.ts`.
-- The look, in the manner of an illustrated city map (`loadMapStyle` in `src/lib/map.ts`): the real streets and buildings underneath,
-  in one colour. Land is a soft block of that colour, streets are the paper showing through, water is a deeper shade.
-  The one colour is `BASE_TONE` with `BASE_STRENGTH`: `--sun` gives light cream (current), `--wood` a browner cream, `--sky` light blue, `--cherry` pink, `--steel` grey.
-  `BUILDINGS_3D` switches buildings between flat footprints (current) and raised blocks.
-- T lines are drawn like a highlighter pen: a wide see-through stroke with a solid line down the middle.
-- Stickers on top (`addStickerLayers`): hospitals from the map's own place data, each with a hand-drawn cross badge.
-  They appear from about zoom 14, where the map data carries places. More kinds can be added the same way.
-- `TrainsLayer.tsx`: live trains as dots in their line colour, gliding for two seconds after each update (every 15 seconds).
-- Elevator outages: a red dot on the marker and the MBTA's own alert text in the sheet. That station's challenge becomes "Elevator check".
-- Tapping a marker flies the camera down to the station.
-- `StationMarker.tsx`: one pixel sprite per station. Bobs gently, springs up on hover (Motion). Grey until completed.
-- `StationSheet.tsx`: opens on tap. Station name, its challenge, one progress bar per line ("3 of 22 stops").
-- `progress.ts`: completed stations, saved in the browser (localStorage key in `content.ts`).
-- `content.ts`: all text, the placeholder challenges, sprite paths and size.
-- Data: `/api/subway` (`src/app/api/subway/route.ts`) reads lines, stops and shapes from the MBTA V3 API, cached for a day.
-  If the MBTA cannot be reached it serves `subway-snapshot.json`, so the demo never depends on live data.
-- Live data: `/api/subway/live` (`src/app/api/subway/live/route.ts`) reads train positions and elevator alerts, shared for 15 seconds.
-  If the MBTA cannot be reached it serves `live-snapshot.json` and the map chip says "Saved sample · not live" (trains then stand still).
+- `Explore.tsx`: just the map, full screen under the site nav (server). `ExploreLoader.tsx`: loads it in the browser only (`next/dynamic`, `ssr: false`).
+- `ExploreMap.tsx`: puts the layers together. All map settings and colours come from `src/lib/map.ts`.
+- `StationMarker.tsx`: three levels. A stop is a small ring in its line colour; a transfer hub is a larger ring;
+  a mission (an elevator out, or a landmark stop) is a dashed ticket stamp. Completed turns filled or green; selected lifts.
+- `LandmarkMarker.tsx`: the few miniature buildings floating over the map, each pinned to its real coordinates.
+  They hover over a soft shadow, lift on hover, pop when selected, grow with zoom and hide when zoomed far out.
+- `MissionTicket.tsx`: the small printed ticket that appears above the selected stop. "View mission" opens `StationSheet.tsx`.
+- `TrainsLayer.tsx`: live trains as dots in their line colour.
+- `progress.ts`: completed stations, saved in the browser. `content.ts`: all text, the sample missions and the landmark list.
 
-## Doodle look (涂鸦)
-- Wobbly lines: an SVG filter (`DOODLE_FILTER` in `src/lib/map.ts`) nudges the map picture so straight lines look hand-drawn.
-  `strength` is how far lines wander, `frequency` how often they bend. It switches off while the map is dragged, to keep dragging smooth.
-- Scribbled water: `addDoodleTextures` draws a small crayon-stroke tile in the base tone and fills the water with it.
-- Place names are still typeset (they wobble with everything else). Truly hand-lettered names need a handwriting font, which lives in the shared layout.
+## The look
+- Palette: `ATLAS` in `src/lib/map.ts` (stone land, sage-grey water, ivory roads, sandstone buildings, taupe outlines, sage parks).
+  These are typed-in colours from Rachel's brief; they should move to `globals.css` as tokens once the team agrees.
+  The map's own layers are repainted (`loadMapStyle`); no filter sits over the map, so MBTA colours stay true.
+- Background buildings: every real footprint, low contrast, with a hairline outline from zoom 14.
+- T lines: official colours with a soft ivory edge. Selecting a stop brings its lines forward and dims the rest (`tLineLayers`).
+- Motion: nothing moves on its own. Hover and selection use short springs; Reduced Motion turns them off.
 
-## Speed
-- The street style and the T data start downloading the moment the map code arrives, side by side; streets show without waiting for the T.
-- The marker bob is a browser-native animation (see `StationMarker.tsx`), so 125 markers cost nothing while tiles load. Motion only runs on hover.
-- Trains redraw for two seconds per update, not constantly.
-- The MBTA allows 20 requests a minute without a key. We use 7 once a day plus 8 a minute while someone is watching.
-  Set `MBTA_API_KEY` in Vercel (free from api-v3.mbta.com) to lift that to 1,000.
+## Adding the miniature buildings
+The landmarks are listed in `content.ts` (`landmarks`). Each has real coordinates and the stop its ticket belongs to.
+Until a landmark has art, a plain dashed block marks its spot. To add art:
+1. Make a PNG with a see-through background, three-quarter view, about 240px wide.
+2. Save it in `public/assets/explore/landmarks/`, for example `state-house.png`.
+3. Add `art: "/assets/explore/landmarks/state-house.png"` to that landmark in `content.ts`.
 
-## Swapping in the real art
-Replace the files in `public/assets/explore/`, keeping the names: `marker-red.png`, `marker-orange.png`,
-`marker-green.png`, `marker-blue.png`, `marker-mattapan.png`. Any square size works; they are drawn at
-`spriteSize` (in `content.ts`) with crisp pixels. A station on two lines uses its first line's sprite.
+## Data
+- `/api/subway`: lines, stops and shapes from the MBTA V3 API, cached for a day, with `subway-snapshot.json` as fallback.
+- `/api/subway/live`: train positions and elevator alerts, shared for 15 seconds, with `live-snapshot.json` as fallback
+  (the chip then says "Saved sample · not live").
+- Hospitals come from the map's own place data (`addStickerLayers`), from zoom 14.
+- The MBTA allows 20 requests a minute without a key. Set `MBTA_API_KEY` in Vercel to lift that to 1,000.
 
 ## Choices made (change freely)
 - Green B, C, D and E count as one Green Line (70 stops). Mattapan is its own line (8 stops).
-- Challenges are five unofficial sample missions, one per station, always labelled as not from the MBTA.
+- Missions are five unofficial sample challenges, always labelled as not from the MBTA.
 - "Mark as completed" is a stand-in until the real challenge flow (`features/challenge`) exists.
 - The sheet is built here on the Base UI dialog because `components/ui` has no Sheet yet.
 - `screenshots/` holds the PR screenshots only; safe to delete after merge.
