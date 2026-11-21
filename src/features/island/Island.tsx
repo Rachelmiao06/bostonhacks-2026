@@ -78,6 +78,7 @@ function IslandView({
   onTogglePreview: () => void;
 }) {
   const [phase, setPhase] = useState("ball");
+  const [unravelled, setUnravelled] = useState(false); // the rider folded the island back into the ball this visit
   const [known, setKnown] = useState(plan.known); // tiers knitted in right now
   const [waiting, setWaiting] = useState<number | null>(null); // tier whose thread lies on the quilt
   const [note, setNote] = useState("");
@@ -117,6 +118,7 @@ function IslandView({
       // Unravelling folds the island into the ball; the next knit-in includes everything earned so far,
       // so a waiting piece is not lost.
       if (p === "unravel" && !preview) {
+        setUnravelled(true);
         writeSeen(plan.earned);
         setKnown(plan.earned);
         setWaiting(null);
@@ -131,11 +133,19 @@ function IslandView({
   const next = unlockTiers[Math.min(known, total - 1)];
   const waitingTier = waiting !== null ? unlockTiers[waiting] : null;
   const allKnown = known >= total;
+  const opening = phase === "ball" || phase === "intro";
   const line = preview
     ? content.previewNote
     : waitingTier
       ? content.giftReady(waitingTier.name)
-      : note || (plan.mode === "return" ? content.welcomeBack(known, total) : allKnown ? content.allUnlocked : content.nextUnlock(next.name));
+      : note ||
+        (plan.mode === "return"
+          ? content.welcomeBack(known, total)
+          : allKnown
+            ? opening
+              ? content.allReady
+              : content.allUnlocked
+            : content.nextUnlock(next.name));
 
   return (
     <section className="fixed inset-0 z-30 bg-stone font-ui text-graphite">
@@ -150,7 +160,7 @@ function IslandView({
           {unavailable && <p className="text-xs text-taupe">{content.unavailable}</p>}
 
           {/* Keyboard and no-drag alternatives to pulling a thread */}
-          {phase === "ball" && plan.mode === "first" && (
+          {phase === "ball" && (plan.mode === "first" || unravelled) && (
             <button type="button" onClick={() => handle.current?.replay()} className={primary}>
               {content.knitButton}
             </button>
@@ -175,7 +185,7 @@ function IslandView({
       </p>
 
       <p className="pointer-events-none absolute inset-x-0 bottom-3 px-4 text-center text-xs text-graphite/70">
-        {content.hint} {content.soundHint}{" "}
+        {(plan.mode === "first" || unravelled) && opening ? content.hint : content.hintAfter} {content.soundHint}{" "}
         <a className="pointer-events-auto underline" href={content.creditUrl} target="_blank" rel="noreferrer">
           {content.credit}
         </a>

@@ -6,6 +6,8 @@ export const content = {
   progress: (stamps: number, total: number) => `${stamps} of ${total} stamps`,
   progressUnknown: "Checking your stamps…",
   hint: "Pull the thread to knit your island, or use the button. Then drag to look around and poke things.",
+  hintAfter: "Drag to look around and poke things.",
+  allReady: "Every piece you have earned is ready to knit in.",
   knitButton: "Knit the island for me",
   knitting: "Knitting your island…",
   knitted: "Your island is knitted. Drag to look around, poke things, or pull the loose end to unravel it.",
