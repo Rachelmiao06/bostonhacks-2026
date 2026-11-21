@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import gsap from "gsap";
 import { MotionConfig } from "motion/react";
 import type { Quest } from "@/lib/mbta";
 import {
@@ -9,6 +10,7 @@ import {
   MAX_PITCH,
   MIN_ZOOM,
   Map,
+  Marker,
   NavigationControl,
   Source,
   addStickerLayers,
@@ -22,9 +24,11 @@ import {
 } from "@/lib/map";
 import { categoryOf } from "./category";
 import { ContributePanel } from "./ContributePanel";
-import { categories, content, landmarks, type CategoryId, type Landmark } from "./content";
+import { categories, content, landmarks, world as worldText, type CategoryId, type Landmark } from "./content";
+import type { LoadStatus } from "./DiveGate";
 import { LandmarkMarker } from "./LandmarkMarker";
 import { FilterBar, ProgressChip, StatusChip } from "./MapOverlays";
+import { subwayDownload } from "./prefetch";
 import { ClusterPin, ProblemPin } from "./ProblemMarker";
 import { ProblemTicket } from "./ProblemTicket";
 import { useMyProgress } from "./progress";
@@ -32,19 +36,40 @@ import { clusterStops, problemStops, useQuests, type Cluster, type ProblemStop }
 import { StationMarker } from "./StationMarker";
 import { TrainsLayer } from "./TrainsLayer";
 import type { LiveData, SubwayData, SubwayStation } from "./types";
+import { AtlasButton, Eyebrow } from "./ui";
+import { WorldQuest } from "./WorldQuest";
+import {
+  OVERVIEW,
+  chooseWorld,
+  flyCamera,
+  insideWorld,
+  leash,
+  prefersReducedMotion,
+  setWorldBuildingsOpacity,
+  showWorldBuildings,
+  worldView,
+  type CameraView,
+  type Entry,
+  type World,
+} from "./world";
 
 type MapStyle = Awaited<ReturnType<typeof loadMapStyle>>;
 
 const getJson = <T,>(url: string): Promise<T> =>
   fetch(url).then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))));
 
-// Both downloads start the moment this file arrives in the browser, before React has drawn anything.
+// The streets start downloading the moment this file arrives in the browser, before React has drawn anything.
+// The T lines and the problem list were already started by prefetch.ts, as soon as the page loaded.
 const stylePromise = loadMapStyle();
-const subwayPromise = getJson<SubwayData>("/api/subway");
+const subwayPromise = subwayDownload();
+const BUILDING_OPACITY = 0.92;
+const DIVE_SECONDS = 4.2;
 
 const landmarkOfStation = new globalThis.Map(landmarks.map((landmark) => [landmark.stationId, landmark]));
 const ALL = new Set<CategoryId>(categories.map((c) => c.id));
 const NOTHING_DONE: ReadonlySet<string> = new Set();
+type Mode = "intro" | "world" | "atlas";
+const lngLat = (s: SubwayStation): [number, number] => [s.longitude, s.latitude];
 
 /** True on screens at least 640px wide (tickets pin to the map there; on phones they dock at the bottom). */
 function useWide() {
@@ -64,9 +89,30 @@ function useWide() {
  * Pick a pin to read its ticket; from the ticket, contribute. Browser only.
  * It fills the whole screen (fixed, under the floating nav) so other UI can be layered on top of it.
  */
-export default function ExploreMap() {
+type Props = {
+  /** How the rider chose to start (from the gate). */
+  entry: Entry;
+  /** Reports what has finished loading, for the gate's checklist. */
+  onStatus: (status: LoadStatus) => void;
+  /** Called when the gate can lift because the camera is about to move. */
+  onReveal: () => void;
+};
+
+export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
   const mapRef = useRef<MapRef>(null);
   const wide = useWide();
+  // intro = hidden behind the gate; world = the small 3D district; atlas = the whole city (the original map).
+  const [mode, setMode] = useState<Mode>(entry.kind === "atlas" ? "atlas" : "intro");
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [patient, setPatient] = useState(false);
+  const [worldInfo, setWorldInfo] = useState<World | null>(null);
+  const [arrived, setArrived] = useState(false);
+  const [coached, setCoached] = useState(false);
+  const fogRef = useRef<HTMLDivElement>(null);
+  const flight = useRef<gsap.core.Timeline | null>(null);
+  const unleash = useRef<(() => void) | null>(null);
+  const started = useRef(false);
+  const [startsInAtlas] = useState(entry.kind === "atlas");
   const [style, setStyle] = useState<MapStyle | null>(null);
   const [data, setData] = useState<SubwayData | null>(null);
   const [live, setLive] = useState<LiveData | null>(null);
@@ -92,7 +138,9 @@ export default function ExploreMap() {
   }, []);
 
   // Train positions: refreshed every few seconds. If a refresh fails we keep the last one.
+  // Not while the gate is up: the first seconds belong to the map and the dive.
   useEffect(() => {
+    if (mode === "intro") return;
     let cancelled = false;
     const load = () =>
       getJson<LiveData>("/api/subway/live")
@@ -104,7 +152,7 @@ export default function ExploreMap() {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, []);
+  }, [mode]);
 
   const lineGeoJSON = useMemo(() => {
     if (!data) return null;
@@ -122,6 +170,18 @@ export default function ExploreMap() {
   const stopById = useMemo(() => new globalThis.Map(stops.map((stop) => [stop.station.id, stop])), [stops]);
   const clusters = useMemo(() => clusterStops(stops, zoom), [stops, zoom]);
 
+  // The small world only shows what is inside its circle: a handful of stops, not the whole T.
+  const allStops = useMemo(() => problemStops(questList, stationById, ALL), [questList, stationById]);
+  const worldStops = useMemo(
+    () => (worldInfo ? allStops.filter((stop) => insideWorld(worldInfo.center, lngLat(stop.station), 1.05)) : []),
+    [allStops, worldInfo],
+  );
+  const worldStationList = useMemo(
+    () => (worldInfo && data ? data.stations.filter((station) => insideWorld(worldInfo.center, lngLat(station), 1.05)) : []),
+    [data, worldInfo],
+  );
+  const worldProblemCount = worldStops.reduce((sum, stop) => sum + stop.quests.length, 0);
+
   // Counts per category ignore the filter, so every chip always says how many there are.
   const counts = useMemo(() => {
     const all = problemStops(questList, stationById, ALL).flatMap((stop) => stop.quests);
@@ -133,6 +193,17 @@ export default function ExploreMap() {
     (station: SubwayStation) => {
       const map = mapRef.current?.getMap();
       if (!map) return;
+      if (mode === "world") {
+        // The question card sits at the bottom: lift the stop above it and lean in.
+        map.flyTo({
+          center: [station.longitude, station.latitude],
+          zoom: wide ? 16.8 : 16.4,
+          pitch: 64,
+          padding: wide ? { top: 0, bottom: 340, left: 0, right: 0 } : { top: 40, bottom: 430, left: 0, right: 0 },
+          duration: 1000,
+        });
+        return;
+      }
       // Wide: the ticket stands above the stop, under the nav and filters. Phone: it docks at the bottom.
       map.flyTo({
         center: [station.longitude, station.latitude],
@@ -142,13 +213,14 @@ export default function ExploreMap() {
         duration: 1200,
       });
     },
-    [wide],
+    [wide, mode],
   );
 
   const selectStation = useCallback(
     (station: SubwayStation, index = 0) => {
       setSelected(station);
       setQuestIndex(index);
+      setCoached(true);
       focus(station);
     },
     [focus],
@@ -209,15 +281,133 @@ export default function ExploreMap() {
     (quest: Quest) => {
       setPanelQuest(quest);
       const map = mapRef.current?.getMap();
-      if (map && wide) map.easeTo({ padding: { top: 420, right: 460, bottom: 0, left: 0 }, duration: 600 });
+      const top = mode === "world" ? 0 : 420;
+      if (map && wide) map.easeTo({ padding: { top, right: 460, bottom: 0, left: 0 }, duration: 600 });
     },
-    [wide],
+    [wide, mode],
   );
   const closePanel = useCallback(() => {
     setPanelQuest(null);
     const map = mapRef.current?.getMap();
-    if (map && wide) map.easeTo({ padding: { top: 420, right: 0, bottom: 0, left: 0 }, duration: 600 });
-  }, [wide]);
+    // In the world the question card comes back for the same stop, so keep room for it.
+    if (map && wide) map.easeTo({ padding: mode === "world" ? { top: 0, right: 0, bottom: 340, left: 0 } : { top: 420, right: 0, bottom: 0, left: 0 }, duration: 600 });
+  }, [wide, mode]);
+
+  // ---- The dive: gate -> fall from above Boston -> a small 3D world around one stop ----
+
+  const atlasView = useCallback((): CameraView => {
+    const view = initialView();
+    return { center: [view.longitude, view.latitude], zoom: view.zoom, pitch: view.pitch, bearing: view.bearing };
+  }, []);
+
+  /** Falls from high above the city to the district and builds the world while falling. */
+  const playWorld = useCallback(
+    (map: ReturnType<NonNullable<MapRef["getMap"]>>, w: World) => {
+      unleash.current?.();
+      unleash.current = null;
+      flight.current?.kill();
+      setWorldInfo(w);
+      setMode("world");
+      setArrived(false);
+      showWorldBuildings(map, w.center);
+      const fog = fogRef.current;
+      const buildings = { v: 0 };
+      const settle = () => {
+        map.setMinZoom(14.6);
+        gsap.set(fog, { opacity: 1 });
+        setWorldBuildingsOpacity(map, BUILDING_OPACITY);
+        unleash.current = leash(map, w.center);
+        setArrived(true);
+      };
+      flight.current = flyCamera(map, worldView(w.center, !wide), {
+        duration: DIVE_SECONDS,
+        instant: prefersReducedMotion(),
+        decorate: (timeline) => {
+          // In the last seconds of the fall: the fog closes in around the district and the buildings rise.
+          timeline.fromTo(fog, { opacity: 0 }, { opacity: 1, duration: 1.5, ease: "power1.inOut" }, DIVE_SECONDS - 1.8);
+          timeline.to(buildings, { v: BUILDING_OPACITY, duration: 1.4, ease: "power1.out", onUpdate: () => setWorldBuildingsOpacity(map, buildings.v) }, DIVE_SECONDS - 1.6);
+        },
+        onComplete: settle,
+      });
+    },
+    [wide],
+  );
+
+  /** The whole city, as the map always was. */
+  const playAtlas = useCallback(
+    (map: ReturnType<NonNullable<MapRef["getMap"]>>) => {
+      unleash.current?.();
+      unleash.current = null;
+      flight.current?.kill();
+      setArrived(false);
+      setSelected(null);
+      setPanelQuest(null);
+      setMode("atlas");
+      map.setMinZoom(MIN_ZOOM);
+      map.setPadding({ top: 0, right: 0, bottom: 0, left: 0 });
+      const buildings = { v: BUILDING_OPACITY };
+      flight.current = flyCamera(map, atlasView(), {
+        duration: 2.4,
+        instant: prefersReducedMotion(),
+        decorate: (timeline) => {
+          timeline.to(fogRef.current, { opacity: 0, duration: 0.9 }, 0);
+          timeline.to(buildings, { v: 0, duration: 1.1, onUpdate: () => setWorldBuildingsOpacity(map, buildings.v) }, 0);
+        },
+        onComplete: () => {
+          gsap.set(fogRef.current, { opacity: 0 });
+          setWorldBuildingsOpacity(map, 0);
+        },
+      });
+    },
+    [atlasView],
+  );
+
+  // The gate's checklist.
+  const problemsReady = quests.status !== "loading";
+  useEffect(() => {
+    onStatus({ streets: Boolean(style) && mapLoaded, lines: Boolean(data), problems: problemsReady });
+  }, [onStatus, style, mapLoaded, data, problemsReady]);
+
+  // If the problem list is slow, start without waiting for it forever.
+  const chose = entry.kind !== "pending";
+  useEffect(() => {
+    if (!chose) return;
+    const timer = window.setTimeout(() => setPatient(true), 7000);
+    return () => window.clearTimeout(timer);
+  }, [chose]);
+
+  // Once the rider has chosen and the map is ready: lift the gate and start moving.
+  useEffect(() => {
+    if (started.current || entry.kind === "pending" || !style || !mapLoaded || !data) return;
+    if (quests.status === "loading" && !patient) return;
+    const map = mapRef.current?.getMap();
+    if (!map) return;
+    started.current = true;
+    onReveal();
+    if (entry.kind === "atlas") {
+      if (!startsInAtlas) playAtlas(map);
+      return;
+    }
+    playWorld(map, chooseWorld(entry, data.stations, allStops));
+  }, [entry, style, mapLoaded, data, quests.status, patient, allStops, onReveal, playWorld, playAtlas, startsInAtlas]);
+
+  const backToBlock = useCallback(() => {
+    const map = mapRef.current?.getMap();
+    if (map && worldInfo) playWorld(map, worldInfo);
+  }, [playWorld, worldInfo]);
+  const seeCity = useCallback(() => {
+    const map = mapRef.current?.getMap();
+    if (map) playAtlas(map);
+  }, [playAtlas]);
+
+  // Leaving the page mid-flight: stop the animation and the leash.
+  useEffect(
+    () => () => {
+      flight.current?.kill();
+      unleash.current?.();
+    },
+    [],
+  );
 
   // The selected station's lines come forward; the rest step back.
   const selectedLineKey = selected?.lineIds.join(",") ?? "";
@@ -233,14 +423,17 @@ export default function ExploreMap() {
         {style && (
           <Map
             ref={mapRef}
-            initialViewState={initialView()}
+            initialViewState={startsInAtlas ? initialView() : { longitude: OVERVIEW.center[0], latitude: OVERVIEW.center[1], zoom: OVERVIEW.zoom, pitch: OVERVIEW.pitch, bearing: OVERVIEW.bearing }}
             attributionControl={{ compact: true }}
             mapStyle={style}
             maxBounds={MAX_BOUNDS}
             maxPitch={MAX_PITCH}
             minZoom={MIN_ZOOM}
             style={{ width: "100%", height: "100%" }}
-            onLoad={(event) => addStickerLayers(event.target)}
+            onLoad={(event) => {
+              addStickerLayers(event.target);
+              setMapLoaded(true);
+            }}
             onZoom={(event) => setZoom(Math.round(event.viewState.zoom * 2) / 2)}
             onClick={(event) => {
               // Taps on markers and tickets also reach the map; only a tap on bare map clears the selection.
@@ -255,8 +448,8 @@ export default function ExploreMap() {
                 <Layer {...lineLayers.line} />
               </Source>
             )}
-            {data && <TrainsLayer trains={live?.trains ?? []} lines={data.lines} />}
-            {data?.stations.map((station) => (
+            {data && (mode === "atlas" || arrived) && <TrainsLayer trains={live?.trains ?? []} lines={data.lines} />}
+            {(mode === "atlas" ? data?.stations : arrived ? worldStationList : [])?.map((station) => (
               <StationMarker
                 key={station.id}
                 station={station}
@@ -264,10 +457,16 @@ export default function ExploreMap() {
                 color={colorOfLine.get(station.lineIds[0]) ?? ""}
                 selected={selected?.id === station.id}
                 compact={zoom < 12}
-                onSelect={selectStation}
+                onSelect={(picked) => {
+                  if (mode !== "world") return selectStation(picked);
+                  // In the world only stops with a problem lead anywhere.
+                  const stop = stopById.get(picked.id) ?? allStops.find((s) => s.station.id === picked.id);
+                  if (stop) selectStop(stop);
+                }}
               />
             ))}
-            {data &&
+            {mode === "atlas" &&
+              data &&
               zoom >= content.landmarkMinZoom &&
               landmarks.map((landmark) => (
                 <LandmarkMarker
@@ -278,21 +477,43 @@ export default function ExploreMap() {
                   onSelect={selectLandmark}
                 />
               ))}
-            {clusters.map((cluster) =>
-              cluster.stops.length > 1 ? (
-                <ClusterPin key={`c-${cluster.id}`} cluster={cluster} onExpand={expandCluster} />
-              ) : (
+            {mode === "atlas" &&
+              clusters.map((cluster) =>
+                cluster.stops.length > 1 ? (
+                  <ClusterPin key={`c-${cluster.id}`} cluster={cluster} onExpand={expandCluster} />
+                ) : (
+                  <ProblemPin
+                    key={cluster.id}
+                    stop={cluster.stops[0]}
+                    doneCount={cluster.stops[0].quests.filter((q) => done.has(q.id)).length}
+                    selected={selected?.id === cluster.id}
+                    compact={zoom < 11.5}
+                    onSelect={selectStop}
+                  />
+                ),
+              )}
+            {mode === "world" &&
+              arrived &&
+              worldStops.map((stop) => (
                 <ProblemPin
-                  key={cluster.id}
-                  stop={cluster.stops[0]}
-                  doneCount={cluster.stops[0].quests.filter((q) => done.has(q.id)).length}
-                  selected={selected?.id === cluster.id}
-                  compact={zoom < 11.5}
+                  key={stop.station.id}
+                  stop={stop}
+                  doneCount={stop.quests.filter((q) => done.has(q.id)).length}
+                  selected={selected?.id === stop.station.id}
+                  compact={false}
+                  beacon
                   onSelect={selectStop}
                 />
-              ),
+              ))}
+            {mode === "world" && arrived && worldInfo?.you && (
+              <Marker longitude={worldInfo.you[0]} latitude={worldInfo.you[1]} anchor="center" style={{ zIndex: 7 }}>
+                <span role="img" aria-label={worldText.you} title={worldText.you} className="relative block size-4">
+                  <span aria-hidden className="absolute inset-0 rounded-full bg-graphite/30 motion-safe:animate-ping" />
+                  <span className="absolute inset-0 rounded-full border-2 border-ivory bg-graphite shadow-float" />
+                </span>
+              </Marker>
             )}
-            {data && selected && wide && (
+            {data && selected && wide && mode === "atlas" && (
               <ProblemTicket
                 station={selected}
                 lines={data.lines}
@@ -309,18 +530,52 @@ export default function ExploreMap() {
           </Map>
         )}
 
-        {/* Overlays: filters and progress under the nav, status at the bottom. */}
+        {/* The fog: the edge of the small world fades into the city's own colour, like a diorama on a table. */}
+        <div
+          ref={fogRef}
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-0"
+          style={{ background: "radial-gradient(ellipse 64% 60% at 50% 52%, transparent 52%, color-mix(in oklab, var(--atlas-land) 60%, transparent) 76%, var(--atlas-land) 100%)" }}
+        />
+
+        {/* Overlays: filters (or the world's name tag) and progress under the nav, status at the bottom. */}
         <div className="pointer-events-none absolute inset-x-0 top-[3.75rem] flex flex-col gap-2 px-2 sm:top-[4.75rem] sm:flex-row sm:items-start sm:justify-between sm:px-4">
           <div className="pointer-events-auto min-w-0">
-            {quests.status === "ready" && <FilterBar counts={counts} show={show} onToggle={toggleFilter} />}
+            {mode === "atlas" && quests.status === "ready" && (
+              <div className="flex flex-col items-start gap-2">
+                <FilterBar counts={counts} show={show} onToggle={toggleFilter} />
+                {worldInfo && (
+                  <AtlasButton tone="outline" size="sm" className="shadow-float" onClick={backToBlock}>
+                    {worldText.backToBlock}
+                  </AtlasButton>
+                )}
+              </div>
+            )}
+            {mode === "world" && arrived && worldInfo && (
+              <div className="flex flex-col items-start gap-2" aria-live="polite">
+                <div className="rounded-2xl border border-hairline bg-ivory/92 px-3.5 py-2 shadow-float backdrop-blur-md">
+                  <Eyebrow>{worldText.near(worldInfo.station.name)}</Eyebrow>
+                  <p className="font-ui text-sm font-medium text-graphite">{worldText.problems(worldProblemCount)}</p>
+                  {worldInfo.note && (
+                    <p className="mt-1 max-w-64 font-ui text-xs text-taupe">
+                      {worldInfo.note.kind === "far" ? worldText.far : worldText.quiet(worldInfo.note.from)}
+                    </p>
+                  )}
+                </div>
+                <AtlasButton tone="outline" size="sm" className="shadow-float" onClick={seeCity}>
+                  {worldText.seeCity}
+                </AtlasButton>
+                {!selected && !coached && worldProblemCount > 0 && (
+                  <p className="max-w-64 rounded-2xl bg-graphite px-3.5 py-2 font-ui text-xs font-medium text-ivory shadow-float">{worldText.coach}</p>
+                )}
+              </div>
+            )}
           </div>
-          <div className="pointer-events-auto self-start">
-            <ProgressChip />
-          </div>
+          <div className="pointer-events-auto self-start">{mode !== "intro" && <ProgressChip />}</div>
         </div>
 
         <div className="pointer-events-none absolute bottom-3 left-2 flex flex-col items-start gap-1.5 sm:left-4">
-          {live && data && (!selected || wide) && (
+          {mode === "atlas" && live && data && (!selected || wide) && (
             <StatusChip live={live.source === "live"}>
               {live.source === "live" ? content.liveChip(live.trains.length) : content.sampleChip}
             </StatusChip>
@@ -329,7 +584,7 @@ export default function ExploreMap() {
           {quests.status === "failed" && <StatusChip live={false}>{content.questsFailed}</StatusChip>}
         </div>
 
-        {!data && (
+        {!data && mode !== "intro" && (
           <p className="absolute inset-x-0 bottom-6 mx-auto w-fit rounded-full border border-hairline bg-ivory px-4 py-2 font-ui text-sm text-graphite shadow-float">
             {failed ? content.error : content.loading}
           </p>
@@ -337,7 +592,18 @@ export default function ExploreMap() {
 
         <ContributePanel quest={panelQuest} onClose={closePanel} />
 
-        {data && selected && !wide && !panelQuest && (
+        {mode === "world" && arrived && selected && !panelQuest && selectedQuests.length > 0 && (
+          <WorldQuest
+            key={selected.id}
+            quests={selectedQuests}
+            index={Math.min(questIndex, selectedQuests.length - 1)}
+            onIndex={setQuestIndex}
+            onClose={clearSelection}
+            onFullForm={contribute}
+          />
+        )}
+
+        {mode === "atlas" && data && selected && !wide && !panelQuest && (
           <ProblemTicket
             station={selected}
             lines={data.lines}

@@ -135,3 +135,73 @@ export const landmarks: Landmark[] = [
   { id: "south-station", name: "South Station", longitude: -71.0552, latitude: 42.3519, stationId: "place-sstat" },
   { id: "td-garden", name: "TD Garden", longitude: -71.0621, latitude: 42.3662, stationId: "place-north" },
 ];
+
+/** The arrival gate: the first thing a new rider sees, while the map loads behind it. */
+export const dive = {
+  eyebrow: "T Party · Boston",
+  title: "Drop in where you are.",
+  intro:
+    "We zoom you down to the nearest T stop and show what is broken around you. Your location stays in your browser.",
+  useLocation: "Use my location",
+  locating: "Finding the nearest stop…",
+  denied: "We could not get your location. Pick a place to start instead.",
+  orStart: "Or start at",
+  skip: "Skip, show me the whole map",
+  loading: {
+    label: "Getting the map ready",
+    streets: "Streets",
+    lines: "T lines",
+    problems: "Live problems",
+  },
+  waiting: "Almost there. The map is still arriving…",
+  /** The starting places on the gate. Each is the stop of a landmark in `landmarks`. */
+  spots: [
+    { label: "Park Street", stationId: "place-pktrm" },
+    { label: "Kenmore · Fenway", stationId: "place-kencl" },
+    { label: "South Station", stationId: "place-sstat" },
+    { label: "North Station", stationId: "place-north" },
+  ],
+};
+
+/** The small 3D world around one stop, and the questions asked inside it. */
+export const world = {
+  near: (station: string) => `Near ${station}`,
+  problems: (n: number) =>
+    n === 1
+      ? "1 problem within a short walk"
+      : `${n} problems within a short walk`,
+  far: "You are outside the T area, so we started you at Park Street.",
+  quiet: (from: string) =>
+    `Nothing is broken near ${from} right now. We moved you to the closest problem.`,
+  coach: "Tap a pin. Type what you see. Get a stamp.",
+  seeCity: "See the whole city",
+  backToBlock: "Back to my block",
+  you: "You are here",
+  question: "The question",
+  asks: {
+    elevator:
+      "The MBTA says this elevator is out. Have you been past it? Was it running, closed off, or was there a sign?",
+    escalator:
+      "This escalator is listed as out of service. What did you see when you walked by?",
+    access:
+      "An accessibility problem is reported here. What is it like on the ground?",
+    station:
+      "A change is posted at this station. What do riders actually run into?",
+    closure:
+      "The MBTA says this stop is closed. What did you see at the entrance?",
+    shuttle:
+      "Shuttle buses are replacing trains here. How easy was it to find the shuttle?",
+    suspension:
+      "Service is suspended on this stretch. How did you find out, and what did you do?",
+  } satisfies Record<QuestKind, string>,
+  askVerify:
+    "The MBTA says this one is fixed. Go and look: is it really working again?",
+  send: "Check my answer",
+  stamp: "Stamp the ticket",
+  fullForm: "Add a photo in the full form",
+  close: "Close",
+  placeholder: "Type what you see…",
+  enterHint: "Enter to check · Shift+Enter for a new line",
+  coachName: "AI coach",
+  edited: "You changed your answer. Check it again to unlock the stamp.",
+};

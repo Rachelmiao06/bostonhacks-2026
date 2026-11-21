@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { Quest, QuestFeed } from "@/lib/mbta";
 import { categoryOf, priorityOf } from "./category";
 import { content, type CategoryId } from "./content";
+import { takeQuestsDownload } from "./prefetch";
 import type { SubwayStation } from "./types";
 
 export type QuestState =
@@ -17,9 +18,17 @@ export function useQuests(): QuestState {
 
   useEffect(() => {
     let cancelled = false;
+    // The first load was already started by prefetch.ts; later refreshes fetch normally.
+    let first = true;
+    const download = (): Promise<QuestFeed> => {
+      if (first) {
+        first = false;
+        return takeQuestsDownload();
+      }
+      return fetch("/api/quests").then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))));
+    };
     const load = () =>
-      fetch("/api/quests")
-        .then((res) => (res.ok ? (res.json() as Promise<QuestFeed>) : Promise.reject(new Error(String(res.status)))))
+      download()
         .then((feed) => !cancelled && setState({ status: "ready", quests: feed.quests, source: feed.source }))
         // Keep the last good list if a refresh fails.
         .catch(() => !cancelled && setState((prev) => (prev.status === "ready" ? prev : { status: "failed" })));
