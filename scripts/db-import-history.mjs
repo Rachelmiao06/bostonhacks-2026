@@ -1,6 +1,7 @@
 // One-off: load past MBTA outages (from scripts/export-history.py) into the outages table.
 // Run: node --env-file=.env.local scripts/db-import-history.mjs history.json
-// Existing rows are never overwritten, so it is safe to run again.
+// Safe to run again. For outages our own sync already marked as fixed, this replaces our
+// detection time with MBTA's exact close time.
 import { readFileSync } from "node:fs";
 import pg from "pg";
 
@@ -44,14 +45,16 @@ let inserted = 0;
 for (let i = 0; i < rows.length; i += 2000) {
   const result = await client.query(
     `INSERT INTO outages (alert_id, facility_id, kind, station_id, station_name, lines, header, cause,
-                          started_at, first_seen_at, last_seen_at, resolved_at, source)
+                          started_at, first_seen_at, last_seen_at, resolved_at, source, resolved_source)
      SELECT r.alert_id, r.facility_id, r.kind, r.station_id, r.station_name,
             ARRAY(SELECT jsonb_array_elements_text(r.lines)), r.header, r.cause,
-            r.started_at, r.first_seen_at, r.resolved_at, r.resolved_at, 'archive'
+            r.started_at, r.first_seen_at, r.resolved_at, r.resolved_at, 'archive', 'mbta_archive'
      FROM jsonb_to_recordset($1::jsonb) AS r(alert_id text, facility_id text, kind text, station_id text,
           station_name text, lines jsonb, header text, cause text, started_at timestamptz,
           first_seen_at timestamptz, resolved_at timestamptz)
-     ON CONFLICT (alert_id) DO NOTHING`,
+     ON CONFLICT (alert_id) DO UPDATE
+       SET resolved_at = EXCLUDED.resolved_at, resolved_source = 'mbta_archive'
+       WHERE outages.resolved_at IS NOT NULL AND outages.resolved_source IS DISTINCT FROM 'mbta_archive'`,
     [JSON.stringify(rows.slice(i, i + 2000))],
   );
   inserted += result.rowCount;
@@ -59,5 +62,5 @@ for (let i = 0; i < rows.length; i += 2000) {
 const [{ total, unknown }] = (
   await client.query("select count(*) total, count(*) filter (where station_name = 'Unknown station' or station_name = '') unknown from outages")
 ).rows;
-console.log(`inserted ${inserted} of ${rows.length}; outages table now has ${total} rows, ${unknown} without a station name`);
+console.log(`inserted or corrected ${inserted} of ${rows.length}; outages table now has ${total} rows, ${unknown} without a station name`);
 await client.end();

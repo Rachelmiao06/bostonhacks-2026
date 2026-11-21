@@ -50,3 +50,18 @@ CREATE INDEX IF NOT EXISTS submissions_user_idx ON submissions (user_id);
 -- Where a row came from: 'live' = seen by our own sync, 'archive' = loaded once from MBTA's public alert archive.
 ALTER TABLE outages ADD COLUMN IF NOT EXISTS source text NOT NULL DEFAULT 'live';
 CREATE INDEX IF NOT EXISTS outages_resolved_idx ON outages (resolved_at);
+
+-- How we know when an outage ended:
+--   'mbta_archive' = MBTA's own close time (exact).
+--   'detected'     = we noticed it missing from the live feed; the true time lies between last_seen_at and resolved_at.
+ALTER TABLE outages ADD COLUMN IF NOT EXISTS resolved_source text;
+UPDATE outages SET resolved_source = CASE WHEN source = 'archive' THEN 'mbta_archive' ELSE 'detected' END
+WHERE resolved_at IS NOT NULL AND resolved_source IS NULL;
+
+-- One row per AI check, to cap how often one rider or one network address can call it.
+CREATE TABLE IF NOT EXISTS review_calls (
+  called_at timestamptz NOT NULL DEFAULT now(),
+  user_id   text NOT NULL,
+  ip_hash   text NOT NULL   -- SHA-256 of the address, never the address itself
+);
+CREATE INDEX IF NOT EXISTS review_calls_time_idx ON review_calls (called_at);

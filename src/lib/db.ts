@@ -55,7 +55,8 @@ export async function syncOutages(quests: Quest[], observedAt: string): Promise<
      FROM jsonb_to_recordset($1::jsonb) AS r(alert_id text, facility_id text, kind text, station_id text,
           station_name text, lines jsonb, header text, cause text, started_at timestamptz)
      ON CONFLICT (alert_id) DO UPDATE
-       SET last_seen_at = EXCLUDED.last_seen_at, header = EXCLUDED.header, cause = EXCLUDED.cause, resolved_at = NULL`,
+       SET last_seen_at = EXCLUDED.last_seen_at, header = EXCLUDED.header, cause = EXCLUDED.cause,
+           resolved_at = NULL, resolved_source = NULL`,
     [rows, observedAt],
   );
 
@@ -68,7 +69,7 @@ export async function syncOutages(quests: Quest[], observedAt: string): Promise<
   );
 
   const resolved = await query(
-    `UPDATE outages SET resolved_at = $2
+    `UPDATE outages SET resolved_at = $2, resolved_source = 'detected'
      WHERE resolved_at IS NULL AND alert_id <> ALL($1::text[]) RETURNING alert_id`,
     [quests.map((q) => q.id), observedAt],
   );

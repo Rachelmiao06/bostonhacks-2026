@@ -17,3 +17,6 @@ One line each: date · what · why.
 - 2026-11-21 · Loaded 26,300 closed outages (2019 onward) from MBTA's public LAMP alert archive, marked `source = 'archive'` · time-to-fix needs history; our own sync only started today.
 - 2026-11-21 · Archive rows with no close time are skipped · in the archive that does not reliably mean still open.
 - 2026-11-21 · `/api/stats` computes every KPI from the database on request, medians not averages · a few multi-year outages would distort an average.
+- 2026-11-21 · MBTA's API drops closed alerts, so exact close times exist only in the archive; our own detected fixes carry a window (`last_seen_at` to `resolved_at`) and count toward time-to-fix only if that window is 30 minutes or less · fix times must not depend on our traffic.
+- 2026-11-21 · `.github/workflows/sync.yml` loads `/api/quests` on the live site every 5 minutes · keeps detection windows small when nobody is using the app.
+- 2026-11-21 · AI check capped at 20 per rider and 60 per network address per hour (address stored only as a hash) · protects the Gemini quota; does not stop invented user ids from earning tokens.

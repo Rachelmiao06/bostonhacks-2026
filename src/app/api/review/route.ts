@@ -1,12 +1,16 @@
 // POST /api/review: run the AI check on a rider's report and save the result.
 // Send multipart form data: questId, userId, text (optional), photo (optional file).
 // The photo is sent to Gemini for this one check and is not stored by us.
+import { createHash } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { AiError, reviewSubmission } from "@/lib/ai";
 import { hasDb, query } from "@/lib/db";
 
 const MAX_TEXT = 2000;
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024; // 4 MB: Vercel rejects request bodies above 4.5 MB.
+// Limits protect the Gemini quota. A new user id does not reset the per-address limit.
+const MAX_CHECKS_PER_USER_PER_HOUR = 20;
+const MAX_CHECKS_PER_ADDRESS_PER_HOUR = 60;
 const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 function bad(message: string, status = 400) {
@@ -47,6 +51,18 @@ export async function POST(request: NextRequest) {
   );
   if (existing?.status === "completed") return bad("You already completed this quest", 409);
   if (!existing && outage.resolved_at) return bad("This quest has expired: MBTA resolved the outage", 409);
+
+  const address = request.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const ipHash = createHash("sha256").update(address).digest("hex");
+  const [usage] = await query<{ by_user: string; by_address: string }>(
+    `SELECT count(*) FILTER (WHERE user_id = $1) by_user, count(*) FILTER (WHERE ip_hash = $2) by_address
+     FROM review_calls WHERE called_at >= now() - interval '1 hour'`,
+    [userId, ipHash],
+  );
+  if (Number(usage.by_user) >= MAX_CHECKS_PER_USER_PER_HOUR || Number(usage.by_address) >= MAX_CHECKS_PER_ADDRESS_PER_HOUR) {
+    return bad("Too many AI checks in the last hour. Your report is not lost, please try again later.", 429);
+  }
+  await query("INSERT INTO review_calls (user_id, ip_hash) VALUES ($1, $2)", [userId, ipHash]);
 
   let review;
   try {

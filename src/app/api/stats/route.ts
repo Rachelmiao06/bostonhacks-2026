@@ -4,13 +4,18 @@ import { connection } from "next/server";
 import { hasDb, query } from "@/lib/db";
 
 const WINDOW_DAYS = 90;
+// Detected fixes are only trusted for timing when we saw the outage open at most this long before.
+const MAX_GAP = "interval '30 minutes'";
+// Exact close time from MBTA, or the midpoint of the window in which we know it closed.
+const FIXED_AT = `CASE WHEN resolved_source = 'detected' THEN last_seen_at + (resolved_at - last_seen_at) / 2 ELSE resolved_at END`;
+const PRECISE = `(resolved_source IS DISTINCT FROM 'detected' OR resolved_at - last_seen_at <= ${MAX_GAP})`;
 const hours = (v: string | null) => (v === null ? null : Math.round(Number(v) * 10) / 10);
 
 export async function GET() {
   await connection(); // always run at request time, never prebuilt
   if (!hasDb()) return Response.json({ error: "Database is not configured" }, { status: 503 });
 
-  const [openByKind, longestOpen, fixTime, fixTrend, repeatOffenders, busiestStations, riders, history] =
+  const [openByKind, longestOpen, fixTime, fixTrend, repeatOffenders, busiestStations, riders, history, openByHour, openByDay] =
     await Promise.all([
       query<{ kind: string; n: string }>(
         `SELECT kind, count(*) n FROM outages WHERE resolved_at IS NULL GROUP BY kind`,
@@ -22,20 +27,20 @@ export async function GET() {
       ),
       query<{ kind: string; n: string; median_h: string | null; p90_h: string | null }>(
         `SELECT kind, count(*) n,
-                percentile_cont(0.5) WITHIN GROUP (ORDER BY extract(epoch FROM resolved_at - started_at) / 3600) median_h,
-                percentile_cont(0.9) WITHIN GROUP (ORDER BY extract(epoch FROM resolved_at - started_at) / 3600) p90_h
+                percentile_cont(0.5) WITHIN GROUP (ORDER BY extract(epoch FROM ${FIXED_AT} - started_at) / 3600) median_h,
+                percentile_cont(0.9) WITHIN GROUP (ORDER BY extract(epoch FROM ${FIXED_AT} - started_at) / 3600) p90_h
          FROM outages
-         WHERE resolved_at >= now() - make_interval(days => $1) AND resolved_at >= started_at
+         WHERE resolved_at >= now() - make_interval(days => $1) AND resolved_at >= started_at AND ${PRECISE}
          GROUP BY kind`,
         [WINDOW_DAYS],
       ),
       query<{ month: string; n: string; median_h: string | null }>(
         `SELECT to_char(date_trunc('month', resolved_at AT TIME ZONE 'America/New_York'), 'YYYY-MM') AS month,
                 count(*) n,
-                percentile_cont(0.5) WITHIN GROUP (ORDER BY extract(epoch FROM resolved_at - started_at) / 3600) median_h
+                percentile_cont(0.5) WITHIN GROUP (ORDER BY extract(epoch FROM ${FIXED_AT} - started_at) / 3600) median_h
          FROM outages
          WHERE resolved_at AT TIME ZONE 'America/New_York' >= date_trunc('month', now() AT TIME ZONE 'America/New_York') - interval '11 months'
-           AND resolved_at >= started_at
+           AND resolved_at >= started_at AND ${PRECISE}
          GROUP BY 1 ORDER BY 1`,
       ),
       query<{ facility_id: string; station_name: string; kind: string; outages: string }>(
@@ -68,10 +73,31 @@ export async function GET() {
               AND EXISTS (SELECT 1 FROM submissions s WHERE s.alert_id = o.alert_id AND s.status = 'completed'
                           AND s.completed_at < o.resolved_at)) resolved_after_report`,
       ),
-      query<{ total: string; since: string | null; live_syncs: string }>(
+      query<{ total: string; since: string | null; live_syncs: string; imprecise: string }>(
         `SELECT (SELECT count(*) FROM outages) total,
                 (SELECT min(started_at) FROM outages WHERE source = 'archive') since,
-                (SELECT count(DISTINCT observed_at) FROM outage_observations) live_syncs`,
+                (SELECT count(DISTINCT observed_at) FROM outage_observations) live_syncs,
+                (SELECT count(*) FROM outages WHERE resolved_at >= now() - make_interval(days => $1)
+                   AND NOT ${PRECISE}) imprecise`,
+        [WINDOW_DAYS],
+      ),
+      // From the time-series table: the most outages seen open in any one sync, per hour, last 48 hours.
+      query<{ hour: string; open: string }>(
+        `SELECT bucket AS hour, max(n) AS open FROM (
+           SELECT time_bucket('1 hour', observed_at) bucket, observed_at, count(*) n
+           FROM outage_observations WHERE observed_at >= now() - interval '48 hours' GROUP BY 1, 2
+         ) per_sync GROUP BY bucket ORDER BY bucket`,
+      ),
+      // Rebuilt from outage start and end times: how many were open at the end of each day, last 90 days.
+      query<{ day: string; open: string }>(
+        `SELECT to_char(d, 'YYYY-MM-DD') AS day, count(o.alert_id) AS open
+         FROM generate_series(date_trunc('day', now()) - make_interval(days => $1), date_trunc('day', now()), interval '1 day') d
+         LEFT JOIN (
+           SELECT alert_id, started_at, resolved_at FROM outages
+           WHERE resolved_at IS NULL OR resolved_at >= date_trunc('day', now()) - make_interval(days => $1)
+         ) o ON o.started_at <= d AND (o.resolved_at IS NULL OR o.resolved_at > d)
+         GROUP BY d ORDER BY d`,
+        [WINDOW_DAYS],
       ),
     ]);
 
@@ -102,6 +128,10 @@ export async function GET() {
       repeatOffenders: repeatOffenders.map((f) => ({
         facilityId: f.facility_id, stationName: f.station_name, kind: f.kind, outages: Number(f.outages),
       })),
+      openOverTime: {
+        byHour: openByHour.map((h) => ({ hour: h.hour, open: Number(h.open) })),
+        byDay: openByDay.map((d) => ({ day: d.day, open: Number(d.open) })),
+      },
       busiestStations: busiestStations.map((s) => ({ stationName: s.station_name, outages: Number(s.outages) })),
     },
     riders: {
@@ -121,6 +151,8 @@ export async function GET() {
       totalOutagesOnRecord: Number(history[0].total),
       archiveStartsAt: history[0].since,
       liveSyncs: Number(history[0].live_syncs),
+      // Fixes left out of time-to-fix because we could not pin their end time to within 30 minutes.
+      fixesExcludedAsImprecise: Number(history[0].imprecise),
       sources: ["MBTA V3 API (live alerts)", "MBTA LAMP public alert archive", "T Party rider submissions"],
     },
   });
