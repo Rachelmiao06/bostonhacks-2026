@@ -2,6 +2,13 @@
 
 What: the live quest page at `/challenges/[id]` (id = a quest id from `/api/quests`), plus the older practice page at `/challenge` (sample quests, offline coach) that it replaces.
 
+## Who owns what
+- **Louie** (quest hub at `/challenge`): `Challenge.tsx`, `SubmitForm.tsx`, `useSubmission.ts`, `review.ts`, `storage.ts`, `sample-quests.ts`, `PhotoField.tsx`, `photo.ts`.
+- **Rachel** (one quest at `/challenges/[id]`): `QuestPage.tsx`, `ReportForm.tsx`, `VerifyForm.tsx`, `RewardCard.tsx`, `useQuest.ts`, `useReport.ts`, `api.ts`, and `src/app/challenges/[id]/`.
+- **Shared in this folder:** `content.ts`, one section each.
+
+One quest = `/challenges/[id]`. The report rules are `useReport` (the server is the source of truth). Louie's browser-only flow will be retired by Louie in his own PR.
+
 ## Live page: /challenges/[id]
 - `QuestPage.tsx` + `useQuest.ts`: details from `/api/quests` (no extra MBTA call), Community Mission label, "quest not found" page.
 - `ReportForm.tsx` + `useReport.ts`: guided steps (Write → Check with AI → Revise → Complete), tap-to-add question starters, text and/or one photo, `/api/review` check, "not checked" after any edit, Complete via `/api/submissions` only after a passing check on the unchanged report. Text is saved to localStorage on every keystroke; photos stay in memory (shrunk under 4 MB) and are never stored.
