@@ -204,6 +204,10 @@ export function mountIsland(container, { isUnlocked, onPhase, instant = false })
 		replay: () => world.playIntro(),
 		offerGift: (stages, label, onKnitted) => world.offerGift(stages, label, onKnitted),
 		acceptGift: () => world.acceptGift(),
+		/** Pop the reward parcel in; `onOpen` runs each time it is poked. */
+		showParcel: (onOpen) => world.parcel.show(onOpen),
+		hideParcel: () => world.parcel.hide(),
+		openParcel: () => world.parcel.open(),
 		dispose() {
 			renderer.setAnimationLoop(null);
 			observer.disconnect();

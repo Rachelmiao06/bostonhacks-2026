@@ -6,6 +6,8 @@ import { refreshProgress, stampCount, useMyProgress, type ProgressState } from "
 import { content, stagesFor, unlockTiers } from "./content";
 import { IslandScene } from "./IslandLoader";
 import type { IslandHandle } from "./IslandScene";
+import { perk, perkReady } from "./perk";
+import { PerkTicket } from "./PerkTicket";
 import { readSeen, writeSeen } from "./seen";
 
 const total = unlockTiers.length;
@@ -81,6 +83,8 @@ function IslandView({
   const [known, setKnown] = useState(plan.known); // tiers knitted in right now
   const [waiting, setWaiting] = useState<number | null>(null); // tier whose thread lies on the quilt
   const [note, setNote] = useState("");
+  const [ready, setReady] = useState(false);
+  const [ticket, setTicket] = useState(false);
   const handle = useRef<IslandHandle | null>(null);
   const offerRef = useRef<(h: IslandHandle, index: number, more: boolean) => void>(() => {});
 
@@ -106,6 +110,7 @@ function IslandView({
   const onReady = useCallback(
     (h: IslandHandle) => {
       handle.current = h;
+      setReady(true);
       if (!preview && plan.mode === "return" && plan.earned > plan.known) offerRef.current(h, plan.known, false);
     },
     [preview, plan],
@@ -128,6 +133,16 @@ function IslandView({
     [plan, preview],
   );
 
+  // The parcel appears once the island is fully knitted and a perk is available to this rider.
+  // The server's count decides (plan.earned); the parcel stays on the island so the perk can be seen again.
+  const parcelOn = perk !== null && perkReady(plan.earned) && ready && phase === "idle" && waiting === null;
+  useEffect(() => {
+    const h = handle.current;
+    if (!h || !ready) return;
+    if (parcelOn) h.showParcel(() => setTicket(true));
+    else h.hideParcel();
+  }, [parcelOn, ready]);
+
   const next = unlockTiers[Math.min(known, total - 1)];
   const waitingTier = waiting !== null ? unlockTiers[waiting] : null;
   const allKnown = known >= total;
@@ -135,7 +150,14 @@ function IslandView({
     ? content.previewNote
     : waitingTier
       ? content.giftReady(waitingTier.name)
-      : note || (plan.mode === "return" ? content.welcomeBack(known, total) : allKnown ? content.allUnlocked : content.nextUnlock(next.name));
+      : note ||
+        (parcelOn
+          ? content.parcelWaiting
+          : plan.mode === "return"
+            ? content.welcomeBack
+            : allKnown
+              ? content.allUnlocked
+              : content.nextUnlock(next.name));
 
   return (
     <section className="fixed inset-0 z-30 bg-stone font-ui text-graphite">
@@ -145,7 +167,6 @@ function IslandView({
         <div className="pointer-events-auto space-y-1 rounded-2xl border border-hairline bg-ivory/92 p-4 shadow-float backdrop-blur-md">
           <p className="font-mono text-[0.65rem] tracking-[0.16em] text-taupe uppercase">{content.eyebrow}</p>
           <h1 className="font-serif text-xl leading-tight font-semibold">{content.title}</h1>
-          <p className="text-sm">{content.progress(plan.earned, total)}</p>
           <p className="text-xs text-taupe">{line}</p>
           {unavailable && <p className="text-xs text-taupe">{content.unavailable}</p>}
 
@@ -160,6 +181,11 @@ function IslandView({
               {content.giftButton}
             </button>
           )}
+          {parcelOn && (
+            <button type="button" onClick={() => handle.current?.openParcel()} className={primary}>
+              {content.parcelButton}
+            </button>
+          )}
           <button
             type="button"
             onClick={onTogglePreview}
@@ -169,6 +195,8 @@ function IslandView({
           </button>
         </div>
       </div>
+
+      {ticket && perk && <PerkTicket perk={perk} onClose={() => setTicket(false)} />}
 
       <p role="status" aria-live="polite" className="sr-only">
         {note || (phase === "ball" ? content.waiting : phase === "intro" ? content.knitting : phase === "idle" ? content.knitted : "")}

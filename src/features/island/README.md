@@ -23,6 +23,11 @@ Owner: Rachel. Only the owner edits this folder.
 - **Island visits:** `seen.ts` remembers how many tiers this browser has seen knitted (display memory only). First visit: the yarn-pull opening. Later visits: the island is simply there (`instant`). A stamp earned since the last visit leaves one red loose thread on the quilt (`offerGift` in `weave.js`); pulling it, or pressing "Knit it in for me", springs that tier's pieces into place. The tier is remembered only once it has really knitted in. If the server cannot be reached, the island shows what this browser last saw.
 - Every visit re-fetches stamps (`refreshProgress`) and re-plans, because the page stays mounted between visits.
 
+## Reward parcel
+- `yarn-world/parcel.js`: a small knitted gift box (same yarn materials, `Spring`, poke and sounds). Not part of the knit-in: `Island.tsx` calls `showParcel` once the island is fully there and the rider qualifies (`perkReady` in `perk.ts`, using the server's count), and hides it when the island unravels.
+- Poke it (or press "Open your parcel") and the lid flips up; `PerkTicket.tsx` shows the coupon. The parcel stays on the island so the ticket can be opened again.
+- `perk.ts` holds the one perk. It is a **demo**: no code, no barcode, and the ticket says nothing can be redeemed. A real code must come from the server, one per rider, never from this file.
+
 ## Notes
 - The yarn ball, the quilt and the river are always there. The unlock set is read when the thread is pulled.
 - "Preview the full island" shows everything without touching real stamps (good for the demo).

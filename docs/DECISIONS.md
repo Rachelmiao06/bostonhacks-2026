@@ -43,3 +43,5 @@ One line each: date · what · why.
 - 2026-11-21 · GSAP only, no Lenis · Lenis smooths page scrolling, but the map owns the wheel (zoom) and the quest card scrolls natively; both would fight it. Revisit only if a scrolling landing page is added.
 - 2026-11-21 · 3D buildings use MapLibre `distance` (not `within`, which ignores building outlines), heights capped at 46 m, only inside the district · keeps the world light and stops towers hiding stops.
 - 2026-11-21 · Location is read once in the browser to pick the nearest stop; never sent, never stored · privacy, and the app needs nothing more.
+- 2026-11-21 · Reward = one small knitted parcel on the island (poke it to open a coupon ticket), not a store or wallet; island copy no longer shows stamp counts · a tiny surprise on top of the island riders already like; backend counts are unchanged.
+- 2026-11-21 · The only perk is a DEMO (no code, no barcode, says nothing can be redeemed) until a real merchant exists; a real code must be issued by the server per rider, never written in the browser code · a code in client code is public and would be shared by everyone.

@@ -18,6 +18,7 @@ import { setupGroundArt } from './groundart.js';
 import { setupSmoke } from './smoke.js';
 import { setupMeadow } from './meadow.js';
 import { setupKite } from './kite.js';
+import { setupParcel } from './parcel.js';
 import { buildBlanket } from './blanket.js';
 import { LAYOUT, L, S, H, ROLL, HOUSE, BALL, FLOWER_CLUSTERS } from './layout.js';
 
@@ -1182,6 +1183,8 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 	const kite = setupKite({ root, wind, kit, terrain });
 	// sheep walk around the kite stake, and the wildflower patches stay clear of it
 	blockers.push([kite.items[0].base.x, kite.items[0].base.z, 0.45]);
+	// the reward parcel: hidden until the page shows it (not part of the knit-in)
+	const parcel = setupParcel({ root, kit, terrain, at: settle(...L(1.7, -1.2), 0.9), blockers });
 	const meadow = setupMeadow({ root, wind, kit, terrain, trees });
 	const syncColliders = () => {
 		for (const c of sheepColliders) c.s.body.localToWorld(c.center.set(0, 0.5, -0.05));
@@ -1283,6 +1286,7 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 		groundArt.update(t, dt);
 		smoke.update(t, dt);
 		kite.update(t, dt);
+		parcel.update(t, dt);
 		meadow.update(t, dt);
 		weave.update(t, dt);
 		// the first gust sweeps over the island as soon as the knit-in finishes; cloud shadows fade in with it
@@ -1383,6 +1387,7 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 		offerGift: (stages, label, onKnitted) => weave.offerGift(stages, label, onKnitted),
 		acceptGift: () => weave.acceptGift(),
 		setPullSpan: (v) => weave.setPullSpan(v),
+		parcel,
 		get phase() {
 			return weave.phase;
 		},

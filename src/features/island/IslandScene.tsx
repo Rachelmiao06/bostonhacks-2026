@@ -11,6 +11,11 @@ export type IslandHandle = {
   offerGift: (stages: string[], label: string, onKnitted: () => void) => boolean;
   /** Knit the waiting piece in without dragging. */
   acceptGift: () => void;
+  /** Pop the reward parcel in. `onOpen` runs each time it is poked. */
+  showParcel: (onOpen: () => void) => void;
+  hideParcel: () => void;
+  /** Open the parcel without poking it (button for keyboard and screen readers). */
+  openParcel: () => void;
 };
 
 type Props = {
