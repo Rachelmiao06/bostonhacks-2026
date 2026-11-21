@@ -30,8 +30,8 @@ const stationList = (stationData.stations as { id: string; name: string; lines: 
   .sort((a, b) => a.name.localeCompare(b.name));
 
 /**
- * The welcome: a small frosted-glass card floating over the live map, low in the corner on wide screens and
- * as a bottom sheet on phones. The map loads behind it and stays visible. Three honest choices, location
+ * The welcome: a small liquid-glass card floating in the middle of the live map, a little below centre, so the
+ * lines of the T show through it. The map loads behind it and stays visible. Three honest choices, location
  * optional. When the camera starts to move, the card fades away.
  */
 export function DiveGate({ phase, status, error, onLocate, onSpot, onSkip, onGone }: Props) {
@@ -79,13 +79,13 @@ export function DiveGate({ phase, status, error, onLocate, onSpot, onSkip, onGon
   const note = status.failed ? dive.failed : error ? dive.errors[error] : phase === "waiting" && ready < 3 ? dive.waiting : "";
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-[35] flex items-end justify-center px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:justify-start sm:px-6 sm:pb-6">
+    <div className="pointer-events-none fixed inset-0 z-[35] flex items-center justify-center px-4 pt-[12vh] pb-[max(1rem,env(safe-area-inset-bottom))]">
       <div
         ref={card}
         role="region"
         aria-label={dive.title}
         className={cn(
-          "pointer-events-auto relative isolate w-full max-w-[24rem] overflow-hidden rounded-[1.75rem] border border-ivory/80 bg-gradient-to-br from-ivory/55 via-ivory/30 to-ivory/18 p-4 font-ui text-graphite backdrop-blur-xl backdrop-saturate-[1.8] sm:p-5",
+          "pointer-events-auto relative isolate w-full max-w-[25rem] overflow-hidden rounded-[1.75rem] border border-ivory/80 bg-gradient-to-br from-ivory/55 via-ivory/30 to-ivory/18 p-4 font-ui text-graphite backdrop-blur-xl backdrop-saturate-[1.8] sm:p-5",
           phase === "revealing" && "pointer-events-none",
         )}
         style={{
