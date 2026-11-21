@@ -46,3 +46,7 @@ CREATE TABLE IF NOT EXISTS submissions (
   UNIQUE (alert_id, user_id)
 );
 CREATE INDEX IF NOT EXISTS submissions_user_idx ON submissions (user_id);
+
+-- Where a row came from: 'live' = seen by our own sync, 'archive' = loaded once from MBTA's public alert archive.
+ALTER TABLE outages ADD COLUMN IF NOT EXISTS source text NOT NULL DEFAULT 'live';
+CREATE INDEX IF NOT EXISTS outages_resolved_idx ON outages (resolved_at);

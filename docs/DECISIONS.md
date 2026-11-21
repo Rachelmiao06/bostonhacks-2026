@@ -14,3 +14,6 @@ One line each: date · what · why.
 - 2026-11-21 · AI check uses Gemini, lite model first with fallbacks (`src/lib/ai.ts`) · bigger models were overloaded (503) on demo weekend; lite answered in about 1 s.
 - 2026-11-21 · Pass rule (every score 3 or more out of 5) is in code, and only `/api/review` can write an AI result · the model and the browser cannot grant a pass.
 - 2026-11-21 · Editing a report after a check resets it to not checked; completion needs the exact checked report · spec: changes must be re-checked.
+- 2026-11-21 · Loaded 26,300 closed outages (2019 onward) from MBTA's public LAMP alert archive, marked `source = 'archive'` · time-to-fix needs history; our own sync only started today.
+- 2026-11-21 · Archive rows with no close time are skipped · in the archive that does not reliably mean still open.
+- 2026-11-21 · `/api/stats` computes every KPI from the database on request, medians not averages · a few multi-year outages would distort an average.
