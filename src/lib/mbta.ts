@@ -44,7 +44,7 @@ export type QuestFeed = {
 const ALERTS_URL =
   "https://api-v3.mbta.com/alerts?filter%5Bactivity%5D=USING_WHEELCHAIR,USING_ESCALATOR&include=facilities,stops";
 const SOURCE_URL = "https://www.mbta.com/alerts/access";
-const REWARD_TOKENS = 10;
+export const REWARD_TOKENS = 10;
 /** When src/lib/data/mbta-alerts-snapshot.json was saved. */
 export const snapshotTakenAt = "2026-11-21T16:20:00Z";
 
@@ -149,10 +149,13 @@ async function fetchLiveQuests(): Promise<QuestFeed> {
   return { quests: toQuests(raw, now), source: "live", fetchedAt: now.toISOString() };
 }
 
+let lastSyncedAt: string | undefined;
+
 /** The quest list every page should use. Never throws: falls back to the saved snapshot. */
 export async function getQuests(): Promise<QuestFeed> {
+  let feed: QuestFeed;
   try {
-    return await fetchLiveQuests();
+    feed = await fetchLiveQuests();
   } catch (error) {
     console.error("MBTA fetch failed, serving snapshot:", error);
     return {
@@ -161,4 +164,19 @@ export async function getQuests(): Promise<QuestFeed> {
       fetchedAt: snapshotTakenAt,
     };
   }
+
+  // Save each fresh MBTA answer once (about every 5 minutes). Snapshot data is never saved,
+  // so an MBTA outage cannot be mistaken for a wave of fixes.
+  if (feed.fetchedAt !== lastSyncedAt) {
+    const { hasDb, syncOutages } = await import("./db");
+    if (hasDb()) {
+      try {
+        await syncOutages(feed.quests, feed.fetchedAt);
+        lastSyncedAt = feed.fetchedAt;
+      } catch (error) {
+        console.error("Could not save outages to the database:", error);
+      }
+    }
+  }
+  return feed;
 }
