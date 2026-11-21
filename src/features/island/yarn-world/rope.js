@@ -21,7 +21,6 @@
 //   bend 0.5         strength of the soft anti-kink constraint (0 disables)
 //   reachFactor 0.99 a grabbed particle can only get this fraction of its chain length away
 //                    from the anchor (keeps the rope from stretching under a hard pull)
-//   grabFollow 80    1/s, how fast a grabbed particle chases the hand (lower = softer, springier)
 //   colliders        array of { center: Vector3, radius } spheres, read live (mutate freely,
 //                    call wake() after moving one)
 //
@@ -102,7 +101,6 @@ export class Rope {
 		groundFriction = 0.85,
 		bend = 0.5,
 		reachFactor = 0.99,
-		grabFollow = GRAB_FOLLOW,
 		colliders = [],
 	}) {
 		this.groundAt = groundAt;
@@ -117,7 +115,6 @@ export class Rope {
 		this.groundFriction = groundFriction;
 		this.bend = bend;
 		this.reachFactor = reachFactor;
-		this.grabFollow = grabFollow;
 		this.colliders = colliders;
 
 		this.count = 0;
@@ -607,7 +604,7 @@ export class Rope {
 		const dz = tmp.z - pos[k + 2];
 		const dist = Math.hypot(dx, dy, dz);
 		if (dist > 1e-7) {
-			const move = Math.min(dist * (1 - Math.exp(-this.grabFollow * h)), GRAB_SPEED * h);
+			const move = Math.min(dist * (1 - Math.exp(-GRAB_FOLLOW * h)), GRAB_SPEED * h);
 			const f = move / dist;
 			pos[k] += dx * f;
 			pos[k + 1] += dy * f;

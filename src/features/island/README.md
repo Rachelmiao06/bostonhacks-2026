@@ -8,19 +8,14 @@ Owner: Rachel. Only the owner edits this folder.
 - `content.ts`: all text and `unlockTiers`: what each stamp knits in (1 stamp = first tier, 5 stamps = the whole island).
 - `IslandLoader.tsx` / `IslandScene.tsx`: load the three.js scene in the browser only, and clean it up when you leave.
 - `yarn-world/`: **Yarn World by Kris Yang** (https://github.com/krisyangdev/yarn-world, MIT, see `yarn-world/LICENSE-yarn-world`).
-  Our changes: `mount.js` (replaces `main.js`: sized to its container, cleaned up on leave), `weave.js` + `world.js` (`isUnlocked` keeps locked pieces hidden; pull-driven intro, see below), `rope.js`,
+  Our changes: `mount.js` (replaces `main.js`: sized to its container, cleaned up on leave), `weave.js` + `world.js` (`isUnlocked` keeps locked pieces hidden; `scrub` makes the pull drive the knit-in; palette `P` retuned to warm stone, ivory, sage and sandstone with MBTA accents),
   `guide.js`, `sound.js`, `ambience.js` (mount and dispose). Sounds are CC0, in `public/assets/island/sfx/`.
 
-## The opening: pull the thread
-The island starts as a yarn ball on its mat with a loose thread. Dragging the thread knits the island in:
-- Real pointer drag (mouse and touch). The thread feeds out of the ball as you pull (up to 7.5 units long) and the pompom follows the hand softly (`grabFollow` in `rope.js`).
-- Progress = how far the hand has moved away from the ball (only outward movement counts, so pull, bring the hand back, pull again works). `PULL_RANGE` in `weave.js` is the length of yarn for the whole island.
-- The existing knit-in animation is reused as it was. Its clock now chases the pulled length (eases in and out, never runs backwards, never faster than 3x) instead of running on a timer. Letting go pauses it; the thread can be picked up again.
-- "Knit it for me" (and `world.knit()`) runs the same thing without a hand: the accessible alternative. `Island.tsx` shows a polite live-region update ("Knitting… 40%"). With reduced motion it takes 2.5 s instead of 5.5 s.
-- Pieces the rider has not earned yet never knit in, same as before (`isUnlocked` is read when the pull starts).
-- The timed intro is still there: `world.playIntro()` (replay) is unchanged.
-Our changes in `yarn-world/`: `weave.js` (pull-driven intro, `knit()`, `status`), `rope.js` (`grabFollow`), `mount.js` (`onStatus`, `knit`), `world.js` (`knit`, `status`), `guide.js` (its text label is off; the page shows "Pull the thread." as real text).
-Screenshots: `screenshots/`.
+## Opening: pull the thread
+- Drag the loose thread (mouse or touch). The distance you drag sets how far the knit-in has gone (about half the window height = the whole island). It only moves forward; let go and the rest knits by itself.
+- "Knit the island for me" starts the same knit-in without dragging (keyboard and screen-reader alternative; progress is announced).
+- Testing tiers (dev server only): `/island?stamps=2` shows the island as if the rider had 2 stamps.
+- Code: `scrub` in `yarn-world/weave.js` (`pullSpan` is set from the camera distance in `mount.js`).
 
 ## Notes
 - The yarn ball, the quilt and the river are always there. The unlock set is read when the thread is pulled.

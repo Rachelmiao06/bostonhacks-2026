@@ -1374,11 +1374,9 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 		grabbables: [...[yarn.grabbable, ...unravel.grabbables, ...sheepLife.grabbables, ...critters.grabbables].map(gate), weave.grabbable],
 		reset: resetAll,
 		playIntro: resetAll,
-		// knit the island without dragging the thread (accessible alternative)
-		knit: () => weave.knit(),
-		// { phase, progress } of the opening
-		get status() {
-			return weave.status;
+		setPullSpan: (v) => weave.setPullSpan(v),
+		get phase() {
+			return weave.phase;
 		},
 		// { kind: 'start' | 'collapse', point, dir } for the guide overlay, or null
 		get hint() {
