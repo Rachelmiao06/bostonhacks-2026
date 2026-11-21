@@ -168,7 +168,7 @@ export const landmarks: Landmark[] = [
 
 /** The welcome card: the one thing a first-time rider sees, floating over the map while it loads. */
 export const dive = {
-  eyebrow: "Tada · Welcome aboard",
+  eyebrow: "Tada · Welcome",
   title: "Where should we start?",
   intro: "Find T issues near you. Your location stays in your browser.",
   useLocation: "Use my location",
