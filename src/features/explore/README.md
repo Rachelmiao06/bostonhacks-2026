@@ -21,6 +21,15 @@ Issue: #2. Owner: Rachel. Only the owner edits this folder.
 - `StationMarker.tsx`, `LandmarkMarker.tsx`, `TrainsLayer.tsx`: quiet stop rings, floating landmarks, live trains.
 - A link like `/?quest=<id>` opens that problem's ticket.
 
+## The first visit: gate, dive, small world
+- `DiveGate.tsx` (in the first download): "Drop in where you are". Use my location, or pick Park Street / Kenmore / South / North Station, or skip to the whole map.
+  The map downloads behind it (`prefetch.ts` starts the subway and problem downloads at page load) and the gate shows what is ready.
+- `world.ts`: GSAP camera flight (`flyCamera`) from high over Boston down to one stop, the 3D building layer (real footprints raised, only inside an 800 m circle),
+  and `chooseWorld` (nearest stop; if nothing is broken there, the closest problem; outside Boston: Park Street).
+- `ExploreMap.tsx` has three modes: `intro` (behind the gate), `world` (the small 3D district: fog edge, leash, only nearby pins) and `atlas` (the original whole-city map).
+- `WorldQuest.tsx`: the question in a speech bubble, answer by typing, AI coach replies, stamp. Uses PR #14's `useReport`; verify quests reuse `VerifyFlow`.
+- Location never leaves the browser and is not stored. A shared link `/?quest=<id>` skips the gate. Reduced Motion: no flight, no typing effect, no pulses.
+
 ## The look
 - Palette: `ATLAS` in `src/lib/map.ts` (stone land, sage-grey water, ivory roads, sandstone buildings, taupe outlines, sage parks).
   These are typed-in colours from Rachel's brief; they should move to `globals.css` as tokens once the team agrees.

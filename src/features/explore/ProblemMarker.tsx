@@ -21,6 +21,8 @@ type PinProps = {
   compact: boolean;
   /** Set when the status is green; says who it comes from. Null or missing: the usual warning pin. */
   verified?: Verified | null;
+  /** In the small world: a soft ring pulses around the pin so a first-time rider knows where to tap. */
+  beacon?: boolean;
   onSelect: (stop: ProblemStop) => void;
 };
 
@@ -31,6 +33,8 @@ type FaceProps = {
   selected: boolean;
   compact: boolean;
   verified?: Verified | null;
+  /** The pulsing "tap here" ring used in the small world. */
+  beacon?: boolean;
   /** Show the source label above the pin now (the map shows it on hover, focus and selection). */
   showLabel?: boolean;
   /** Clock for the "ago" text. Only the preview sets it; the map uses the real time. */
@@ -38,7 +42,7 @@ type FaceProps = {
 };
 
 /** The pin's looks, with no map around it, so the preview page can draw the same thing the map does. */
-export function PinFace({ category, count, doneCount, selected, compact, verified, showLabel, now }: FaceProps) {
+export function PinFace({ category, count, doneCount, selected, compact, verified, beacon, showLabel, now }: FaceProps) {
   const reduce = useReducedMotion() ?? false;
   const style = categoryStyle[category];
   const Icon = verified ? categoryStyle.verify.icon : style.icon;
@@ -60,36 +64,39 @@ export function PinFace({ category, count, doneCount, selected, compact, verifie
           {verifiedText(verified, now)}
         </span>
       )}
-      <span
-        className={cn(
-          "relative grid size-8 place-items-center rounded-full border-2 bg-ivory shadow-float transition-colors",
-          verified ? "border-double border-cat-verify/70 bg-cat-verify/10 text-cat-verify" : allDone ? "border-taupe/50 text-taupe" : cn(style.border, style.text),
-          selected && "shadow-ticket",
-        )}
-      >
-        <Icon className="size-4" strokeWidth={2.2} aria-hidden />
-        {count > 1 && !allDone && !verified && (
-          <span className="absolute -top-1.5 -right-2 grid h-4 min-w-4 place-items-center rounded-full bg-graphite px-1 font-ui text-[0.6rem] leading-none font-semibold text-ivory tabular-nums">
-            {count}
-          </span>
-        )}
-        {verified && (
-          // A small stamp thump, like the ticket stamp. With Reduced Motion it is simply there.
-          <motion.span
-            aria-hidden
-            className="absolute -top-1 -right-1.5 grid size-4 place-items-center rounded-full bg-cat-verify text-ivory"
-            initial={reduce ? false : { scale: 2.4, opacity: 0, rotate: 12 }}
-            animate={{ scale: 1, opacity: 1, rotate: 0 }}
-            transition={{ delay: reduce ? 0 : 0.15, type: "spring", stiffness: 420, damping: 16 }}
-          >
-            <Check className="size-2.5" strokeWidth={4} />
-          </motion.span>
-        )}
-        {allDone && (
-          <span className="absolute -top-1 -right-1.5 grid size-4 place-items-center rounded-full bg-cat-verify text-ivory">
-            <Check className="size-2.5" strokeWidth={4} aria-hidden />
-          </span>
-        )}
+      <span className="relative block">
+        {beacon && !allDone && !selected && <span aria-hidden className={cn("absolute inset-0 rounded-full opacity-40 motion-safe:animate-ping", tone.bg)} />}
+        <span
+          className={cn(
+            "relative grid size-8 place-items-center rounded-full border-2 bg-ivory shadow-float transition-colors",
+            verified ? "border-double border-cat-verify/70 bg-cat-verify/10 text-cat-verify" : allDone ? "border-taupe/50 text-taupe" : cn(style.border, style.text),
+            selected && "shadow-ticket",
+          )}
+        >
+          <Icon className="size-4" strokeWidth={2.2} aria-hidden />
+          {count > 1 && !allDone && !verified && (
+            <span className="absolute -top-1.5 -right-2 grid h-4 min-w-4 place-items-center rounded-full bg-graphite px-1 font-ui text-[0.6rem] leading-none font-semibold text-ivory tabular-nums">
+              {count}
+            </span>
+          )}
+          {verified && (
+            // A small stamp thump, like the ticket stamp. With Reduced Motion it is simply there.
+            <motion.span
+              aria-hidden
+              className="absolute -top-1 -right-1.5 grid size-4 place-items-center rounded-full bg-cat-verify text-ivory"
+              initial={reduce ? false : { scale: 2.4, opacity: 0, rotate: 12 }}
+              animate={{ scale: 1, opacity: 1, rotate: 0 }}
+              transition={{ delay: reduce ? 0 : 0.15, type: "spring", stiffness: 420, damping: 16 }}
+            >
+              <Check className="size-2.5" strokeWidth={4} />
+            </motion.span>
+          )}
+          {allDone && (
+            <span className="absolute -top-1 -right-1.5 grid size-4 place-items-center rounded-full bg-cat-verify text-ivory">
+              <Check className="size-2.5" strokeWidth={4} aria-hidden />
+            </span>
+          )}
+        </span>
       </span>
       {/* Stem down to the stop itself */}
       <span aria-hidden className={cn("h-2 w-0.5 rounded-full", verified ? "bg-cat-verify/60" : allDone ? "bg-taupe/50" : style.bg)} />
@@ -102,7 +109,7 @@ export function PinFace({ category, count, doneCount, selected, compact, verifie
  * A number shows when there is more than one problem. Once the rider has done them all, the tag gets a check.
  * When the status is verified, the tag turns a quiet green with a stamp, and its label names the source.
  */
-export const ProblemPin = memo(function ProblemPin({ stop, doneCount, selected, compact, verified, onSelect }: PinProps) {
+export const ProblemPin = memo(function ProblemPin({ stop, doneCount, selected, compact, verified, beacon = false, onSelect }: PinProps) {
   const count = stop.quests.length;
   const allDone = doneCount >= count;
 
@@ -127,9 +134,9 @@ export const ProblemPin = memo(function ProblemPin({ stop, doneCount, selected, 
         whileHover={{ y: selected ? -6 : -3 }}
         whileTap={{ scale: 0.95 }}
         transition={SPRING}
-        className="group relative flex cursor-pointer flex-col items-center rounded-full outline-none focus-visible:ring-4 focus-visible:ring-graphite/30"
+        className="group relative flex cursor-pointer touch-manipulation flex-col items-center rounded-full outline-none focus-visible:ring-4 focus-visible:ring-graphite/30"
       >
-        <PinFace category={stop.top} count={count} doneCount={doneCount} selected={selected} compact={compact} verified={verified} />
+        <PinFace category={stop.top} count={count} doneCount={doneCount} selected={selected} compact={compact} verified={verified} beacon={beacon} />
       </motion.button>
     </Marker>
   );
