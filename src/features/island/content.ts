@@ -37,7 +37,7 @@ export const content = {
   gift: {
     label: (n: number, locked: boolean) => `Open gift ${n}${locked ? " (locked)" : ""}`,
     journalLabel: "Open your journal",
-    kicker: "Demo surprise · example only",
+    kicker: "Demo — Not Redeemable",
     realKicker: "A gift for you",
     title: "A Little Gift from Boston",
     subtitle: "A treat for your next ride",
@@ -55,9 +55,13 @@ export const content = {
 
   // The compact glass label that appears when you hover, focus or select an object on the island
   label: {
+    // the always-visible small tag on each object: an icon and one word
+    tag: { journal: "Journal", gift: "Gift", opened: "Opened", locked: "Locked" },
     journal: { title: "Your journal", sub: "Reports and checks" },
     readySub: (demo: boolean) => `${demo ? "Example gift" : "Local treat"} · tap to open`,
     openedSub: "Opened · tap to see it",
+    nearbyTitle: "A nearby treat",
+    nearbySub: "A local place · tap to open",
     lockedTitle: "New discovery",
     lockedSub: (need: number) => `${need} more ${need === 1 ? "contribution" : "contributions"} to open`,
     unknownSub: "Opens as your world grows",
@@ -82,6 +86,20 @@ export const content = {
     stillBroken: (date: string) => `You said it is still broken${date ? ` · ${date}` : ""}`,
     honest: "Finishing a mission here does not send anything to the MBTA.",
     viewOnMap: "Continue on the map",
+  },
+
+  // A real nearby place found for a gift (never an offer)
+  place: {
+    title: "A Little Gift from Boston",
+    subtitle: "A cozy stop near you",
+    nearby: (distance: string | null, station: string) => (distance ? `Nearby · ${distance}` : `Near ${station}`),
+    viewOnMap: "View on Map",
+    note: (station: string) => `A place to discover near ${station}. Tada has no offer or partnership with it.`,
+    credit: (who: string) => `Photo: ${who} · Google Maps`,
+    creditNoPhoto: "Google Maps",
+    pickStop: "Pick a stop on the map and your gifts will point to real places near it.",
+    lookupFailed: "Could not look up nearby places just now, so this is an example.",
+    looking: "Looking for places near your stop…",
   },
 
   journey: {

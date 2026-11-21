@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Gift as GiftIcon, Lock } from "lucide-react";
+import { Check, ExternalLink, Gift as GiftIcon, Lock, MapPin, Utensils } from "lucide-react";
+import { formatDistance, type NearbyPlace } from "@/lib/places";
 import { cn } from "@/lib/utils";
 import { TicketFrame, closeButtonClass } from "./TicketFrame";
 import { content, giftMilestones, nextGift, unlockSteps, type GiftState } from "./content";
@@ -15,6 +16,11 @@ type Props = {
   state: GiftState;
   /** Journey steps on the island now. Null when the server could not be reached: nothing is claimed about progress. */
   known: number | null;
+  /** A real nearby place for this gift, when the lookup found one. */
+  place: NearbyPlace | null;
+  /** Why there is no place (so the demo can say so): the rider has not picked a stop, the lookup failed, or it is still running. */
+  noPlace: "no-station" | "unavailable" | "loading" | null;
+  stationName: string;
   handle: React.RefObject<IslandHandle | null>;
   onClose: () => void;
 };
@@ -23,7 +29,7 @@ type Props = {
  * The gift's ticket: the offer on one side, your journey on the other, so you can see what you have and what opens next.
  * Demo gifts are labelled, and their code works nowhere. A real, server-issued offer would show its real code and status.
  */
-export function GiftTicket({ gift, index, state, known, handle, onClose }: Props) {
+export function GiftTicket({ gift, index, state, known, place, noPlace, stationName, handle, onClose }: Props) {
   const [revealed, setRevealed] = useState(false);
 
   const g = content.gift;
@@ -43,9 +49,9 @@ export function GiftTicket({ gift, index, state, known, handle, onClose }: Props
         <div className="grid gap-0 sm:grid-cols-[1.15fr_1fr]">
           {/* The offer */}
           <section className="p-4">
-            <p className="font-mono text-[0.6rem] tracking-[0.14em] text-cat-station uppercase">{gift.demo ? g.kicker : g.realKicker}</p>
-            <h2 className="mt-1 font-serif text-xl leading-tight font-semibold">{g.title}</h2>
-            <p className="text-sm text-taupe">{g.subtitle}</p>
+            <p className="font-mono text-[0.6rem] tracking-[0.14em] text-cat-station uppercase">{place && !locked ? content.place.title : gift.demo ? g.kicker : g.realKicker}</p>
+            <h2 className="mt-1 font-serif text-xl leading-tight font-semibold">{place && !locked ? place.name : g.title}</h2>
+            <p className="text-sm text-taupe">{place && !locked ? content.place.subtitle : g.subtitle}</p>
 
             {locked ? (
               <p className="mt-3 flex items-start gap-2 border-t border-dashed border-graphite/20 pt-3 text-sm">
@@ -53,35 +59,38 @@ export function GiftTicket({ gift, index, state, known, handle, onClose }: Props
                 <span>{need === null ? content.journey.unknown : g.locked(need)}</span>
               </p>
             ) : (
-              <>
-                <dl className="mt-3 space-y-2 border-t border-dashed border-graphite/20 pt-3 text-[0.8rem] leading-snug">
-                  {rows.map(([label, value]) => (
-                    <div key={label}>
-                      <dt className="font-mono text-[0.58rem] tracking-[0.12em] text-taupe uppercase">{label}</dt>
-                      <dd>{value}</dd>
+              place ? (
+                <PlaceCard place={place} stationName={stationName} />
+              ) : (
+                <>
+                  {noPlace && <p className="mt-3 text-[0.72rem] text-taupe">{noPlace === "no-station" ? content.place.pickStop : noPlace === "unavailable" ? content.place.lookupFailed : content.place.looking}</p>}
+                  <dl className="mt-3 space-y-2 border-t border-dashed border-graphite/20 pt-3 text-[0.8rem] leading-snug">
+                    {rows.map(([label, value]) => (
+                      <div key={label}>
+                        <dt className="font-mono text-[0.58rem] tracking-[0.12em] text-taupe uppercase">{label}</dt>
+                        <dd>{value}</dd>
+                      </div>
+                    ))}
+                    <div>
+                      <dt className="font-mono text-[0.58rem] tracking-[0.12em] text-taupe uppercase">{g.code}</dt>
+                      <dd>
+                        {revealed ? (
+                          <span className="inline-block rounded-lg border border-dashed border-graphite/40 bg-stone px-2.5 py-1 font-mono text-sm tracking-wider">{gift.code}</span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setRevealed(true)}
+                            className="inline-flex h-8 cursor-pointer items-center rounded-full border border-graphite/30 px-3 text-xs font-medium outline-none hover:border-graphite/60 focus-visible:ring-4 focus-visible:ring-graphite/20"
+                          >
+                            {g.reveal}
+                          </button>
+                        )}
+                        {revealed && gift.demo && <span className="mt-1 block text-[0.7rem] text-taupe">{g.codeNote}</span>}
+                      </dd>
                     </div>
-                  ))}
-                  <div>
-                    <dt className="font-mono text-[0.58rem] tracking-[0.12em] text-taupe uppercase">{g.code}</dt>
-                    <dd>
-                      {revealed ? (
-                        <span className="inline-block rounded-lg border border-dashed border-graphite/40 bg-stone px-2.5 py-1 font-mono text-sm tracking-wider">
-                          {gift.code}
-                        </span>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => setRevealed(true)}
-                          className="inline-flex h-8 cursor-pointer items-center rounded-full border border-graphite/30 px-3 text-xs font-medium outline-none hover:border-graphite/60 focus-visible:ring-4 focus-visible:ring-graphite/20"
-                        >
-                          {g.reveal}
-                        </button>
-                      )}
-                      {revealed && gift.demo && <span className="mt-1 block text-[0.7rem] text-taupe">{g.codeNote}</span>}
-                    </dd>
-                  </div>
-                </dl>
-              </>
+                  </dl>
+                </>
+              )
             )}
 
             <button data-autofocus type="button" onClick={onClose} className={cn("mt-4", closeButtonClass)}>
@@ -149,5 +158,45 @@ function Row({ done, current, label, gift, highlight, known }: { done?: boolean;
         )}
       </span>
     </li>
+  );
+}
+
+/** A real nearby business: photo (with its credit), where it is, how far, and a link to Google Maps. No offer. */
+function PlaceCard({ place, stationName }: { place: NearbyPlace; stationName: string }) {
+  const [photoFailed, setPhotoFailed] = useState(false);
+  const p = content.place;
+  const distance = formatDistance(place.distanceM);
+  const showPhoto = place.photo && !photoFailed;
+  return (
+    <div className="mt-3 space-y-2.5 border-t border-dashed border-graphite/20 pt-3">
+      <div className="relative aspect-[21/9] overflow-hidden rounded-xl bg-stone sm:aspect-[16/9]">
+        {showPhoto ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={`/api/places/photo?name=${encodeURIComponent(place.photo!.name)}&w=480`} alt={place.name} loading="lazy" onError={() => setPhotoFailed(true)} className="size-full object-cover" />
+        ) : (
+          <span className="grid size-full place-items-center text-taupe">
+            <Utensils className="size-7" aria-hidden />
+          </span>
+        )}
+        <span className="absolute bottom-1.5 left-1.5 flex items-center gap-1 rounded-full border border-ivory/70 bg-ivory/70 px-2 py-0.5 text-[0.68rem] font-medium backdrop-blur-md">
+          <MapPin className="size-3" aria-hidden /> {p.nearby(distance, stationName)}
+        </span>
+      </div>
+      <p className="text-[0.8rem] leading-snug">
+        <span className="font-medium">{place.category}</span>
+        {place.area && <span className="text-taupe"> · {place.area}</span>}
+      </p>
+      <a
+        href={place.mapsUri}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex h-9 w-full cursor-pointer items-center justify-center gap-1.5 rounded-full bg-cat-station px-4 text-xs font-medium text-ivory outline-none hover:opacity-90 focus-visible:ring-4 focus-visible:ring-graphite/25"
+      >
+        {p.viewOnMap} <ExternalLink className="size-3" aria-hidden />
+      </a>
+      <p className="text-[0.66rem] leading-snug text-taupe">
+        {p.note(stationName)} {place.photo && !photoFailed ? p.credit(place.photo.credit) : p.creditNoPhoto}
+      </p>
+    </div>
   );
 }

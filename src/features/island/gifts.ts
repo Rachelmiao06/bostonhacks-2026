@@ -1,3 +1,8 @@
+// What a gift can show. Three kinds are kept apart on purpose:
+//   'place'              a REAL nearby business (src/lib/places.ts). It has no offer: a listing is not a promotion.
+//   'demo'               a clearly labelled fictional example offer that cannot be redeemed (below).
+//   'real-offer' / 'verified-promotion'  reserved. Nothing produces them yet: there is no partner data, no server-side
+//                        entitlement or redemption, and no verified public promotion source.
 // The little gifts' offers. There is NO real partner-offer source in this project yet (no merchants, no
 // inventory, no redemption), so every gift is a clearly labelled demo whose code works nowhere.
 //
@@ -34,7 +39,7 @@ const demo = (id: string, short: string, merchant: string, benefit: string, code
   code,
 });
 
-/** One per cloud, in the same order as `giftMilestones`. */
+/** One per gift, in the same order as `giftMilestones`. Fictional on purpose: never put a real shop's name on an invented discount. */
 export const demoGifts: Gift[] = [
   demo("demo-surprise", "A free cookie", "Example Café", "A free cookie with any hot drink", "EXAMPLE-ONLY-1"),
   demo("demo-pastry", "A free pastry", "Example Bakery", "A free pastry with a coffee", "EXAMPLE-ONLY-2"),

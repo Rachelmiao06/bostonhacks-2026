@@ -6,25 +6,27 @@ import { refreshProgress, stampCount, useMyProgress, type ProgressState } from "
 import { allowedFor, content, giftMilestones, giftStatesFor, isIn, unlockSteps, type GiftState } from "./content";
 import { demoGifts } from "./gifts";
 import { GiftTicket } from "./GiftTicket";
-import { HotspotLabel } from "./HotspotLabel";
+import { HotspotLabel, type TagIcon } from "./HotspotLabel";
 import { IslandHelp } from "./IslandHelp";
 import { JournalTicket } from "./JournalTicket";
 import { IslandScene } from "./IslandLoader";
 import type { IslandHandle } from "./IslandScene";
+import { useNearbyPlaces } from "./usePlaces";
 import { readParcelOpened, readSeen, writeParcelOpened, writeSeen } from "./seen";
 
 const total = unlockSteps.length;
 
 const hotspotIds = ["journal", "gift-0", "gift-1", "gift-2"];
 
-/** What the compact label for an object says. */
-function labelFor(id: string | null, states: GiftState[], known: number | null): { title: string; sub: string } {
+/** What the small tag for an object says (always), and what its fuller label says (on hover or focus). */
+function labelFor(id: string, states: GiftState[], known: number | null, hasPlace: boolean[]): { tag: string; icon: TagIcon; title: string; sub: string } {
   const l = content.label;
-  if (id === "journal") return l.journal;
-  const i = Number((id ?? "gift-0").slice(5));
+  if (id === "journal") return { tag: l.tag.journal, icon: "book", ...l.journal };
+  const i = Number(id.slice(5));
   const gift = demoGifts[i];
-  if (states[i] === "locked") return { title: l.lockedTitle, sub: known === null ? l.unknownSub : l.lockedSub(Math.max(0, giftMilestones[i] - known)) };
-  return { title: gift.short, sub: states[i] === "opened" ? l.openedSub : l.readySub(gift.demo) };
+  if (states[i] === "locked") return { tag: l.tag.locked, icon: "lock", title: l.lockedTitle, sub: known === null ? l.unknownSub : l.lockedSub(Math.max(0, giftMilestones[i] - known)) };
+  if (hasPlace[i]) return { tag: states[i] === "opened" ? l.tag.opened : l.tag.gift, icon: "gift", title: l.nearbyTitle, sub: states[i] === "opened" ? l.openedSub : l.nearbySub };
+  return { tag: states[i] === "opened" ? l.tag.opened : l.tag.gift, icon: "gift", title: gift.short, sub: states[i] === "opened" ? l.openedSub : l.readySub(gift.demo) };
 }
 
 /** What this visit shows: the opening, or the island as it was plus the pieces earned since last time dropping in. */
@@ -129,6 +131,7 @@ function IslandView({
   useEffect(() => {
     openedRef.current = opened;
   }, [opened]);
+  const places = useNearbyPlaces(true);
   const handle = useRef<IslandHandle | null>(null);
   const dropRef = useRef<(h: IslandHandle, index: number) => void>(() => {});
 
@@ -221,6 +224,8 @@ function IslandView({
   const unlocked = useMemo(() => isIn(allowedFor(known)), [known]);
   const canKnit = phase === "ball" && plan.mode === "first";
   const giftStates: GiftState[] = giftStatesFor(known, opened);
+  const placeList = places.status === "ready" ? places.places : [];
+  const hasPlace = demoGifts.map((_, i) => Boolean(placeList[i]));
   const status = sceneFailed ? { text: content.sceneFailed } : unavailable ? { text: content.progressFailed, retry: onRetry } : null;
 
   return (
@@ -287,8 +292,14 @@ function IslandView({
         </div>
       )}
 
-      {/* A compact glass label for the one object under the pointer or focused, never for all of them at once */}
-      {phase === "idle" && ticket === null && (hover ?? focused) && <HotspotLabel key={hover ?? focused} id={(hover ?? focused) as string} {...labelFor(hover ?? focused, giftStates, plan.progressKnown ? known : null)} handle={handle} />}
+      {/* Every object wears a small glass tag that follows it, so you can tell what it is; hover or focus grows it */}
+      {phase === "idle" && ticket === null && (
+        <div className="pointer-events-none absolute inset-0 z-10">
+          {hotspotIds.map((id) => (
+            <HotspotLabel key={id} id={id} expanded={(hover ?? focused) === id} handle={handle} {...labelFor(id, giftStates, plan.progressKnown ? known : null, hasPlace)} />
+          ))}
+        </div>
+      )}
 
       {ticket === "journal" && <JournalTicket progress={progress} known={plan.progressKnown ? known : null} handle={handle} onClose={closeTicket} onRetry={onRetry} />}
       {ticket?.startsWith("gift-") && (
@@ -297,6 +308,9 @@ function IslandView({
           index={Number(ticket.slice(5))}
           state={giftStates[Number(ticket.slice(5))]}
           known={plan.progressKnown ? known : null}
+          place={placeList[Number(ticket.slice(5))] ?? null}
+          noPlace={places.status === "ready" ? null : places.status}
+          stationName={places.status === "ready" ? places.stationName : ""}
           handle={handle}
           onClose={closeTicket}
         />
