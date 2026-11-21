@@ -1,9 +1,9 @@
 // Site settings and feature flags in one place. Rename the project here.
 export const site = {
-  name: "T Party",
+  name: "Tada",
   tagline: "Make every ride count",
   description:
-    "T Party turns feedback on Boston's public transit into a game. Explore a pixel-art MBTA map, take on real transit challenges, and get rewarded for feedback worth reading.",
+    "Tada turns feedback on Boston's public transit into a game. Explore a pixel-art MBTA map, take on real transit challenges, and get rewarded for feedback worth reading.",
   // Three tabs. `also` lists other routes that keep the tab lit (My Challenges lives under Explore, Rewards under My Tada).
   nav: [
     { href: "/", label: "Explore", short: "Explore", also: ["/explore", "/my-challenges"] },

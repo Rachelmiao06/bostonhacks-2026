@@ -2,7 +2,7 @@ import { ANSWER_LIMIT, validConversation } from "@/features/trolley-chat/convers
 import { site } from "@/lib/config";
 
 const guide = [
-  { topic: /report|feedback|draft|photo|coach/i, text: "Open a station with a mission and choose a problem. Describe what you personally saw, including the station, time and how it affected your trip. The AI coach can help you revise. Finishing a mission records it in T Party. To reach the MBTA, use its official feedback channel." },
+  { topic: /report|feedback|draft|photo|coach/i, text: "Open a station with a mission and choose a problem. Describe what you personally saw, including the station, time and how it affected your trip. The AI coach can help you revise. Finishing a mission records it in Tada. To reach the MBTA, use its official feedback channel." },
   { topic: /token|stamp|reward|journey|collection/i, text: "Complete a station mission to earn its reward. Open My Journey to revisit your activity, or Collection to see your rewards." },
   { topic: /map|explore|start|quest|station|mission/i, text: "On Explore, choose a starting place or select “Just show the map.” Tap a problem marker to read the station’s ticket and see what riders are being asked to check." },
 ];
