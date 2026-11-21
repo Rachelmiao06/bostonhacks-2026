@@ -13,7 +13,7 @@ type Choice = { target: LngLat; place: Place; shift: number; tailAt: number };
 // The callout's footprint on screen, and the room kept clear around other pins, the top nav and the bottom edge.
 const CALLOUT_W = 236;
 const CALLOUT_H = 96;
-const PIN_BOX = { w: 44, up: 62, down: 10 }; // a pin: its tag above the stop, plus a little stem
+const PIN_BOX = { w: 44, up: 62, down: 10 }; // the target pin: its tag above the stop, plus a little stem
 const MARGIN = 10;
 const TOP_CLEAR = 96; // under the floating nav and the name tag (phones stack more up there: see below)
 const BOTTOM_CLEAR = 64; // above the attribution and zoom controls
@@ -29,14 +29,11 @@ const hit = (a: Rect, b: Rect) => a.l < b.r && a.r > b.l && a.t < b.b && a.b > b
  */
 export function MapHint({
   candidates,
-  others,
   onGone,
   onNone,
 }: {
   /** Open, unresolved, unlabelled pins, best first. */
   candidates: LngLat[];
-  /** Every other marker on screen (pins and landmarks), so the callout never sits on one. */
-  others: LngLat[];
   onGone: () => void;
   onNone: () => void;
 }) {
@@ -50,10 +47,12 @@ export function MapHint({
     const w = map.getContainer().clientWidth;
     const h = map.getContainer().clientHeight;
     const screen = (p: LngLat) => map.project(p);
-    const pinRect = (p: LngLat): Rect => {
-      const s = screen(p);
-      return { l: s.x - PIN_BOX.w / 2, r: s.x + PIN_BOX.w / 2, t: s.y - PIN_BOX.up, b: s.y + PIN_BOX.down };
-    };
+    // The real footprint of every marker on screen (pins, landmarks, labels, the rider's dot), measured, not guessed.
+    const frame = map.getContainer().getBoundingClientRect();
+    const markers: Rect[] = [...map.getContainer().querySelectorAll(".maplibregl-marker")].map((el) => {
+      const r = el.getBoundingClientRect();
+      return { l: r.left - frame.left, r: r.right - frame.left, t: r.top - frame.top, b: r.bottom - frame.top };
+    });
     const compact = w < 460;
     const cw = compact ? 176 : CALLOUT_W;
     const topClear = compact ? 156 : TOP_CLEAR;
@@ -72,11 +71,14 @@ export function MapHint({
       };
       // Also keep clear of the target stop's own name label, which is printed on the map around its foot.
       const ownLabel: Rect = { l: s.x - 80, r: s.x + 80, t: s.y - 10, b: s.y + 26 };
-      const clearOf = [ownLabel, ...others.filter((o) => o[0] !== target[0] || o[1] !== target[1]).map(pinRect)];
+      // Everything except the target's own marker (the one that holds the target's point).
+      const clearOf = [ownLabel, ...markers.filter((m) => !(s.x >= m.l && s.x <= m.r && s.y >= m.t && s.y <= m.b))];
       for (const place of ["right", "left", "above", "below"] as Place[]) {
         const r = spots[place];
         const inside = r.l >= MARGIN && r.r <= w - MARGIN && r.t >= topClear && r.b <= h - BOTTOM_CLEAR;
-        if (inside && !clearOf.some((o) => hit(r, o))) return { target, place, shift: slide + cw / 2 - s.x, tailAt: s.x - slide };
+        // A few pixels of give, so touching an edge does not veto an otherwise clear spot.
+        const snug: Rect = { l: r.l + 4, r: r.r - 4, t: r.t + 4, b: r.b - 4 };
+        if (inside && !clearOf.some((o) => hit(snug, o))) return { target, place, shift: slide + cw / 2 - s.x, tailAt: s.x - slide };
       }
     }
     return null;

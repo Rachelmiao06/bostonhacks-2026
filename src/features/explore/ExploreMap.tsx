@@ -236,12 +236,6 @@ export default function ExploreMap({ entry, onStatus, onReveal, guided = false }
       .sort((x, y) => x.d - y.d)
       .map(({ stop }) => [stop.station.longitude, stop.station.latitude] as [number, number]);
   }, [worldInfo, worldStops, done]);
-  // Every marker the callout must stay off: all problem pins and the pixel landmarks.
-  const hintOthers = useMemo(() => {
-    const spots: [number, number][] = worldStops.map((stop) => [stop.station.longitude, stop.station.latitude]);
-    for (const landmark of districtLandmarks) spots.push([landmark.longitude, landmark.latitude]);
-    return spots;
-  }, [worldStops, districtLandmarks]);
   const showHint = guided && hintAllowed && !hintGone && mode === "world" && arrived && !selected && !panelQuest && hintCandidates.length > 0;
 
   const worldProblemCount = worldStops.reduce((sum, stop) => sum + stop.quests.length, 0);
@@ -618,7 +612,7 @@ export default function ExploreMap({ entry, onStatus, onReveal, guided = false }
                   onSelect={selectStop}
                 />
               ))}
-            {showHint && <MapHint candidates={hintCandidates} others={hintOthers} onGone={() => setHintGone(true)} onNone={() => setHintGone(true)} />}
+            {showHint && <MapHint candidates={hintCandidates} onGone={() => setHintGone(true)} onNone={() => setHintGone(true)} />}
             {mode === "world" && arrived && worldInfo?.you && (
               <Marker longitude={worldInfo.you[0]} latitude={worldInfo.you[1]} anchor="center" style={{ zIndex: 7 }}>
                 <span role="img" aria-label={worldText.you} title={worldText.you} className="relative block size-4">
