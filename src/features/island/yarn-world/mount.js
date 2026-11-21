@@ -75,6 +75,9 @@ export function mountIsland(container, { isUnlocked, onPhase, instant = false })
 	camera.position.set(S(9), S(6.5), S(11));
 	// on tall (phone) screens the island is wider than the view: back the camera off to fit it
 	camera.position.multiplyScalar(Math.max(1, 1.1 / camera.aspect));
+	// the fog starts relative to the default camera distance: push it back by the same factor or the whole scene looks washed out
+	scene.fog.near *= Math.max(1, 1.1 / camera.aspect);
+	scene.fog.far *= Math.max(1, 1.1 / camera.aspect);
 	const controls = new OrbitControls(camera, renderer.domElement);
 	controls.target.copy(focus);
 	controls.enableDamping = true;
@@ -157,7 +160,8 @@ export function mountIsland(container, { isUnlocked, onPhase, instant = false })
 		},
 	});
 
-	const guide = setupGuide({ camera, dom: renderer.domElement });
+	// our fix: inside the scene container, not document.body. The island page is `fixed z-30`, which hid the body-level guide (z-5) behind it.
+	const guide = setupGuide({ camera, dom: renderer.domElement, parent: container });
 	const ambience = setupAmbience({ camera, target: controls.target, riverPoint: world.riverPoint, windAt: world.wind.at });
 
 	// browsers only allow sound after a gesture; the first touch on the scene starts it

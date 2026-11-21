@@ -69,7 +69,8 @@ export function setupGuide({ camera, dom, parent = document.body }) {
 
 			if (hint.kind !== kind) {
 				kind = hint.kind;
-				label.style.display = kind === 'start' || kind === 'gift' ? '' : 'none';
+				// the page shows "Pull the thread." as real text, so the guide's own label is only used for the gift thread
+				label.style.display = kind === 'gift' ? '' : 'none';
 			}
 
 			const still = reduced.matches;
@@ -101,9 +102,11 @@ export function setupGuide({ camera, dom, parent = document.body }) {
 			}
 
 			// 标签放在拖动终点之外，沿方向退到标签盒子外缘再多留 10px
-			if (kind === 'start') {
+			if (kind === 'start' || kind === 'gift') {
 				const off = SLIDE + 10 + Math.min(34 / (Math.abs(dx) || 1e-3), 14 / (Math.abs(dy) || 1e-3));
-				label.style.transform = `translate(${p0.x + dx * off}px,${p0.y + dy * off}px) translate(-50%,-50%)`;
+				// keep the label on screen: a gift thread near the edge of the view would push it out of sight
+				const lx = Math.min(Math.max(p0.x + dx * off, rect.left + 64), rect.right - 64);
+				label.style.transform = `translate(${lx}px,${p0.y + dy * off}px) translate(-50%,-50%)`;
 			}
 		},
 	};

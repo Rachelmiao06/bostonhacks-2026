@@ -146,6 +146,7 @@ function IslandView({
   const next = unlockTiers[Math.min(known, total - 1)];
   const waitingTier = waiting !== null ? unlockTiers[waiting] : null;
   const allKnown = known >= total;
+  const opening = phase === "ball" || phase === "intro";
   const line = preview
     ? content.previewNote
     : waitingTier
@@ -156,7 +157,9 @@ function IslandView({
           : plan.mode === "return"
             ? content.welcomeBack
             : allKnown
-              ? content.allUnlocked
+              ? opening
+                ? content.allReady
+                : content.allUnlocked
               : content.nextUnlock(next.name));
 
   return (
@@ -198,12 +201,18 @@ function IslandView({
 
       {ticket && perk && <PerkTicket perk={perk} onClose={() => setTicket(false)} />}
 
+      {phase === "ball" && plan.mode === "first" && (
+        <p className="pointer-events-none absolute inset-x-0 bottom-28 text-center font-serif text-lg text-graphite/85 italic sm:bottom-14">
+          {content.pullInstruction}
+        </p>
+      )}
+
       <p role="status" aria-live="polite" className="sr-only">
         {note || (phase === "ball" ? content.waiting : phase === "intro" ? content.knitting : phase === "idle" ? content.knitted : "")}
       </p>
 
       <p className="pointer-events-none absolute inset-x-0 bottom-3 px-4 text-center text-xs text-graphite/70">
-        {content.hint} {content.soundHint}{" "}
+        {opening && plan.mode === "first" ? content.hintOpening : content.hint} {content.soundHint}{" "}
         <a className="pointer-events-auto underline" href={content.creditUrl} target="_blank" rel="noreferrer">
           {content.credit}
         </a>

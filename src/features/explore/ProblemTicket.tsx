@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ChevronLeft, ChevronRight, ExternalLink, X } from "lucide-react";
 import type { Quest } from "@/lib/mbta";
 import { Marker } from "@/lib/map";
@@ -19,6 +19,8 @@ type Props = {
   onIndex: (index: number) => void;
   done: ReadonlySet<string>;
   landmark?: Landmark;
+  /** The map's current landmark scale: a pixel landmark grows with zoom, so the ticket floats above it by the same amount. */
+  landmarkScale?: number;
   /** Wide screens pin the ticket above the stop; phones dock it at the bottom. */
   docked: boolean;
   onContribute: (quest: Quest) => void;
@@ -39,23 +41,44 @@ export function ProblemTicket(props: Props) {
     );
   }
   return (
-    <Marker longitude={props.station.longitude} latitude={props.station.latitude} anchor="bottom" offset={[0, -48]} style={{ zIndex: 10 }}>
+    // A pixel landmark stands on its stop, so its ticket floats above the building instead of over it.
+    <Marker
+      longitude={props.station.longitude}
+      latitude={props.station.latitude}
+      anchor="bottom"
+      offset={[0, props.landmark?.pixel ? -Math.round(93 * (props.landmarkScale ?? 1) + 30) : -48]}
+      style={{ zIndex: 10 }}
+    >
       {ticket}
     </Marker>
   );
 }
 
+/** Easing in 9 hard steps, so a reveal moves like a pixel printer instead of a smooth slide. */
+const PIXEL_STEPS = (t: number) => Math.ceil(t * 9) / 9;
+
 function TicketCard({ station, lines, quests, index, onIndex, done, landmark, docked, onContribute, onClose }: Props) {
   const quest = quests[index];
   const stationLines = lines.filter((line) => station.lineIds.includes(line.id));
+  // PROTOTYPE reveal: on the map, the ticket "prints" upward out of its stop in pixel-sized steps.
+  const reduce = useReducedMotion() ?? false;
+  const printOut = !docked && !reduce;
 
   return (
     <motion.article
       key={station.id}
       aria-label={station.name}
-      initial={{ opacity: 0, y: docked ? 24 : 10, scale: docked ? 1 : 0.96, rotate: docked ? 0 : -1.5 }}
-      animate={{ opacity: 1, y: 0, scale: 1, rotate: 0 }}
-      transition={{ type: "spring", stiffness: 300, damping: 26 }}
+      initial={
+        printOut
+          ? { opacity: 1, clipPath: "inset(100% -40% -40% -40% round 12px)", y: 6 }
+          : { opacity: 0, y: docked ? 24 : 10, scale: docked ? 1 : 0.96 }
+      }
+      animate={printOut ? { opacity: 1, clipPath: "inset(-40% -40% -40% -40% round 12px)", y: 0 } : { opacity: 1, y: 0, scale: 1 }}
+      transition={
+        printOut
+          ? { clipPath: { duration: 0.45, ease: PIXEL_STEPS }, y: { type: "spring", stiffness: 300, damping: 26 } }
+          : { type: "spring", stiffness: 300, damping: 26 }
+      }
       onClick={(event) => event.stopPropagation()}
       className={cn(
         "relative cursor-default overflow-visible rounded-xl border border-hairline bg-ivory font-ui text-graphite shadow-ticket",
