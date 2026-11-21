@@ -90,7 +90,7 @@ export function DiveGate({ phase, status, denied, onLocate, onSpot, onSkip, onGo
           ))}
         </div>
 
-        <div className="flex items-center justify-between gap-3 border-t border-hairline pt-3 text-xs text-taupe">
+        <div className="flex flex-row-reverse items-center justify-between gap-3 border-t sm:flex-row border-hairline pt-3 text-xs text-taupe">
           <span className="inline-flex items-center gap-1.5">
             <span aria-hidden className={cn("size-1.5 rounded-full", ready >= 3 ? "bg-cat-verify" : "animate-pulse bg-taupe/60")} />
             {status.failed ? dive.failed : dive.status(ready, 3)}

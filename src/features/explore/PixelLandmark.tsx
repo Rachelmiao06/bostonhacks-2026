@@ -4,34 +4,36 @@ import { cn } from "@/lib/utils";
 // so they stay crisp at any size and every colour is a theme token.
 // p rose brick, c shaded masonry, m mint, v dark green, l blue glass.
 //
-// o outline   b brick front   s brick side (in shade)   w window   d door
+// o outline   w window   d door
 // t tower     r roof          g gold                    . empty
 const ART = {
   "old-state-house": [
-    "..........g...........",
-    ".........ggg..........",
-    "..........o...........",
-    ".........ooo..........",
-    "........otwto.........",
-    "........ottto.........",
-    "........owwwo.........",
-    ".......ootttoo........",
-    ".......otwtwto........",
-    "......ooooooooo.......",
-    ".....orrrrrrrrro......",
-    "....orrrrrrrrrrro.....",
-    "...ooooooooooooooo....",
-    "...obbbbbbbbbbbbbsso..",
-    "...obwwbbwwbbwwbbsso..",
-    "...obwwbbwwbbwwbbssso.",
-    "...obbbbbbbbbbbbbssso.",
-    "...obbbbbbbbbbbbbssso.",
-    "...obwwbbwwbbwwbbssso.",
-    "...obwwbbwwbbwwbbssso.",
-    "...obbbbbbbbbbbbbssso.",
-    "...obbbbbbddbbbbbssso.",
-    "...obbbbbbddbbbbbssso.",
-    "...oooooooooooooooooo.",
+    ".........gg.............",
+    "........ggog............",
+    "..........o.............",
+    ".........ooo............",
+    "........omvvo...........",
+    ".......owwwwwo..........",
+    ".......owldwro..........",
+    ".......owldwro..........",
+    "......oowwwwwroo........",
+    ".......owwdwro..........",
+    ".......owddwro..........",
+    ".....ooowwwwrooooo......",
+    "....ommmowwoommmmvo.....",
+    "...ommmowppwommmmmvo....",
+    "..oommowppppwommmmvvo...",
+    "..owwowppwwppwowwwwwwo..",
+    "..opppppwddwppppocccco..",
+    "..opwlppwllwppwlocdlco..",
+    "..opwwppwwwwppwwocwlco..",
+    "..oppppowwwwopppocccco..",
+    "..owwwwowwwwowwworrrro..",
+    "..opwlppodwoppwlocdlco..",
+    "..opwwppoddoppwwocwlco..",
+    "..opppppoddoppppocccco..",
+    "..owwwwwrrrrwwwworrrro..",
+    "..oooooooooooooooooooo..",
   ],
   "state-house": [
     ".............g.............",
@@ -115,6 +117,28 @@ const ART = {
     ".oooooooorrrrrroooooooooo.",
     ".......oooooooooo.........",
   ],
+  "tea-party-ships": [
+    "..........oggg.............",
+    "..........o........oggg....",
+    ".......ooooooo.....o.......",
+    ".......owwwwro..ooooooo....",
+    "......owwwwwro..owwwwro....",
+    "......oooooooo.owwwwwro....",
+    "..........o....oooooooo....",
+    ".....oooooooooo....o.......",
+    ".....owwwwwwrro.oooooooo...",
+    "....owwwwwwwrro.owwwwrro...",
+    "....oooooooooooowwwwwrro...",
+    "..........o....ooooooooo..o",
+    ".ooo......o........o....oo.",
+    ".oppoo....o..oggo..o..oo...",
+    ".opppoooooooooooooooooo....",
+    "..occcppppppppppppppco.....",
+    "...occccgcccgcccgccco......",
+    "....occcccccccccccoo.......",
+    ".....ooooooooooooo.........",
+    "...llmmmlll..lllmmmlll.....",
+  ],
   "td-garden": [
     ".......ooooooooooo.........",
     ".....oorrrrrrrrrrrooo......",
@@ -146,8 +170,6 @@ const FILL: Record<string, string> = {
   v: "fill-[var(--landmark-green,#426b5b)]",
   l: "fill-[var(--landmark-glass,#9bbfc9)]",
   o: "fill-graphite",
-  b: "fill-cat-service",
-  s: "fill-cat-service opacity-70",
   w: "fill-ivory",
   d: "fill-graphite",
   t: "fill-ivory",
@@ -172,6 +194,13 @@ const sprites = new Map(Object.entries(ART).map(([id, rows]) => [
   id, { width: Math.max(...rows.map(row => row.length)), height: rows.length, paths: pixelPaths(rows) },
 ]));
 
+export const landmarkWidth = { station: 84, scenic: 70 } as const;
+
+export function landmarkHeight(art: PixelArtId, width: number) {
+  const sprite = sprites.get(art)!;
+  return width * sprite.height / sprite.width;
+}
+
 type Props = {
   art: PixelArtId;
   /** Width in px; height follows the grid. */
@@ -185,7 +214,7 @@ export function PixelLandmark({ art, size = 72, className }: Props) {
     <svg
       viewBox={`0 0 ${w} ${h}`}
       width={size}
-      height={(size * h) / w}
+      height={landmarkHeight(art, size)}
       shapeRendering="crispEdges"
       aria-hidden
       className={cn("block shrink-0", className)}

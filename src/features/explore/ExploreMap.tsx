@@ -25,9 +25,9 @@ import {
 } from "@/lib/map";
 import { categoryOf } from "./category";
 import { ContributePanel } from "./ContributePanel";
-import { categories, content, landmarks, world as worldText, type CategoryId, type Landmark } from "./content";
+import { categories, content, landmarks, world as worldText, type CategoryId } from "./content";
 import type { LoadStatus } from "./DiveGate";
-import { LandmarkMarker, type LandmarkProblems } from "./LandmarkMarker";
+import { LandmarkMarker } from "./LandmarkMarker";
 import { FilterBar, ProgressChip, StatusChip } from "./MapOverlays";
 import { subwayDownload } from "./prefetch";
 import { ClusterPin, ProblemPin } from "./ProblemMarker";
@@ -68,8 +68,7 @@ const subwayPromise = subwayDownload();
 const BUILDING_OPACITY = 0.92;
 const DIVE_SECONDS = 4.2;
 
-const landmarkOfStation = new globalThis.Map(landmarks.map((landmark) => [landmark.stationId, landmark]));
-const missionLandmarkStations = new Set(landmarks.filter((l) => l.stationMarker).map((l) => l.stationId));
+const landmarkOfStation = new globalThis.Map(landmarks.filter((landmark) => landmark.stationId).map((landmark) => [landmark.stationId, landmark]));
 
 /**
  * PROTOTYPE: soft haze toward the horizon when the map is tilted, in the atlas palette.
@@ -202,11 +201,7 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
   const questList = useMemo(() => (quests.status === "ready" ? quests.quests : []), [quests]);
   const stops = useMemo(() => problemStops(questList, stationById, show), [questList, stationById, show]);
   const stopById = useMemo(() => new globalThis.Map(stops.map((stop) => [stop.station.id, stop])), [stops]);
-  // A mission landmark is its stop's own marker, so that stop never joins a cluster bubble (which would sit on top of the building).
-  const clusters = useMemo(
-    () => clusterStops(zoom >= content.landmarkMinZoom ? stops.filter((stop) => !missionLandmarkStations.has(stop.station.id)) : stops, zoom),
-    [stops, zoom],
-  );
+  const clusters = useMemo(() => clusterStops(stops, zoom), [stops, zoom]);
 
   // The small world only shows what is inside its circle: a handful of stops, not the whole T.
   const allStops = useMemo(() => problemStops(questList, stationById, ALL), [questList, stationById]);
@@ -218,10 +213,10 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
     () => (worldInfo && data ? data.stations.filter((station) => insideWorld(worldInfo.center, lngLat(station), 1.05)) : []),
     [data, worldInfo],
   );
-  // Mission landmarks that stand inside the small world: they replace that stop's pin there too.
-  const worldLandmarkIds = useMemo(
-    () => new Set(landmarks.filter((l) => l.stationMarker && worldStationList.some((s) => s.id === l.stationId)).map((l) => l.id)),
-    [worldStationList],
+  // Scenery is anchored to the building, which can be a few blocks from its station.
+  const districtLandmarks = useMemo(
+    () => worldInfo ? landmarks.filter(l => insideWorld(worldInfo.center, [l.longitude, l.latitude], 1.05)) : [],
+    [worldInfo],
   );
   const worldProblemCount = worldStops.reduce((sum, stop) => sum + stop.quests.length, 0);
 
@@ -260,33 +255,32 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
     [wide, mode],
   );
 
+  // A stop or cluster on the opening map is also a way into the atlas.
+  const enterFromMarker = useCallback(() => {
+    if (mode !== "intro" || started.current || entry.kind !== "pending") return;
+    started.current = true;
+    setMode("atlas");
+    onReveal();
+  }, [mode, entry.kind, onReveal]);
+
   const selectStation = useCallback(
     (station: SubwayStation, index = 0) => {
+      enterFromMarker();
       setSelected(station);
       setQuestIndex(index);
       saveView({ stationId: station.id, questIndex: index });
       setCoached(true);
       focus(station);
     },
-    [focus],
+    [enterFromMarker, focus],
   );
 
   const selectStop = useCallback((stop: ProblemStop) => selectStation(stop.station), [selectStation]);
 
-  const selectLandmark = useCallback(
-    (landmark: Landmark) => {
-      const station = stationById.get(landmark.stationId);
-      if (!station) return;
-      // Like the station dots in the world: only a stop with a problem leads anywhere.
-      if (mode === "world" && !(stopById.get(station.id) ?? allStops.find((s) => s.station.id === station.id))) return;
-      selectStation(station);
-    },
-    [stationById, selectStation, mode, stopById, allStops],
-  );
-
   const expandCluster = useCallback((cluster: Cluster) => {
     const map = mapRef.current?.getMap();
     if (!map) return;
+    enterFromMarker();
     const lons = cluster.stops.map((s) => s.station.longitude);
     const lats = cluster.stops.map((s) => s.station.latitude);
     map.fitBounds(
@@ -296,7 +290,7 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
       ],
       { padding: 120, maxZoom: 15, duration: 900 },
     );
-  }, []);
+  }, [enterFromMarker]);
 
   const clearSelection = useCallback(() => {
     setSelected(null);
@@ -500,16 +494,7 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
   const lineLayers = useMemo(() => tLineLayers(selectedLineKey ? selectedLineKey.split(",") : []), [selectedLineKey]);
 
   const landmarkScale = Math.min(1.4, Math.max(0.5, 0.55 + (zoom - 12) * 0.22));
-  // A station landmark can serve as its stop’s mission marker, so that stop's pin steps aside while landmarks show.
   const showLandmarks = zoom >= content.landmarkMinZoom;
-  const pinHiddenFor = (stationId: string) => showLandmarks && missionLandmarkStations.has(stationId);
-  // The world only holds the stops inside its circle (`allStops`), the atlas the filtered ones (`stopById`).
-  const stopOf = (stationId: string) => stopById.get(stationId) ?? allStops.find((s) => s.station.id === stationId);
-  const problemsAt = (stationId: string): LandmarkProblems | undefined => {
-    const stop = stopOf(stationId);
-    if (!stop || !missionLandmarkStations.has(stationId)) return undefined;
-    return { count: stop.quests.length, done: stop.quests.filter((q) => done.has(q.id)).length, top: stop.top, verified: verifiedOf(stop) };
-  };
   const selectedStop = selected ? stopById.get(selected.id) : undefined;
   const selectedQuests = selectedStop?.quests ?? [];
 
@@ -552,7 +537,7 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
               </Source>
             )}
             {data && (mode === "atlas" || arrived) && <TrainsLayer trains={live?.trains ?? []} lines={data.lines} />}
-            {(mode === "atlas" ? data?.stations : arrived ? worldStationList : [])?.map((station) => (
+            {(mode === "world" ? worldStationList : data?.stations)?.map((station) => (
               <StationMarker
                 key={station.id}
                 station={station}
@@ -569,24 +554,20 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
               />
             ))}
             {data &&
-              ((mode === "atlas" && showLandmarks) || (mode === "world" && arrived)) &&
-              landmarks
-                .filter((landmark) => mode === "atlas" || worldLandmarkIds.has(landmark.id))
+              (mode !== "atlas" || showLandmarks) &&
+              (mode === "world" ? districtLandmarks : landmarks)
                 .map((landmark) => (
                 <LandmarkMarker
                   key={landmark.id}
                   landmark={landmark}
                   scale={landmarkScale}
-                  selected={selected?.id === landmark.stationId}
-                  problems={problemsAt(landmark.stationId)}
-                  onSelect={selectLandmark}
                 />
               ))}
-            {mode === "atlas" &&
+            {mode !== "world" &&
               clusters.map((cluster) =>
                 cluster.stops.length > 1 ? (
                   <ClusterPin key={`c-${cluster.id}`} cluster={cluster} onExpand={expandCluster} />
-                ) : pinHiddenFor(cluster.id) ? null : (
+                ) : (
                   <ProblemPin
                     key={cluster.id}
                     stop={cluster.stops[0]}
@@ -599,9 +580,7 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
                 ),
               )}
             {mode === "world" &&
-              arrived &&
               worldStops
-                .filter((stop) => !missionLandmarkStations.has(stop.station.id))
                 .map((stop) => (
                 <ProblemPin
                   key={stop.station.id}
@@ -631,7 +610,6 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
                 onIndex={setQuestIndex}
                 done={done}
                 landmark={landmarkOfStation.get(selected.id)}
-                landmarkScale={landmarkScale}
                 docked={false}
                 onContribute={contribute}
                 onClose={clearSelection}

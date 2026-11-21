@@ -39,8 +39,8 @@ Issue: #2. Owner: Rachel. Only the owner edits this folder.
 - Motion: nothing moves on its own. Hover and selection use short springs; Reduced Motion turns them off.
 
 ## Adding the miniature buildings
-The landmarks are listed in `content.ts` (`landmarks`). Each has real coordinates and the stop its ticket belongs to.
-Each landmark ID selects a matching pixel grid in `PixelLandmark.tsx`. Edit its rows to change the silhouette. The palette and CSS colour overrides live in the same file. Set `stationMarker` when the landmark also serves as its station’s mission pin.
+The landmarks are listed in `content.ts` (`landmarks`). Each has real coordinates and can optionally be associated with a station ticket.
+Each landmark ID selects a matching pixel grid in `PixelLandmark.tsx`. Edit its rows to change the silhouette. The palette and CSS colour overrides live in the same file. Give each landmark a story of up to three sentences. The opening map shows landmarks alongside station rings and problem pins or clusters.
 
 ## Data
 - `/api/subway`: lines, stops and shapes from the MBTA V3 API, cached for a day, with `subway-snapshot.json` as fallback.
