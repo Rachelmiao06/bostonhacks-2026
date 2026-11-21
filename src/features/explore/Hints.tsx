@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Marker, useMap } from "react-map-gl/maplibre";
 import { motion, useReducedMotion } from "motion/react";
 import { hints } from "./content";
+import { primaryClass, primaryStyle } from "./glass";
 import { hasSeen, markSeen } from "./onboarding";
 
 type LngLat = [number, number];
@@ -140,12 +141,13 @@ export function MapHint({
           transition={{ duration: 0.4, ease: "easeOut" }}
           className="relative w-44 rounded-2xl border border-ivory/80 bg-gradient-to-br from-ivory/80 to-ivory/55 px-3.5 py-3 font-ui text-graphite shadow-float backdrop-blur-xl backdrop-saturate-150 min-[460px]:w-[14.75rem]"
         >
-          <p className="font-serif text-base leading-tight font-semibold">{hints.map.title}</p>
+          <p className="font-heading text-base leading-tight font-semibold">{hints.map.title}</p>
           <p className="mt-0.5 text-xs leading-snug text-taupe">{hints.map.body}</p>
           <button
             type="button"
             onClick={onGone}
-            className="mt-2 cursor-pointer rounded-full text-xs font-medium underline decoration-graphite/30 underline-offset-4 outline-none hover:decoration-graphite focus-visible:ring-2 focus-visible:ring-graphite/30"
+            className={`${primaryClass} mt-2.5 h-8 px-4 text-xs`}
+            style={primaryStyle}
           >
             {hints.map.dismiss}
           </button>
@@ -173,7 +175,7 @@ export function TicketHint({ show, className }: { show: boolean; className?: str
   if (!show) return null;
   return (
     <p className={`border-l-2 border-cat-service/50 pl-2.5 font-ui text-xs leading-snug text-taupe ${className ?? ""}`}>
-      <span className="font-serif text-sm font-semibold text-graphite">{hints.ticket.title}</span> {hints.ticket.body}
+      <span className="font-heading text-sm font-semibold text-graphite">{hints.ticket.title}</span> {hints.ticket.body}
     </p>
   );
 }

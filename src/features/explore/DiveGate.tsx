@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import gsap from "gsap";
-import { ArrowLeft, LoaderCircle, LocateFixed, Search } from "lucide-react";
+import { ArrowLeft, LoaderCircle, MapPin, Search, TrainFront } from "lucide-react";
 import stationData from "@/lib/data/stations.json";
 import { cn } from "@/lib/utils";
 import { dive } from "./content";
 import { prefersReducedMotion } from "./world";
-import { AtlasButton } from "./ui";
+import { glassClass, glassStyle, primaryClass, primaryStyle } from "./glass";
 
 export type LoadStatus = { streets: boolean; lines: boolean; problems: boolean; failed?: boolean };
 export type GatePhase = "gate" | "locating" | "waiting" | "revealing";
@@ -89,14 +89,14 @@ export function DiveGate({ phase, status, error, onLocate, onSpot, onSkip, onGon
         role="region"
         aria-label={dive.title}
         className={cn(
-          "pointer-events-auto relative isolate w-full max-w-[22.5rem] overflow-hidden rounded-[1.75rem] border border-ivory/80 bg-gradient-to-br from-ivory/55 via-ivory/30 to-ivory/18 p-4 font-ui text-graphite backdrop-blur-xl backdrop-saturate-[1.8]",
+          "pointer-events-auto relative isolate w-full max-w-[22.5rem] overflow-hidden rounded-[1.75rem] border border-ivory/80 bg-gradient-to-br from-ivory/45 via-ivory/22 to-ivory/12 p-4 font-ui text-graphite backdrop-blur-xl backdrop-saturate-[1.8]",
           phase === "revealing" && "pointer-events-none",
         )}
         style={{
           // Rim light on the top edge, a soft inner glow, and a long shadow that lifts the glass off the map.
           boxShadow:
             "inset 0 1.5px 0 var(--ivory), inset 0 -1px 0 color-mix(in oklab, var(--ivory) 40%, transparent), inset 0 0 24px color-mix(in oklab, var(--ivory) 35%, transparent), 0 24px 48px -20px color-mix(in oklab, var(--graphite) 38%, transparent), 0 2px 6px color-mix(in oklab, var(--graphite) 10%, transparent)",
-          ...(refract ? { backdropFilter: "blur(5px) saturate(1.9) brightness(1.04) url(#tp-liquid)" } : {}),
+          ...(refract ? { backdropFilter: "blur(9px) saturate(1.9) brightness(1.04) url(#tp-liquid)" } : {}),
         }}
       >
         <svg aria-hidden width="0" height="0" className="absolute">
@@ -117,8 +117,8 @@ export function DiveGate({ phase, status, error, onLocate, onSpot, onSkip, onGon
           className="pointer-events-none absolute inset-y-0 -left-1/3 -z-10 w-2/3 -skew-x-12"
           style={{ background: "linear-gradient(90deg, transparent, color-mix(in oklab, var(--ivory) 70%, transparent), transparent)", transform: "translateX(-130%)" }}
         />
-        <p className="font-mono text-[0.62rem] tracking-[0.14em] text-taupe uppercase">{dive.eyebrow}</p>
-        <h2 className="mt-1 font-serif text-[1.4rem] leading-tight font-semibold tracking-tight">{dive.title}</h2>
+        <p className="text-[0.65rem] font-medium tracking-[0.12em] text-taupe uppercase">{dive.eyebrow}</p>
+        <h2 className="mt-1 font-heading text-[1.35rem] leading-tight font-semibold">{dive.title}</h2>
         <p className="mt-1 text-sm text-taupe">{dive.intro}</p>
 
         {/* A ticket's tear line */}
@@ -127,7 +127,7 @@ export function DiveGate({ phase, status, error, onLocate, onSpot, onSkip, onGon
         {choosing ? (
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
-              <p className="font-mono text-[0.62rem] tracking-[0.14em] text-taupe uppercase">{dive.pickTitle}</p>
+              <p className="font-heading text-base font-semibold">{dive.pickTitle}</p>
               <button
                 type="button"
                 onClick={() => {
@@ -142,7 +142,7 @@ export function DiveGate({ phase, status, error, onLocate, onSpot, onSkip, onGon
             </div>
             <label className="relative block">
               <span className="sr-only">{dive.search}</span>
-              <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-taupe" />
+              <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-taupe" />
               <input
                 // On a phone the keyboard would cover the map, so only wide screens focus the box for you.
                 autoFocus={window.matchMedia("(min-width: 640px)").matches}
@@ -150,7 +150,7 @@ export function DiveGate({ phase, status, error, onLocate, onSpot, onSkip, onGon
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={dive.search}
-                className="h-10 w-full rounded-full border border-graphite/20 bg-ivory/80 pr-3 pl-9 text-sm text-graphite outline-none placeholder:text-taupe/80 focus-visible:border-graphite/50 focus-visible:ring-4 focus-visible:ring-graphite/10"
+                className="h-11 w-full rounded-full border border-ivory/90 bg-ivory/55 pr-3 pl-10 text-sm text-graphite outline-none placeholder:text-taupe/80 focus-visible:border-cat-verify/60 focus-visible:ring-4 focus-visible:ring-cat-verify/15"
               />
             </label>
             {query.trim() ? (
@@ -162,7 +162,7 @@ export function DiveGate({ phase, status, error, onLocate, onSpot, onSkip, onGon
                       type="button"
                       disabled={busy}
                       onClick={() => onSpot(s.id)}
-                      className="flex w-full cursor-pointer items-center justify-between rounded-xl px-2.5 py-2 text-left text-sm outline-none hover:bg-stone-deep/50 focus-visible:ring-2 focus-visible:ring-graphite/30 disabled:opacity-40"
+                      className="flex w-full cursor-pointer items-center justify-between rounded-2xl px-3 py-2 text-left text-sm outline-none hover:bg-ivory/60 focus-visible:ring-2 focus-visible:ring-cat-verify/50 disabled:opacity-40"
                     >
                       {s.name}
                       <span className="text-xs text-taupe">{s.lines.join(" · ")}</span>
@@ -175,9 +175,17 @@ export function DiveGate({ phase, status, error, onLocate, onSpot, onSkip, onGon
                 <p className="text-xs text-taupe">{dive.popular}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {dive.spots.map((spot) => (
-                    <AtlasButton key={spot.stationId} tone="outline" size="sm" disabled={busy} onClick={() => onSpot(spot.stationId)}>
+                    <button
+                      key={spot.stationId}
+                      type="button"
+                      disabled={busy}
+                      onClick={() => onSpot(spot.stationId)}
+                      className={`${glassClass} h-9 px-3.5 text-[0.8rem]`}
+                      style={glassStyle}
+                    >
+                      <TrainFront className="size-4" aria-hidden />
                       {spot.label}
-                    </AtlasButton>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -185,13 +193,26 @@ export function DiveGate({ phase, status, error, onLocate, onSpot, onSkip, onGon
           </div>
         ) : (
           <div className="space-y-2">
-            <AtlasButton size="lg" className="w-full" disabled={busy} onClick={onLocate}>
-              {phase === "locating" ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : <LocateFixed className="size-4" aria-hidden />}
+            <button
+              type="button"
+              disabled={busy}
+              onClick={onLocate}
+              className={`${primaryClass} h-11 w-full text-[0.95rem]`}
+              style={primaryStyle}
+            >
+              {phase === "locating" ? <LoaderCircle className="size-5 animate-spin" aria-hidden /> : <MapPin className="size-5 fill-cherry text-ivory" aria-hidden />}
               {phase === "locating" ? dive.locating : dive.useLocation}
-            </AtlasButton>
-            <AtlasButton tone="outline" size="lg" className="w-full bg-ivory/40" disabled={busy} onClick={() => setChoosing(true)}>
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => setChoosing(true)}
+              className={`${glassClass} h-11 w-full text-[0.95rem]`}
+              style={glassStyle}
+            >
+              <TrainFront className="size-5" aria-hidden />
               {dive.chooseStation}
-            </AtlasButton>
+            </button>
             <button
               type="button"
               disabled={busy}
