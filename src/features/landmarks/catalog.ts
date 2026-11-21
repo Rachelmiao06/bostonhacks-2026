@@ -16,14 +16,14 @@ export type LandmarkId = keyof typeof landmarks;
 
 // Demo placements. Keys match /api/stations; move a piece here to change its station.
 export const stationLandmarks: Readonly<Partial<Record<string, LandmarkId>>> = {
-  "place-armnl": "boston-swan-boat",
-  "place-pktrm": "mbta-green-line-trolley",
-  "place-coecl": "duck-boat",
+  "place-lake": "boston-swan-boat",
+  "place-buest": "mbta-green-line-trolley",
+  "place-wascm": "duck-boat",
   "place-kencl": "red-sox-b-cap",
-  "place-boyls": "make-way-for-ducklings-statue",
-  "place-gover": "golden-grasshopper",
-  "place-state": "boston-cream-pie-slice",
-  "place-aqucl": "chowder-bowl",
+  "place-amory": "make-way-for-ducklings-statue",
+  "place-brico": "golden-grasshopper",
+  "place-harvd": "boston-cream-pie-slice",
+  "place-sthld": "chowder-bowl",
 };
 
 export function landmarkSrc(id: LandmarkId, view: LandmarkView = landmarks[id].view) {

@@ -14,8 +14,8 @@ export function LandmarkArt({ id, view, size, decorative }: ArtProps) {
     <Image
       src={landmarkSrc(id, view)}
       alt={decorative ? "" : `${landmarks[id].label}, ${view ?? landmarks[id].view} view`}
-      width={512}
-      height={512}
+      width={40}
+      height={40}
       unoptimized
       draggable={false}
       className={styles.art}

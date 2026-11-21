@@ -30,22 +30,16 @@ export const MAX_BOUNDS: [number, number, number, number] = [-71.65, 42.0, -70.6
 export function initialView() {
   // Phones start zoomed out a little so the whole core of the T fits.
   const isPhone = window.innerWidth < 640;
+  if (new URLSearchParams(window.location.search).get("sample") === "green-b") {
+    return { longitude: -71.131, latitude: 42.347, zoom: isPhone ? 13.55 : 13.05, pitch: 35, bearing: 0 };
+  }
   return { longitude: -71.0712, latitude: 42.3522, zoom: isPhone ? 11.4 : 12.3, pitch: 55, bearing: 0 };
 }
 
-/**
- * The atlas palette: warm, muted, low-saturation, like an architectural publication.
- * These six colours are Rachel's brief (Nov 21). They live here, not in globals.css, because that file
- * is shared; once the team agrees they should move there as tokens and this object should read them.
- * ExploreMap also hands them to the page as CSS variables (--atlas-land and so on) for things drawn on top.
- */
+/** Felt colours for land, buildings, water and label contrast. */
 export const ATLAS = {
-  land: "#F1EFE9", // warm stone
-  water: "#DCE5E1", // misty sage-grey
-  road: "#FAF9F5", // soft ivory
-  building: "#C9C2B5", // warm sandstone
-  outline: "#645F58", // dark taupe: building edges and place names
-  park: "#D4DDCF", // desaturated sage
+  land: "#e5d8b5", water: "#a7cbd0", road: "#fff2d7",
+  building: "#cba58a", outline: "#514337", park: "#b6c897",
 } as const;
 
 /** The palette as CSS variables, for a wrapper element's `style`. */
@@ -107,7 +101,8 @@ export async function loadMapStyle(): Promise<StyleSpecification> {
             },
           },
         ];
-      // Land-use patches would only add noise.
+      if (layer.id === "landcover_wood") return [{ ...layer, paint: { "fill-color": ATLAS.park } }];
+      // Streets, parks and water carry the quilt pattern; these fills would obscure it.
       return [];
     }
 
@@ -137,6 +132,23 @@ export async function loadMapStyle(): Promise<StyleSpecification> {
   });
 
   return style;
+}
+
+/** Register small seamless fabric swatches and anchor them to map geometry. */
+export async function addKnitPatterns(map: MapLibreMap) {
+  const surfaces = [
+    { image: "meadow", layers: ["background"] },
+    { image: "river", layers: ["water"] },
+    { image: "moss", layers: ["park", "landcover_wood"] },
+  ];
+  await Promise.all(surfaces.map(async ({ image, layers }) => {
+    const texture = await map.loadImage(`/assets/textile/${image}.png`);
+    if (!map.getLayer("background")) return;
+    if (!map.hasImage(image)) map.addImage(image, texture.data, { pixelRatio: 2 });
+    for (const id of layers) {
+      if (map.getLayer(id)) map.setPaintProperty(id, id === "background" ? "background-pattern" : "fill-pattern", image);
+    }
+  }));
 }
 
 /**
@@ -201,11 +213,11 @@ export function addStickerLayers(map: MapLibreMap) {
  * By default every line is drawn evenly and a little soft. When a station is selected, its lines
  * come forward at full strength and the others step back.
  */
-export function tLineLayers(highlightLineIds: string[]): { casing: LayerProps; line: LayerProps } {
+export function tLineLayers(highlightLineIds: string[]): { casing: LayerProps; line: LayerProps; stitches: LayerProps } {
   const hasHighlight = highlightLineIds.length > 0;
   const isHighlighted: ExpressionSpecification = ["in", ["get", "lineId"], ["literal", highlightLineIds]];
   return {
-    // A soft ivory edge, so lines stay crisp over buildings without a hard dark outline.
+    // A soft piping edge separates coloured yarn from the streets.
     casing: {
       id: "t-lines-casing",
       type: "line",
@@ -213,7 +225,7 @@ export function tLineLayers(highlightLineIds: string[]): { casing: LayerProps; l
       paint: {
         "line-color": ATLAS.road,
         "line-opacity": 0.9,
-        "line-width": ["interpolate", ["linear"], ["zoom"], 10, 4, 14, 8],
+        "line-width": ["interpolate", ["linear"], ["zoom"], 10, 5, 14, 9],
       },
     },
     line: {
@@ -226,6 +238,16 @@ export function tLineLayers(highlightLineIds: string[]): { casing: LayerProps; l
         "line-width": hasHighlight
           ? ["interpolate", ["linear"], ["zoom"], 10, ["case", isHighlighted, 3.2, 2], 14, ["case", isHighlighted, 6.5, 4]]
           : ["interpolate", ["linear"], ["zoom"], 10, 2.2, 14, 4.5],
+      },
+    },
+    stitches: {
+      id: "t-line-stitches", type: "line",
+      layout: { "line-cap": "round", "line-join": "round" },
+      paint: {
+        "line-color": ATLAS.road,
+        "line-width": ["interpolate", ["linear"], ["zoom"], 10, 0.8, 15, 1.55],
+        "line-dasharray": [1.2, 4.2],
+        "line-opacity": hasHighlight ? ["case", isHighlighted, 0.8, 0.22] : 0.72,
       },
     },
   };
