@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { MotionConfig } from "motion/react";
 import type { Quest } from "@/lib/mbta";
 import {
+  ATLAS,
   Layer,
   MAX_BOUNDS,
   MAX_PITCH,
@@ -23,7 +24,7 @@ import {
 import { categoryOf } from "./category";
 import { ContributePanel } from "./ContributePanel";
 import { categories, content, landmarks, type CategoryId, type Landmark } from "./content";
-import { LandmarkMarker } from "./LandmarkMarker";
+import { LandmarkMarker, type LandmarkProblems } from "./LandmarkMarker";
 import { FilterBar, ProgressChip, StatusChip } from "./MapOverlays";
 import { ClusterPin, ProblemPin } from "./ProblemMarker";
 import { ProblemTicket } from "./ProblemTicket";
@@ -43,6 +44,23 @@ const stylePromise = loadMapStyle();
 const subwayPromise = getJson<SubwayData>("/api/subway");
 
 const landmarkOfStation = new globalThis.Map(landmarks.map((landmark) => [landmark.stationId, landmark]));
+const pixelLandmarkStations = new Set(landmarks.filter((l) => l.pixel).map((l) => l.stationId));
+
+/**
+ * PROTOTYPE: soft haze toward the horizon when the map is tilted, in the atlas palette.
+ * Uses MapLibre's own sky settings: no extra layer, no full-screen filter.
+ */
+function addHaze(map: Parameters<typeof addStickerLayers>[0]) {
+  map.setSky({
+    "sky-color": ATLAS.road,
+    "horizon-color": ATLAS.land,
+    "fog-color": ATLAS.land,
+    "sky-horizon-blend": 0.6,
+    "horizon-fog-blend": 0.7,
+    "fog-ground-blend": 0.6,
+    "atmosphere-blend": 0,
+  });
+}
 const ALL = new Set<CategoryId>(categories.map((c) => c.id));
 const NOTHING_DONE: ReadonlySet<string> = new Set();
 
@@ -224,6 +242,14 @@ export default function ExploreMap() {
   const lineLayers = useMemo(() => tLineLayers(selectedLineKey ? selectedLineKey.split(",") : []), [selectedLineKey]);
 
   const landmarkScale = Math.min(1.4, Math.max(0.5, 0.55 + (zoom - 12) * 0.22));
+  // PROTOTYPE: a pixel-art landmark is its stop's mission marker, so that stop's pin steps aside while landmarks show.
+  const showLandmarks = zoom >= content.landmarkMinZoom;
+  const pinHiddenFor = (stationId: string) => showLandmarks && pixelLandmarkStations.has(stationId);
+  const problemsAt = (stationId: string): LandmarkProblems | undefined => {
+    const stop = stopById.get(stationId);
+    if (!stop || !pixelLandmarkStations.has(stationId)) return undefined;
+    return { count: stop.quests.length, done: stop.quests.filter((q) => done.has(q.id)).length, top: stop.top };
+  };
   const selectedStop = selected ? stopById.get(selected.id) : undefined;
   const selectedQuests = selectedStop?.quests ?? [];
 
@@ -240,7 +266,10 @@ export default function ExploreMap() {
             maxPitch={MAX_PITCH}
             minZoom={MIN_ZOOM}
             style={{ width: "100%", height: "100%" }}
-            onLoad={(event) => addStickerLayers(event.target)}
+            onLoad={(event) => {
+              addStickerLayers(event.target);
+              addHaze(event.target);
+            }}
             onZoom={(event) => setZoom(Math.round(event.viewState.zoom * 2) / 2)}
             onClick={(event) => {
               // Taps on markers and tickets also reach the map; only a tap on bare map clears the selection.
@@ -268,18 +297,19 @@ export default function ExploreMap() {
               />
             ))}
             {data &&
-              zoom >= content.landmarkMinZoom &&
+              showLandmarks &&
               landmarks.map((landmark) => (
                 <LandmarkMarker
                   key={landmark.id}
                   landmark={landmark}
                   scale={landmarkScale}
                   selected={selected?.id === landmark.stationId}
+                  problems={problemsAt(landmark.stationId)}
                   onSelect={selectLandmark}
                 />
               ))}
             {clusters.map((cluster) =>
-              cluster.stops.length > 1 ? (
+              cluster.stops.length === 1 && pinHiddenFor(cluster.id) ? null : cluster.stops.length > 1 ? (
                 <ClusterPin key={`c-${cluster.id}`} cluster={cluster} onExpand={expandCluster} />
               ) : (
                 <ProblemPin

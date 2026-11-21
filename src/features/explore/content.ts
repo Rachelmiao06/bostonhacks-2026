@@ -1,4 +1,5 @@
 import type { QuestKind } from "@/lib/mbta";
+import type { PixelArtId } from "./PixelLandmark";
 
 export const content = {
   title: "Explore",
@@ -73,6 +74,8 @@ export const content = {
   /** Below this zoom the landmark models are hidden, so the far-out view stays clean. */
   landmarkMinZoom: 11.5,
   landmarkPlaceholder: "Model to come",
+  landmarkProblems: (name: string, n: number, done: number) =>
+    `${name}: ${n} ${n === 1 ? "problem" : "problems"} at this stop${done ? `, ${done} done by you` : ""}`,
   /** Problems within this many pixels of each other merge into one cluster. 0 = never. */
   clusterRadiusPx: (zoom: number) => (zoom >= 14.5 ? 0 : 46),
 };
@@ -126,9 +129,13 @@ export type Landmark = {
   latitude: number;
   stationId: string;
   art?: string;
+  /** PROTOTYPE: a cute pixel-art miniature drawn in code (PixelLandmark.tsx). Wins over `art`. */
+  pixel?: PixelArtId;
 };
 
 export const landmarks: Landmark[] = [
+  // PROTOTYPE station: the Old State House stands right on top of State station.
+  { id: "old-state-house", name: "Old State House", longitude: -71.0575, latitude: 42.3587, stationId: "place-state", pixel: "old-state-house" },
   { id: "state-house", name: "State House", longitude: -71.0638, latitude: 42.3588, stationId: "place-pktrm" },
   { id: "fenway-park", name: "Fenway Park", longitude: -71.0972, latitude: 42.3467, stationId: "place-kencl" },
   { id: "public-library", name: "Boston Public Library", longitude: -71.0782, latitude: 42.3493, stationId: "place-coecl" },
