@@ -65,7 +65,7 @@ const SHADOW_GRID = 20;
 const SHADOW_LIFT = 0.03;
 const SHADOW_RANGE = S(9); // travel runs from -range to +range along the wind
 const SHADOW_FADE = [0.88, 0.97]; // sE where the shadow fades out at the cushion edge
-const SHADOW_COLOR = '#2c3a5a';
+const SHADOW_COLOR = '#3a3632';
 // spread evenly over the travel range so one is always crossing the island
 const SHADOWS = [
 	{ size: 4.0, depth: 3.0, s: S(-6.0), l: S(-2.0), rot: 0.3, seed: 11 },

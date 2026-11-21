@@ -19,7 +19,7 @@ import { S } from './layout.js';
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
 
-const BACKGROUND = '#f1dcc4';
+const BACKGROUND = '#ebe5d9'; // warm stone
 
 /**
  * @param {HTMLElement} container

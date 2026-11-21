@@ -51,7 +51,7 @@ const COLLIDER_BALD = 0.26;
 const COLLIDER_SLACK = 0.05;
 
 // bald body: slim pink knitted ellipsoid under the wool (semi axes, body-local center)
-const BALD_COLOR = '#f3c8c0';
+const BALD_COLOR = '#e8d3c8';
 const BALD_RADII = [0.25, 0.21, 0.38];
 const BALD_CENTER = [0, 0.52, -0.02];
 

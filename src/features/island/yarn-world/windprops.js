@@ -546,8 +546,8 @@ export function setupWindProps({ root, wind, kit, terrain }) {
 
 	const garments = [
 		{ s: 0.2, mesh: sweater, pegs: [-0.1, 0.1], k: 30, c: 2.2 },
-		{ s: 0.42, mesh: () => sock(P.mustard), pegs: [-0.02, 0.022], k: 55, c: 2.4 },
-		{ s: 0.58, mesh: () => sock(P.lavender), pegs: [-0.02, 0.022], k: 55, c: 2.4 },
+		{ s: 0.42, mesh: () => sock(P.orange), pegs: [-0.02, 0.022], k: 55, c: 2.4 },
+		{ s: 0.58, mesh: () => sock(P.blue), pegs: [-0.02, 0.022], k: 55, c: 2.4 },
 		{ s: 0.8, mesh: scarf, pegs: [-0.035, 0.035], k: 36, c: 2.2 },
 	].map((spec) => {
 		const g = new THREE.Group();

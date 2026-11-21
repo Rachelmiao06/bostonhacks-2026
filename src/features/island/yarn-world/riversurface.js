@@ -22,8 +22,8 @@ const SWELL_LIFT = 0.012; // vertex displacement
 const SWELL_TILT = 0.05; // normal tilt per unit of swell slope
 const SWELL_LIGHT = 0.09; // diffuse change at crests / troughs
 
-const BASE = new THREE.Color('#8ec5df'); // river base color
-const DEEP = new THREE.Color('#5fa3c7'); // centerline target
+const BASE = new THREE.Color('#a8c4c4'); // river base color
+const DEEP = new THREE.Color('#82a6ab'); // centerline target
 const DEPTH_MIX = 0.9;
 const DEPTH_POW = 1.3;
 

@@ -24,26 +24,34 @@ import { LAYOUT, L, S, H, ROLL, HOUSE, BALL, FLOWER_CLUSTERS } from './layout.js
 // ---------------------------------------------------------------------------
 // Palette
 // ---------------------------------------------------------------------------
+// Palette: warm stone, ivory, muted sage and sandstone make up the island. The MBTA line colours
+// (red, orange, blue, green, slightly softened) are kept for accents only: the yarn ball, kite, door, train.
+// Names are Yarn World's originals, so the other modules keep working; only the values changed.
 const P = {
-	cream: '#f6ecdc',
-	white: '#fbf4ea',
-	sage: '#a8c09a',
-	grass: '#8fb57a',
-	olive: '#6f8f5a',
-	pine: '#5f8450',
-	mustard: '#e2b04a',
-	terracotta: '#d0694a',
-	brick: '#b85a40',
-	coral: '#ef8f86',
-	coralDeep: '#e27b76',
-	pink: '#f4a79d',
-	sky: '#8ec5df',
-	lavender: '#b8a6d9',
-	charcoal: '#3b3633',
-	wood: '#b07a4a',
-	roof: '#9a6240',
+	cream: '#f1eadc',
+	white: '#faf6ee',
+	sage: '#b4c2a8',
+	grass: '#a8b79a',
+	olive: '#8a9b7c',
+	pine: '#6c8368',
+	mustard: '#d8c08f', // sandstone
+	terracotta: '#cdb08f', // sandstone walls
+	brick: '#a2644f',
+	coral: '#c4493d', // MBTA red
+	coralDeep: '#b23f36',
+	pink: '#e4cfc2', // blush stone
+	sky: '#9db9bb', // misty sage-blue
+	lavender: '#c8bfb1', // greige stone
+	charcoal: '#3a3632',
+	wood: '#a98a6a',
+	roof: '#8c6c54',
 	stone: '#aaa49c',
 	stone2: '#bab4aa',
+	// MBTA accents
+	red: '#c4493d',
+	orange: '#d58a3c',
+	blue: '#4c6f9f',
+	green: '#4d8566',
 };
 
 // ---------------------------------------------------------------------------
@@ -324,7 +332,7 @@ const wobbleZ = (x) => 0.5 * Math.sin((x / LAYOUT) * 0.5 + 2.0) + 0.25 * Math.si
 const CELLS = [
 	[[P.sage, 'rib', 0], [P.grass, 'cable', 0], [P.olive, 'seed', 0], [P.sage, 'garter', 0]],
 	[[P.grass, 'stockinette', 1], [P.olive, 'stockinette', 0, P.cream, 'fairisle'], [P.grass, 'rib', 1], [P.mustard, 'stockinette', 0]],
-	[[P.lavender, 'rib', 1], [P.grass, 'stockinette', 0, P.coral, 'stripe'], [P.olive, 'cable', 1], [P.grass, 'seed', 0]],
+	[[P.lavender, 'rib', 1], [P.grass, 'stockinette', 0, P.pink, 'stripe'], [P.olive, 'cable', 1], [P.grass, 'seed', 0]],
 	[[P.sage, 'stockinette', 0], [P.mustard, 'seed', 0], [P.lavender, 'stockinette', 0], [P.grass, 'stockinette', 0, P.cream, 'check']],
 ];
 // repeat of a patch per stitch kind: tiles hold 4 to 8 columns, this keeps stitches ~0.1 to 0.13 units at any island size
@@ -605,7 +613,7 @@ function buildHouse(parent) {
 	const doorHinge = new THREE.Group();
 	doorHinge.position.set(-0.18, 0, 0.61);
 	house.add(doorHinge);
-	add(doorHinge, new THREE.Mesh(new RoundedBoxGeometry(0.36, 0.6, 0.08, 2, 0.04), mat(P.mustard, 'stockinette', [4, 6]))).position.set(0.18, 0.3, 0);
+	add(doorHinge, new THREE.Mesh(new RoundedBoxGeometry(0.36, 0.6, 0.08, 2, 0.04), mat(P.blue, 'stockinette', [4, 6]))).position.set(0.18, 0.3, 0);
 	add(doorHinge, new THREE.Mesh(sphereGeo(0.03), woodMat)).position.set(0.28, 0.3, 0.06);
 	const cat = buildCat(house);
 	add(house, new THREE.Mesh(new RoundedBoxGeometry(0.55, 0.07, 0.28, 2, 0.03), mat(P.stone2, 'seed', [6, 3]))).position.set(0, 0.03, 0.8);
@@ -662,9 +670,9 @@ function buildTrees(parent, rand) {
 
 	const pompomTrees = [
 		[...L(-5.0, -1.0), 1.1, P.grass, 0.6, P.coral],
-		[...L(-1.2, 5.2), 0.95, P.coral, 0.5, P.sky],
-		[...L(5.3, -1.0), 1.0, P.mustard, 0.6, P.lavender],
-		[...L(-5.6, 3.2), 0.85, P.sage, 0.5, P.mustard],
+		[...L(-1.2, 5.2), 0.95, P.pine, 0.5, P.orange],
+		[...L(5.3, -1.0), 1.0, P.mustard, 0.6, P.pink],
+		[...L(-5.6, 3.2), 0.85, P.sage, 0.5, P.orange],
 	];
 	for (const [px, pz, s, color, r, fruit] of pompomTrees) {
 		const [x, z] = settle(px, pz, 1.4);

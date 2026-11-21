@@ -278,8 +278,8 @@ export function setupKite({ root, wind, kit, terrain }) {
 	};
 	const panels = [];
 	[
-		[P.coral, [quad.tl, quad.br]],
-		[P.mustard, [quad.tr, quad.bl]],
+		[P.red, [quad.tl, quad.br]],
+		[P.orange, [quad.tr, quad.bl]],
 	].forEach(([color, parts]) => {
 		const g = mergeGeometries(parts);
 		parts.forEach((p) => p.dispose());
@@ -331,7 +331,7 @@ export function setupKite({ root, wind, kit, terrain }) {
 		g.scale(1, 1, 0.45);
 		return g;
 	});
-	const bowColors = [P.coral, P.mustard, P.sky, P.lavender, P.pink, P.mustard];
+	const bowColors = [P.red, P.orange, P.blue, P.green, P.cream, P.orange];
 	const bows = bowColors.slice(0, TAIL_N).map((color, i) => {
 		const mesh = kit.add(tailG, new THREE.Mesh(bowGeo, kit.mat(color, 'stockinette', [8, 8])));
 		mesh.scale.setScalar(1 - i * 0.04);

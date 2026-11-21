@@ -15,7 +15,7 @@ export function Island() {
   const next = unlockTiers[shown];
 
   return (
-    <section className="fixed inset-0 z-30 bg-[#f1dcc4] font-ui text-graphite">
+    <section className="fixed inset-0 z-30 bg-stone font-ui text-graphite">
       {/* key: switching to or from the preview rebuilds the island with the new set of pieces */}
       <IslandScene key={String(preview)} stages={stagesFor(shown)} />
 
