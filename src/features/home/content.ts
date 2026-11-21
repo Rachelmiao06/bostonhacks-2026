@@ -1,14 +1,15 @@
-// Placeholder copy. Replace once the team picks the idea.
+// Placeholder copy. Replace once the team agrees the wording.
 export const content = {
-  title: "BostonHacks 2026",
-  tagline: "Roll the dice and pick your first square",
+  title: "T Party",
+  tagline: "Make every ride count",
   startLabel: "Press Start",
-  startHref: "/app",
+  startHref: "/explore",
   diceHint: "Tap the dice to roll",
   squaresHeading: "Pick your square",
   squares: [
-    { href: "/", label: "Home", blurb: "You are here. Start of the board.", tone: "sun" },
-    { href: "/app", label: "Main app", blurb: "Placeholder. The main game goes here.", tone: "sky" },
-    { href: "/about", label: "About", blurb: "Placeholder. Who we are and why.", tone: "leaf" },
+    { href: "/explore", label: "Explore", blurb: "Wander the pixel map and find a challenge.", tone: "sun" },
+    { href: "/my-challenges", label: "My Challenges", blurb: "Drafts, reviews and completed missions.", tone: "sky" },
+    { href: "/rewards", label: "Rewards", blurb: "Your tokens and how you earned them.", tone: "leaf" },
+    { href: "/about", label: "About", blurb: "What T Party is, and what it is not.", tone: "cherry" },
   ],
 } as const;

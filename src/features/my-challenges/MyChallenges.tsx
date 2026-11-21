@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { content } from "./content";
 
-export function MainApp() {
+export function MyChallenges() {
   return (
     <Card>
       <CardHeader>

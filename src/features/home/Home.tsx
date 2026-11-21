@@ -14,6 +14,7 @@ const NUMBER_TONES = {
   sun: "bg-sun",
   sky: "bg-sky",
   leaf: "bg-leaf",
+  cherry: "bg-cherry",
 } as const;
 
 export function Home() {
@@ -70,7 +71,7 @@ export function Home() {
         <div className="text-center">
           <Ribbon tone="sun">{content.squaresHeading}</Ribbon>
         </div>
-        <ol className="grid gap-8 sm:grid-cols-3">
+        <ol className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {content.squares.map((square, i) => (
             <li key={square.href}>
               <Tilt>
