@@ -43,3 +43,6 @@ One line each: date · what · why.
 - 2026-11-21 · GSAP only, no Lenis · Lenis smooths page scrolling, but the map owns the wheel (zoom) and the quest card scrolls natively; both would fight it. Revisit only if a scrolling landing page is added.
 - 2026-11-21 · 3D buildings use MapLibre `distance` (not `within`, which ignores building outlines), heights capped at 46 m, only inside the district · keeps the world light and stops towers hiding stops.
 - 2026-11-21 · Location is read once in the browser to pick the nearest stop; never sent, never stored · privacy, and the app needs nothing more.
+- 2026-11-21 · Report: a report judged "not the city's job" cannot be overridden by the user; a wrong verdict can only be flagged for review · rejected reports must never reach 311 or add to the city's workload. See `features/report/EDGE-CASES.md`.
+- 2026-11-21 · Report: emergencies (fire, injury, gas smell) are never filed; the app says "Call 911" · a 311 case is the wrong channel for an emergency.
+- 2026-11-21 · Report: three case stages (Sent, In progress, Closed), because Boston's public 311 data has no "in review" or "approved" status · we show only what the city publishes. Proposed, awaiting teammate.
