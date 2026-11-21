@@ -42,7 +42,7 @@ export const StationMarker = memo(function StationMarker({ station, kind, color,
         whileHover={{ scale: selected ? 1.3 : 1.15 }}
         whileTap={{ scale: 0.94 }}
         transition={SPRING}
-        className="grid cursor-pointer place-items-center rounded-full p-1.5 outline-none focus-visible:ring-4 focus-visible:ring-graphite/30"
+        className="grid cursor-pointer touch-manipulation place-items-center rounded-full p-1.5 outline-none focus-visible:ring-4 focus-visible:ring-graphite/30"
       >
         <span
           // The ring is the line's colour (from the MBTA API, not typed in).
