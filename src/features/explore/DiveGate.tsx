@@ -66,11 +66,25 @@ export function DiveGate({ phase, status, denied, onLocate, onSpot, onSkip, onGo
           phase === "revealing" && "pointer-events-none",
         )}
       >
-        <div className="space-y-1">
+        <div className="space-y-2">
+          <p className="font-mono text-[0.62rem] tracking-[0.14em] text-taupe uppercase">{dive.eyebrow}</p>
+          <p className="text-sm font-medium text-graphite">{dive.pitch}</p>
+          <ol className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-taupe">
+            {dive.steps.map((step, i) => (
+              <li key={step} className="inline-flex items-center gap-1.5">
+                <span aria-hidden className="grid size-4 place-items-center rounded-full bg-stone-deep font-mono text-[0.6rem] text-graphite">
+                  {i + 1}
+                </span>
+                {step}
+              </li>
+            ))}
+          </ol>
+        </div>
+
+        <div className="space-y-1 border-t border-hairline pt-3">
           <h2 className="font-serif text-xl leading-tight sm:text-2xl font-semibold tracking-tight">{dive.title}</h2>
           <p className="text-sm text-taupe">{dive.intro}</p>
         </div>
-
         <div className="space-y-2">
           <AtlasButton size="lg" className="w-full" disabled={busy} onClick={onLocate}>
             {phase === "locating" ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : <LocateFixed className="size-4" aria-hidden />}
@@ -95,14 +109,9 @@ export function DiveGate({ phase, status, denied, onLocate, onSpot, onSkip, onGo
             <span aria-hidden className={cn("size-1.5 rounded-full", ready >= 3 ? "bg-cat-verify" : "animate-pulse bg-taupe/60")} />
             {status.failed ? dive.failed : dive.status(ready, 3)}
           </span>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={onSkip}
-            className="cursor-pointer underline decoration-graphite/25 underline-offset-4 outline-none hover:text-graphite focus-visible:ring-4 focus-visible:ring-graphite/25 disabled:opacity-40"
-          >
+          <AtlasButton tone="outline" size="sm" className="shrink-0" disabled={busy} onClick={onSkip} title={dive.skipHint}>
             {dive.skip}
-          </button>
+          </AtlasButton>
         </div>
       </div>
     </div>

@@ -154,13 +154,19 @@ export const landmarks: Landmark[] = [
 
 /** The arrival gate: the first thing a new rider sees, while the map loads behind it. */
 export const dive = {
+  /** What the app is, in one line, before anything is asked of the rider. */
+  eyebrow: "T Party",
+  pitch: "Real MBTA problems, near you. Tell us what you see and earn a stamp.",
+  steps: ["Pick a spot", "Tap a pin", "Say what you see"],
   title: "Where are you right now?",
-  intro: "We drop you into the nearest T stop. Your location stays in your browser.",
+  intro: "We use it only to find your nearest T stop, so the problems around you show first. Your location stays in your browser.",
   useLocation: "Use my location",
   locating: "Finding the nearest stop…",
-  denied: "We could not get your location. Pick a place instead.",
+  denied: "We could not get your location. Pick a place below instead.",
   orStart: "Or start at",
-  skip: "Just show the map",
+  skip: "Skip: just show the map",
+  skipHint: "No location needed",
+  flying: "Finding problems near you…",
   /** One quiet status line, so waiting never feels like nothing is happening. */
   status: (ready: number, total: number) => (ready >= total ? "Map ready" : `Loading the map · ${ready} of ${total}`),
   waiting: "Almost there…",
@@ -185,6 +191,14 @@ export const world = {
   quiet: (from: string) =>
     `Nothing is broken near ${from} right now. We moved you to the closest problem.`,
   coach: "Tap a pin. Type what you see. Get a stamp.",
+  legend: {
+    open: "What are the pins?",
+    close: "Hide",
+    title: "Reading the map",
+    number: "The number is how many problems are at that stop.",
+    landmark: "A pixel building is a landmark near a stop. Tap it to see its problems.",
+    ring: "A ring on a line is a T stop with nothing to report.",
+  },
   seeCity: "See the whole city",
   backToBlock: "Back to my block",
   you: "You are here",

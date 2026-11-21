@@ -25,10 +25,10 @@ import {
 } from "@/lib/map";
 import { categoryOf } from "./category";
 import { ContributePanel } from "./ContributePanel";
-import { categories, content, landmarks, world as worldText, type CategoryId, type Landmark } from "./content";
+import { categories, content, dive, landmarks, world as worldText, type CategoryId, type Landmark } from "./content";
 import type { LoadStatus } from "./DiveGate";
 import { LandmarkMarker, type LandmarkProblems } from "./LandmarkMarker";
-import { FilterBar, ProgressChip, StatusChip } from "./MapOverlays";
+import { FilterBar, PinLegend, ProgressChip, StatusChip } from "./MapOverlays";
 import { subwayDownload } from "./prefetch";
 import { ClusterPin, ProblemPin } from "./ProblemMarker";
 import { verifiedOf } from "./verified";
@@ -682,6 +682,8 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
               {live.source === "live" ? content.liveChip(live.trains.length) : content.sampleChip}
             </StatusChip>
           )}
+          {mode === "world" && !arrived && <StatusChip live>{dive.flying}</StatusChip>}
+          {mode !== "intro" && arrived && !selected && !panelQuest && quests.status === "ready" && <PinLegend />}
           {quests.status === "ready" && quests.source === "snapshot" && <StatusChip live={false}>{content.questsSnapshot}</StatusChip>}
           {quests.status === "failed" && <StatusChip live={false}>{content.questsFailed}</StatusChip>}
         </div>
