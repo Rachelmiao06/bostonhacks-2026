@@ -69,7 +69,7 @@ const BUILDING_OPACITY = 0.92;
 const DIVE_SECONDS = 4.2;
 
 const landmarkOfStation = new globalThis.Map(landmarks.map((landmark) => [landmark.stationId, landmark]));
-const pixelLandmarkStations = new Set(landmarks.filter((l) => l.pixel).map((l) => l.stationId));
+const missionLandmarkStations = new Set(landmarks.filter((l) => l.stationMarker).map((l) => l.stationId));
 
 /**
  * PROTOTYPE: soft haze toward the horizon when the map is tilted, in the atlas palette.
@@ -202,9 +202,9 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
   const questList = useMemo(() => (quests.status === "ready" ? quests.quests : []), [quests]);
   const stops = useMemo(() => problemStops(questList, stationById, show), [questList, stationById, show]);
   const stopById = useMemo(() => new globalThis.Map(stops.map((stop) => [stop.station.id, stop])), [stops]);
-  // A pixel landmark is its stop's own marker, so that stop never joins a cluster bubble (which would sit on top of the building).
+  // A mission landmark is its stop's own marker, so that stop never joins a cluster bubble (which would sit on top of the building).
   const clusters = useMemo(
-    () => clusterStops(zoom >= content.landmarkMinZoom ? stops.filter((stop) => !pixelLandmarkStations.has(stop.station.id)) : stops, zoom),
+    () => clusterStops(zoom >= content.landmarkMinZoom ? stops.filter((stop) => !missionLandmarkStations.has(stop.station.id)) : stops, zoom),
     [stops, zoom],
   );
 
@@ -218,9 +218,9 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
     () => (worldInfo && data ? data.stations.filter((station) => insideWorld(worldInfo.center, lngLat(station), 1.05)) : []),
     [data, worldInfo],
   );
-  // Pixel landmarks that stand inside the small world: they replace that stop's pin there too.
+  // Mission landmarks that stand inside the small world: they replace that stop's pin there too.
   const worldLandmarkIds = useMemo(
-    () => new Set(landmarks.filter((l) => l.pixel && worldStationList.some((s) => s.id === l.stationId)).map((l) => l.id)),
+    () => new Set(landmarks.filter((l) => l.stationMarker && worldStationList.some((s) => s.id === l.stationId)).map((l) => l.id)),
     [worldStationList],
   );
   const worldProblemCount = worldStops.reduce((sum, stop) => sum + stop.quests.length, 0);
@@ -500,14 +500,14 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
   const lineLayers = useMemo(() => tLineLayers(selectedLineKey ? selectedLineKey.split(",") : []), [selectedLineKey]);
 
   const landmarkScale = Math.min(1.4, Math.max(0.5, 0.55 + (zoom - 12) * 0.22));
-  // PROTOTYPE: a pixel-art landmark is its stop's mission marker, so that stop's pin steps aside while landmarks show.
+  // A station landmark can serve as its stop’s mission marker, so that stop's pin steps aside while landmarks show.
   const showLandmarks = zoom >= content.landmarkMinZoom;
-  const pinHiddenFor = (stationId: string) => showLandmarks && pixelLandmarkStations.has(stationId);
+  const pinHiddenFor = (stationId: string) => showLandmarks && missionLandmarkStations.has(stationId);
   // The world only holds the stops inside its circle (`allStops`), the atlas the filtered ones (`stopById`).
   const stopOf = (stationId: string) => stopById.get(stationId) ?? allStops.find((s) => s.station.id === stationId);
   const problemsAt = (stationId: string): LandmarkProblems | undefined => {
     const stop = stopOf(stationId);
-    if (!stop || !pixelLandmarkStations.has(stationId)) return undefined;
+    if (!stop || !missionLandmarkStations.has(stationId)) return undefined;
     return { count: stop.quests.length, done: stop.quests.filter((q) => done.has(q.id)).length, top: stop.top, verified: verifiedOf(stop) };
   };
   const selectedStop = selected ? stopById.get(selected.id) : undefined;
@@ -601,7 +601,7 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
             {mode === "world" &&
               arrived &&
               worldStops
-                .filter((stop) => !pixelLandmarkStations.has(stop.station.id))
+                .filter((stop) => !missionLandmarkStations.has(stop.station.id))
                 .map((stop) => (
                 <ProblemPin
                   key={stop.station.id}

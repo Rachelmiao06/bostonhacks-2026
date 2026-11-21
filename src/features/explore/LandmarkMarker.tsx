@@ -35,7 +35,7 @@ const SPARKS = [
 /**
  * One miniature building floating just above the map, pinned to its real spot.
  * It hovers over a soft shadow, lifts a little on hover, and pops up when selected.
- * The picture is a pixel-art model (`landmark.pixel`), a PNG (`landmark.art`), or a stand-in block.
+ * Each landmark uses its matching pixel sprite.
  * With `problems`, a small tag shows the count, and finishing one sends a pixel train past the building.
  */
 export const LandmarkMarker = memo(function LandmarkMarker({ landmark, scale, selected, problems, onSelect }: Props) {
@@ -76,14 +76,7 @@ export const LandmarkMarker = memo(function LandmarkMarker({ landmark, scale, se
           }}
           transition={SPRING}
         >
-          {landmark.pixel ? (
-            <PixelLandmark art={landmark.pixel} size={76} className="[image-rendering:pixelated]" />
-          ) : landmark.art ? (
-            // eslint-disable-next-line @next/next/no-img-element -- hand-made art, shown as drawn
-            <img src={landmark.art} alt="" width={96} draggable={false} className="block h-auto w-24" />
-          ) : (
-            <StandInBlock />
-          )}
+          <PixelLandmark art={landmark.id} size={landmark.stationMarker ? 76 : 64} />
 
           {/* Problem tag on the roof: count in the most urgent category's colour, a check when all are done. */}
           {problems && style && (
@@ -151,7 +144,7 @@ export const LandmarkMarker = memo(function LandmarkMarker({ landmark, scale, se
             selected ? "opacity-100" : "opacity-0",
           )}
         >
-          {landmark.pixel || landmark.art ? landmark.name : `${landmark.name} · ${content.landmarkPlaceholder}`}
+          {landmark.name}
         </span>
       </motion.button>
     </Marker>
@@ -167,20 +160,4 @@ function useTrainOnNewDone(done: number) {
     last.current = done;
   }, [done]);
   return plays;
-}
-
-/**
- * A plain block in three-quarter view. It is not the artwork: it only marks the spot
- * and lets us judge the floating, shadow and hover behaviour until the real model is added.
- */
-function StandInBlock() {
-  return (
-    <svg width="64" height="62" viewBox="0 0 64 62" aria-hidden className="block">
-      <g stroke="var(--atlas-outline)" strokeOpacity="0.7" strokeWidth="1" strokeLinejoin="round" strokeDasharray="3 2.5">
-        <polygon points="32,2 60,16 32,30 4,16" fill="var(--atlas-road)" />
-        <polygon points="4,16 32,30 32,60 4,46" fill="var(--atlas-land)" />
-        <polygon points="60,16 32,30 32,60 60,46" fill="var(--atlas-building)" />
-      </g>
-    </svg>
-  );
 }

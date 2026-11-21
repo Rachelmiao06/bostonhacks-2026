@@ -82,7 +82,6 @@ export const content = {
 
   /** Below this zoom the landmark models are hidden, so the far-out view stays clean. */
   landmarkMinZoom: 11.5,
-  landmarkPlaceholder: "Model to come",
   landmarkProblems: (name: string, n: number, done: number) =>
     `${name}: ${n} ${n === 1 ? "problem" : "problems"} at this stop${done ? `, ${done} done by you` : ""}`,
   /** Problems within this many pixels of each other merge into one cluster. 0 = never. */
@@ -124,27 +123,20 @@ export const kindLabels: Record<QuestKind, string> = {
   suspension: "Service suspended",
 };
 
-/**
- * The miniature buildings. A small hand-picked set, never the whole city.
- * `art` is the picture to float over the map: a PNG with a see-through background in
- * public/assets/explore/landmarks/, drawn in three-quarter view, about 240px wide.
- * Until a landmark has `art`, a plain stand-in block shows where it will go.
- * `stationId` is the stop whose ticket opens when the landmark is tapped.
- */
+/** The icon sits at the landmark coordinates. Tapping it selects its associated station. */
 export type Landmark = {
-  id: string;
+  id: PixelArtId;
   name: string;
   longitude: number;
   latitude: number;
   stationId: string;
-  art?: string;
-  /** PROTOTYPE: a cute pixel-art miniature drawn in code (PixelLandmark.tsx). Wins over `art`. */
-  pixel?: PixelArtId;
+  /** Set only when the building doubles as the problem pin at the station itself. */
+  stationMarker?: boolean;
 };
 
 export const landmarks: Landmark[] = [
   // PROTOTYPE station: the Old State House stands right on top of State station.
-  { id: "old-state-house", name: "Old State House", longitude: -71.0575, latitude: 42.3587, stationId: "place-state", pixel: "old-state-house" },
+  { id: "old-state-house", name: "Old State House", longitude: -71.0575, latitude: 42.3587, stationId: "place-state", stationMarker: true },
   { id: "state-house", name: "State House", longitude: -71.0638, latitude: 42.3588, stationId: "place-pktrm" },
   { id: "fenway-park", name: "Fenway Park", longitude: -71.0972, latitude: 42.3467, stationId: "place-kencl" },
   { id: "public-library", name: "Boston Public Library", longitude: -71.0782, latitude: 42.3493, stationId: "place-coecl" },

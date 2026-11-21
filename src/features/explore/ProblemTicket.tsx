@@ -46,7 +46,7 @@ export function ProblemTicket(props: Props) {
       longitude={props.station.longitude}
       latitude={props.station.latitude}
       anchor="bottom"
-      offset={[0, props.landmark?.pixel ? -Math.round(93 * (props.landmarkScale ?? 1) + 30) : -48]}
+      offset={[0, props.landmark?.stationMarker ? -Math.round(93 * (props.landmarkScale ?? 1) + 30) : -48]}
       style={{ zIndex: 10 }}
     >
       {ticket}
