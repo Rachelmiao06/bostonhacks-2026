@@ -30,7 +30,9 @@ import { LandmarkMarker } from "./LandmarkMarker";
 import { FilterBar, ProgressChip, StatusChip } from "./MapOverlays";
 import { subwayDownload } from "./prefetch";
 import { ClusterPin, ProblemPin } from "./ProblemMarker";
+import { verifiedOf } from "./verified";
 import { ProblemTicket } from "./ProblemTicket";
+import { loadView, saveView } from "./viewMemory";
 import { useMyProgress } from "./progress";
 import { clusterStops, problemStops, useQuests, type Cluster, type ProblemStop } from "./quests";
 import { StationMarker } from "./StationMarker";
@@ -118,6 +120,10 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
   const unleash = useRef<(() => void) | null>(null);
   const started = useRef(false);
   const [startsInAtlas] = useState(entry.kind === "atlas");
+  const modeRef = useRef(mode);
+  useEffect(() => {
+    modeRef.current = mode;
+  });
   const [style, setStyle] = useState<MapStyle | null>(null);
   const [data, setData] = useState<SubwayData | null>(null);
   const [live, setLive] = useState<LiveData | null>(null);
@@ -128,6 +134,11 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
   const [show, setShow] = useState<ReadonlySet<CategoryId>>(ALL);
   // Rounded to half steps, so markers only redraw when the zoom has really changed.
   const [zoom, setZoom] = useState(12);
+  // Back from another page: the camera starts where the rider left it (see viewMemory.ts).
+  const [startView] = useState(() => {
+    const saved = loadView();
+    return saved ? { longitude: saved.longitude, latitude: saved.latitude, zoom: saved.zoom, pitch: saved.pitch, bearing: saved.bearing, padding: saved.padding } : initialView();
+  });
   const quests = useQuests();
   const progress = useMyProgress();
   const done = progress.status === "ready" ? progress.done : NOTHING_DONE;
@@ -226,6 +237,7 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
     (station: SubwayStation, index = 0) => {
       setSelected(station);
       setQuestIndex(index);
+      saveView({ stationId: station.id, questIndex: index });
       setCoached(true);
       focus(station);
     },
@@ -258,6 +270,7 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
 
   const clearSelection = useCallback(() => {
     setSelected(null);
+    saveView({ stationId: null, questIndex: 0 });
     const map = mapRef.current?.getMap();
     if (!map) return;
     if (mode === "world" && worldInfo) {
@@ -266,6 +279,38 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
       map.easeTo({ center: view.center, zoom: view.zoom, pitch: view.pitch, padding: { top: 0, right: 0, bottom: 0, left: 0 }, duration: 900 });
     } else clearCameraPadding(map);
   }, [mode, worldInfo, wide]);
+
+  // Next keeps this page mounted but hidden while the rider is on another page, and a hidden map loses its camera.
+  // Effects run again when the page is shown, so put the camera back exactly where it was left.
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const saved = loadView();
+      const map = mapRef.current?.getMap();
+      // Only the regular map is remembered; the gate and the dive into the 3D district run their own camera.
+      if (!saved || !map || modeRef.current !== "atlas") return;
+      map.resize();
+      map.jumpTo({ center: [saved.longitude, saved.latitude], zoom: saved.zoom, pitch: saved.pitch, bearing: saved.bearing, ...(saved.padding ? { padding: saved.padding } : {}) });
+    }, 60);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  // Back from another page: bring back the selected stop's ticket without moving the camera.
+  const restored = useRef(false);
+  useEffect(() => {
+    if (restored.current || !style || !data || !startsInAtlas) return;
+    restored.current = true;
+    if (new URLSearchParams(window.location.search).get("quest")) return; // a deep link wins
+    const saved = loadView();
+    const station = saved?.stationId ? stationById.get(saved.stationId) : undefined;
+    if (!station) return;
+    // Wait a frame so the map has mounted (same as the deep link below).
+    requestAnimationFrame(() => {
+      setSelected(station);
+      setQuestIndex(saved?.questIndex ?? 0);
+      const map = mapRef.current?.getMap();
+      if (map) map.jumpTo({ padding: wide ? { top: 420, bottom: 0, left: 0, right: 0 } : { top: 120, bottom: 340, left: 0, right: 0 } });
+    });
+  }, [style, data, stationById, wide, startsInAtlas]);
 
   // A link like /?quest=<id> (from My Journey) opens that problem's ticket once everything has loaded.
   const deepLinked = useRef(false);
@@ -434,7 +479,7 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
         {style && (
           <Map
             ref={mapRef}
-            initialViewState={startsInAtlas ? initialView() : openingView()}
+            initialViewState={startsInAtlas ? startView : openingView()}
             attributionControl={{ compact: true }}
             mapStyle={style}
             maxBounds={MAX_BOUNDS}
@@ -446,6 +491,12 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
               setMapLoaded(true);
             }}
             onZoom={(event) => setZoom(Math.round(event.viewState.zoom * 2) / 2)}
+            onMoveEnd={(event) => {
+              // A hidden map (the rider is on another page) is 0 px wide and its camera is meaningless: never save that.
+              if (event.target.getContainer().clientWidth === 0 || modeRef.current !== "atlas") return;
+              const { longitude, latitude, zoom: z, pitch, bearing, padding } = event.viewState;
+              saveView({ longitude, latitude, zoom: z, pitch, bearing, padding });
+            }}
             onClick={(event) => {
               // Taps on markers and tickets also reach the map; only a tap on bare map clears the selection.
               const target = event.originalEvent.target as HTMLElement | null;
@@ -499,6 +550,7 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
                     doneCount={cluster.stops[0].quests.filter((q) => done.has(q.id)).length}
                     selected={selected?.id === cluster.id}
                     compact={zoom < 11.5}
+                    verified={verifiedOf(cluster.stops[0])}
                     onSelect={selectStop}
                   />
                 ),
@@ -513,6 +565,7 @@ export default function ExploreMap({ entry, onStatus, onReveal }: Props) {
                   selected={selected?.id === stop.station.id}
                   compact={false}
                   beacon
+                  verified={verifiedOf(stop)}
                   onSelect={selectStop}
                 />
               ))}
