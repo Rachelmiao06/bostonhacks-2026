@@ -14,5 +14,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run lint
+      # Next.js generates route types (LayoutProps etc.); tsc needs them first.
+      - run: npx next typegen
       - run: npx tsc --noEmit
       - run: npm run build
