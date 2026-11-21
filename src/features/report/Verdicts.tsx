@@ -5,13 +5,13 @@ import { AlertTriangle, CircleHelp, ChevronRight, ExternalLink, MessageCircle, P
 import { AskTada } from "./AskTada";
 import type { Shot } from "./Camera";
 import { content, MBTA_REPORT, OFFICIAL_311 } from "./content";
-import { KnittedIcon } from "./Knitted";
-import { Disclosure, PrimaryButton, SecondaryButton } from "./ui";
+import { KnittedBuilding, KnittedIcon } from "./Knitted";
+import { Disclosure, plateStyle, PrimaryButton, SecondaryButton } from "./ui";
 import type { CheckResult } from "./types";
 
 const shell = "mx-auto w-full max-w-xl overflow-hidden rounded-3xl border border-hairline bg-ivory shadow-float motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200";
 const linkBtn =
-  "inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-cat-verify px-5 text-[0.95rem] font-medium text-ivory outline-none hover:bg-cat-verify/90 focus-visible:ring-2 focus-visible:ring-graphite/50 focus-visible:ring-offset-2 focus-visible:ring-offset-ivory";
+  "inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-1 py-2 text-center text-[0.95rem] font-medium text-ivory outline-none hover:brightness-105 focus-visible:ring-2 focus-visible:ring-graphite/50 focus-visible:ring-offset-2 focus-visible:ring-offset-ivory";
 
 /** Everything that is not a Boston 311 report: private or unclear photos (D), emergencies (E), and problems for another authority (C). Nothing is ever sent from here. */
 export function Verdict({ shot, result, onRetake, onCancel }: { shot: Shot; result: CheckResult; onRetake: () => void; onCancel: () => void }) {
@@ -25,7 +25,7 @@ export function Verdict({ shot, result, onRetake, onCancel }: { shot: Shot; resu
             <AlertTriangle className="size-6 shrink-0 text-cherry" aria-hidden /> {content.verdict.emergency.title}
           </h1>
           <p>{content.verdict.emergency.body}</p>
-          <a href="tel:911" className={linkBtn}>
+          <a href="tel:911" className={linkBtn} style={plateStyle("green")}>
             <Phone className="size-4" aria-hidden /> {content.verdict.emergency.call}
           </a>
           <button type="button" onClick={onCancel} className="justify-self-start text-sm text-taupe underline underline-offset-4 outline-none hover:text-graphite focus-visible:ring-2 focus-visible:ring-graphite/50">
@@ -55,7 +55,7 @@ export function Verdict({ shot, result, onRetake, onCancel }: { shot: Shot; resu
 
           <section className="grid gap-3 rounded-2xl bg-sage p-4" aria-label={content.result.helpLabel}>
             <div className="flex items-start gap-3">
-              <KnittedIcon name="bank" className="size-12 shrink-0" />
+              {mbta ? <KnittedIcon name="bank" className="size-12 shrink-0" /> : <KnittedBuilding className="size-14 shrink-0" />}
               <div>
                 <p className="text-xs font-medium tracking-wide text-taupe uppercase">{content.result.helpLabel}</p>
                 <p className="font-serif text-2xl font-semibold">{mbta ? content.verdict.mbta.name : content.verdict.otherTitle}</p>
@@ -68,7 +68,7 @@ export function Verdict({ shot, result, onRetake, onCancel }: { shot: Shot; resu
               </div>
             </div>
             <p className="text-sm">{mbta ? content.verdict.mbta.body : content.verdict.other.limit}</p>
-            <a href={mbta ? MBTA_REPORT : OFFICIAL_311} target="_blank" rel="noopener noreferrer" className={linkBtn}>
+            <a href={mbta ? MBTA_REPORT : OFFICIAL_311} target="_blank" rel="noopener noreferrer" className={linkBtn} style={plateStyle("green")}>
               {mbta ? content.verdict.mbta.cta : content.verdict.other.cta} <ExternalLink className="size-4" aria-hidden />
             </a>
             <p className="text-xs text-taupe">{mbta ? content.verdict.mbta.note : content.verdict.other.note}</p>

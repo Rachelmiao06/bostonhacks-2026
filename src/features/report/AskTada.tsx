@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ExternalLink } from "lucide-react";
 import { askTada, type AskAnswer } from "./api";
 import { content } from "./content";
+import { KnittedMascot } from "./Knitted";
 import { PrimaryButton, Sheet, field } from "./ui";
 import type { CheckResult, NearbyCase } from "./types";
 
@@ -43,7 +44,7 @@ export function AskTada({ result, service, nearby, onClose }: { result: CheckRes
   }
 
   return (
-    <Sheet title={content.ask.title} onClose={onClose}>
+    <Sheet title={content.ask.title} icon={<KnittedMascot className="size-11" />} onClose={onClose}>
       <div className="grid gap-4">
         <p className="text-sm text-taupe">{content.ask.note}</p>
         {turns.length === 0 && (

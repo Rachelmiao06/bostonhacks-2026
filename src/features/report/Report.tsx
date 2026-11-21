@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AlertTriangle, ArrowLeft, RefreshCw } from "lucide-react";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 import { Activity } from "./Activity";
 import { checkPhoto, findNearby, ReportApiError } from "./api";
 import { Camera, type Shot } from "./Camera";
 import { content } from "./content";
-import { KnittedCamera, KnittedFlower, KnittedHills, YarnBall } from "./Knitted";
+import { KnittedCamera, KnittedControl, KnittedHills, KnittedSuccess, YarnBall } from "./Knitted";
 import { Prepare } from "./Prepare";
 import { Result, type Analysis } from "./Result";
 import { loadCases, saveCase } from "./store";
@@ -51,8 +51,8 @@ export function Report() {
       {step.name === "entry" && <Entry onStart={camera} onActivity={() => setStep({ name: "activity" })} />}
       {step.name === "activity" && (
         <div className="mx-auto grid w-full max-w-xl gap-4">
-          <button type="button" onClick={entry} className="flex w-fit items-center gap-1 text-sm text-taupe outline-none hover:text-graphite focus-visible:ring-2 focus-visible:ring-graphite/50">
-            <ArrowLeft className="size-4" aria-hidden /> {content.back}
+          <button type="button" onClick={entry} className="flex w-fit items-center gap-1 rounded-full pr-3 text-sm text-taupe outline-none hover:text-graphite focus-visible:ring-2 focus-visible:ring-graphite/50">
+            <KnittedControl name="back" className="size-9" /> {content.back}
           </button>
           <h1 className="font-serif text-4xl leading-tight font-semibold">{content.activity.title}</h1>
           <Activity highlight={step.highlight} onCamera={camera} />
@@ -104,8 +104,8 @@ function Entry({ onStart, onActivity }: { onStart: () => void; onActivity: () =>
     setCount(loadCases().length);
   }, []);
   return (
-    <section className="mx-auto grid w-full max-w-xl justify-items-center gap-6 py-6 text-center motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-300 sm:py-12">
-      <KnittedCamera className="w-48 sm:w-56" />
+    <section className="mx-auto grid w-full max-w-xl justify-items-center gap-5 py-2 text-center motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-300 sm:gap-6 sm:py-12">
+      <KnittedCamera className="w-40 sm:w-56" />
       <div className="grid gap-3">
         <h1 className="font-serif text-5xl leading-[1.05] font-semibold text-balance sm:text-6xl">{content.entry.headline}</h1>
         <p className="mx-auto max-w-md text-lg text-taupe text-balance">{content.entry.body}</p>
@@ -118,7 +118,7 @@ function Entry({ onStart, onActivity }: { onStart: () => void; onActivity: () =>
           {content.entry.activity(count)}
         </button>
       )}
-      <KnittedHills className="mt-4 w-full" />
+      <KnittedHills className="mt-2 w-full" />
     </section>
   );
 }
@@ -178,7 +178,7 @@ function Analyzing({ shot, note, onDone, onError }: { shot: Shot; note: string; 
       {/* Your own photo stays visible, small, so it is clear what is being looked at. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={shot.thumb} alt="" className="size-14 rounded-2xl object-cover shadow-float" />
-      <KnittedHills className="mt-2 w-full" />
+      <KnittedHills variant="river" className="mt-2 w-full" />
     </section>
   );
 }
@@ -211,7 +211,7 @@ function Done({ followed, onView }: { followed: boolean; onView: () => void }) {
   return (
     <section className="mx-auto grid w-full max-w-md gap-4 rounded-3xl border border-hairline bg-ivory p-5 shadow-float motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200" aria-live="polite">
       <div>
-        <KnittedFlower tone="white" className="mb-2 w-12" />
+        <KnittedSuccess className="mb-3 w-24" />
         <h1 className="font-serif text-3xl leading-tight font-semibold">{followed ? content.done.followedTitle : content.done.savedTitle}</h1>
         <p className="mt-1 text-sm text-taupe">{followed ? content.done.followedBody : content.done.savedBody}</p>
       </div>

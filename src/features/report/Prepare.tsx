@@ -1,11 +1,12 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ArrowLeft, Check, ChevronRight, MapPin } from "lucide-react";
+import { Check, ChevronRight, MapPin } from "lucide-react";
 import { sendReport } from "./api";
 import type { Shot } from "./Camera";
 import { CATEGORIES } from "./categories";
 import { content, OFFICIAL_311 } from "./content";
+import { KnittedControl } from "./Knitted";
 import { nowMs, saveCase } from "./store";
 import { Disclosure, field, PrimaryButton, SecondaryButton } from "./ui";
 import type { CheckResult } from "./types";
@@ -93,8 +94,8 @@ export function Prepare({ shot, result, service: first, onBack, onSaved, onRetak
 
   return (
     <section className="mx-auto grid w-full max-w-xl gap-5 rounded-3xl border border-hairline bg-ivory p-5 shadow-float motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200">
-      <button type="button" onClick={onBack} className="flex w-fit items-center gap-1 text-sm text-taupe outline-none hover:text-graphite focus-visible:ring-2 focus-visible:ring-graphite/50">
-        <ArrowLeft className="size-4" aria-hidden /> {content.back}
+      <button type="button" onClick={onBack} className="flex w-fit items-center gap-1 rounded-full pr-3 text-sm text-taupe outline-none hover:text-graphite focus-visible:ring-2 focus-visible:ring-graphite/50">
+        <KnittedControl name="back" className="size-9" /> {content.back}
       </button>
       <div className="flex gap-4">
         {/* eslint-disable-next-line @next/next/no-img-element */}

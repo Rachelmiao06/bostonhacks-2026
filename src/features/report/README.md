@@ -43,4 +43,20 @@ Query through the datastore API (`datastore_search_sql`; cast `latitude`/`longit
 - Stages: three (matches the data) rather than four.
 
 ## Knitted art
-Transparent WebP crops in `public/assets/report/` (cut from the "Knitted Tada UI Asset Sheet", whose cut-out background was already transparent; faint colour glow under the cut-out was removed). Used sparingly and never on functional buttons: camera (entry hero, floats), red yarn ball (analyzing, breathes), hills with flowers (bottom of entry and analyzing, mirrored so the flower clears the floating chat button), wool icon discs (permission note and "Who can help"), a flower on the saved screen and the empty activity state. `Knitted.tsx` holds them; motion is off for reduced motion. Not used: the sheet's text buttons, the LV.3 badge and the progress bar (their text is baked in), and the island map and lock badges (My T World is a live 3D scene). A copy of the yarn ball is in `public/assets/island/` for the My T World loading state.
+Transparent WebP cut-outs in `public/assets/report/`, resized to about 2x their display size. The wool look is used as a hero or an accent; every label is still real HTML text. `Knitted.tsx` holds the sprites; `ui.tsx` holds the button plates. Motion is off for reduced motion.
+
+| Art | Where |
+|---|---|
+| Camera (high resolution), floating | Entry hero |
+| Blank green and cream wool plates | Behind every button's real text (9-slice `border-image`, so the rounded ends keep their shape). Links styled as buttons use `plateStyle()` |
+| Shutter, close, back discs | Camera screen; "Back" on Prepare and Activity |
+| Ring, half ring, solid check markers | Case timeline (half = where the case is now) |
+| Yarn ball, six frames | Analyzing (frames cycle; breathing scale). Frame 1 only for reduced motion |
+| Landscape strips (hills, river, meadow) | Bottom of Entry (hills) and Analyzing (river); hills are mirrored so a flower clears the floating chat button |
+| Success badge | "Saved" and "Following" screen |
+| Mascot | Ask Tada header |
+| Generic building | "Belongs to someone else" when the authority is not the MBTA |
+| Category badges (pothole, street light, litter, graffiti, fallen tree, rat) | Result photo corner and the pick-a-category list; other types show nothing |
+| Icon discs (camera, location, bank), flowers | Permission note, "Who can help", empty Activity |
+
+Not used yet: thread strands, the small plate sizes, and these sheets that have not been generated: result-page illustrations (emergency, private, unclear), the nine icon discs, and empty/error/offline art. Those screens keep their line icons. Originals are in `docs/knit-assets/incoming/`; an overview is `docs/knit-assets/album.png`.

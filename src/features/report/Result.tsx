@@ -7,7 +7,7 @@ import { AskTada } from "./AskTada";
 import type { Shot } from "./Camera";
 import { CATEGORIES, teamFor } from "./categories";
 import { content } from "./content";
-import { KnittedIcon } from "./Knitted";
+import { CategoryBadge, hasCategoryBadge, KnittedIcon } from "./Knitted";
 import { Sheet, PrimaryButton, SecondaryButton, field } from "./ui";
 import type { CheckResult, NearbyCase } from "./types";
 
@@ -75,7 +75,10 @@ export function Result({
           {options.map((o) => (
             <li key={o}>
               <button type="button" onClick={() => choose(o)} className="flex w-full items-center justify-between rounded-2xl border border-hairline px-4 py-3 text-left outline-none hover:bg-stone-deep/40 focus-visible:ring-2 focus-visible:ring-graphite/50">
-                <span className="font-medium">{o}</span>
+                <span className="flex items-center gap-3">
+                  {hasCategoryBadge(o) ? <CategoryBadge service={o} className="size-10" /> : <span className="size-10" aria-hidden />}
+                  <span className="font-medium">{o}</span>
+                </span>
                 <ChevronRight className="size-4 text-taupe" aria-hidden />
               </button>
             </li>
@@ -104,8 +107,12 @@ export function Result({
   const changed = service !== result.serviceName;
   return (
     <article className="mx-auto w-full max-w-xl overflow-hidden rounded-3xl border border-hairline bg-ivory shadow-float motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={shot.dataUrl} alt="Your photo" className="aspect-[16/10] max-h-48 w-full bg-stone-deep object-cover sm:aspect-[4/3] sm:max-h-72" />
+      <div className="relative">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={shot.dataUrl} alt="Your photo" className="aspect-[16/10] max-h-48 w-full bg-stone-deep object-cover sm:aspect-[4/3] sm:max-h-72" />
+        {/* The knitted badge shows only for the six most common types; the title says the same thing in words. */}
+        <CategoryBadge service={service} className="absolute top-3 right-3 size-14" />
+      </div>
       <div className="grid gap-5 p-5">
         {/* Level 1: what Tada found */}
         <div>

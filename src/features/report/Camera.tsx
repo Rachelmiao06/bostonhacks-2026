@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CameraOff, MapPin, MapPinOff, ShieldCheck, X } from "lucide-react";
+import { CameraOff, MapPin, MapPinOff, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { KnittedIcon } from "./Knitted";
+import { KnittedControl, KnittedIcon } from "./Knitted";
 import { Disclosure, Panel, PrimaryButton, SecondaryButton } from "./ui";
 import { content, OFFICIAL_311 } from "./content";
 import { markPrimerSeen, primerSeen } from "./store";
@@ -216,9 +216,9 @@ export function Camera({ onShot, onClose }: { onShot: (s: Shot) => void; onClose
         <button
           onClick={onClose}
           aria-label={content.camera.close}
-          className="absolute top-3 right-3 grid size-10 place-items-center rounded-full bg-ivory/85 text-graphite backdrop-blur-md outline-none focus-visible:ring-2 focus-visible:ring-graphite/50"
+          className="absolute top-3 right-3 size-11 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-graphite/50"
         >
-          <X className="size-4" />
+          <KnittedControl name="close" className="size-full" />
         </button>
         <div role="status" className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-ivory/85 px-3 py-1.5 text-xs text-graphite backdrop-blur-md">
           <MapPin className="size-3.5" aria-hidden />
@@ -230,9 +230,9 @@ export function Camera({ onShot, onClose }: { onShot: (s: Shot) => void; onClose
             onClick={shoot}
             disabled={!ready || busy}
             aria-label={content.camera.shutter}
-            className="size-[4.5rem] rounded-full border-4 border-ivory bg-ivory/30 outline-none backdrop-blur-sm transition-transform focus-visible:ring-4 focus-visible:ring-graphite/60 enabled:active:scale-95 disabled:opacity-40 motion-reduce:transition-none"
+            className="size-[4.75rem] rounded-full outline-none transition-transform focus-visible:ring-4 focus-visible:ring-graphite/60 enabled:active:scale-95 disabled:opacity-40 motion-reduce:transition-none"
           >
-            <span className="mx-auto block size-12 rounded-full bg-ivory" />
+            <KnittedControl name="shutter" className="size-full" />
           </button>
         </div>
       </div>

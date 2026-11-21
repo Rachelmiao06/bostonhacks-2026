@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Check, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { closureView } from "./closure";
 import { content } from "./content";
 import { demoClosedAt, demoInProgressAt, demoNote } from "./demo-case";
+import { KnittedMarker } from "./Knitted";
 import { Chip } from "./ui";
 import type { CityStatus, SavedCase, Stage } from "./types";
 
@@ -72,9 +73,7 @@ export function CaseRow({ c, stage, city, fresh, unread, onOpen }: { c: SavedCas
           <ol className="grid gap-2" aria-label="Case progress">
             {ORDER.map((s, i) => (
               <li key={s} aria-current={i === at ? "step" : undefined} className="flex items-center gap-2">
-                <span className={cn("grid size-5 place-items-center rounded-full border", i <= at ? "border-cat-verify bg-cat-verify text-ivory" : "border-hairline")}>
-                  {i <= at && <Check className="size-3" aria-hidden />}
-                </span>
+                <KnittedMarker state={stage === "closed" || i < at ? "done" : i === at ? "half" : "empty"} className="size-7 shrink-0" />
                 <span className={cn(i <= at ? "font-medium" : "text-taupe")}>{content.stages[s]}</span>
                 {when_[s] && i <= at && <span className="ml-auto text-xs text-taupe">{when_[s]}</span>}
               </li>
