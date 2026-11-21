@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CircleCheck, CircleX } from "lucide-react";
+import { CircleCheck, CircleX, MessageSquarePlus } from "lucide-react";
 import type { Quest } from "@/lib/mbta";
 import { getRiderId } from "@/lib/rider";
 import { loadMyProgress, sendVerification } from "@/features/challenge/api";
@@ -57,11 +57,10 @@ export function VerifyFlow({ quest, onDone }: { quest: Quest; onDone: () => void
   }
 
   return (
-    <div className="space-y-5 font-ui">
-      <div className="space-y-1">
-        <h3 className="font-serif text-xl font-semibold">{flow.verifyTitle}</h3>
-        <p className="text-sm text-taupe">{flow.verifyHelp}</p>
-      </div>
+    <div className="space-y-4 font-ui">
+      {/* The question and two big answers. The help sentence is read out to screen readers. */}
+      <h3 className="font-serif text-xl font-semibold">{flow.verifyTitle}</h3>
+      <p className="sr-only">{flow.verifyHelp}</p>
       <div className="grid gap-2 sm:grid-cols-2">
         <AtlasButton size="lg" fill="bg-cat-verify" className="h-14" disabled={sending !== null} onClick={() => send("working")}>
           <CircleCheck className="size-5" aria-hidden /> {sending === "working" ? flow.sending : flow.working}
@@ -70,19 +69,25 @@ export function VerifyFlow({ quest, onDone }: { quest: Quest; onDone: () => void
           <CircleX className="size-5" aria-hidden /> {sending === "still_broken" ? flow.sending : flow.stillBroken}
         </AtlasButton>
       </div>
-      <div className="space-y-1.5">
-        <label htmlFor="map-verify-note" className="text-sm font-medium">
-          {flow.noteLabel}
-        </label>
+      {/* An optional note stays out of the way until asked for */}
+      <details className="group">
+        <summary
+          aria-label={flow.noteLabel}
+          className="inline-flex cursor-pointer list-none items-center gap-1.5 rounded-full px-1 py-1 text-taupe outline-none hover:text-graphite focus-visible:ring-2 focus-visible:ring-graphite/40 [&::-webkit-details-marker]:hidden"
+        >
+          <MessageSquarePlus className="size-5" aria-hidden />
+        </summary>
         <AtlasTextarea
           id="map-verify-note"
+          aria-label={flow.noteLabel}
           value={note}
           maxLength={500}
           onChange={(e) => setNote(e.target.value)}
           placeholder={flow.notePlaceholder}
           rows={2}
+          className="mt-2"
         />
-      </div>
+      </details>
       {error && <ErrorNote>{error}</ErrorNote>}
     </div>
   );
