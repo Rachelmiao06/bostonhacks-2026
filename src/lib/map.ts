@@ -57,11 +57,15 @@ function blend(from: string, to: string, amount: number): string {
 
 /**
  * The one colour the whole base map is drawn in, on cream paper, and how strongly it is mixed in.
- * "--wood" at 0.4 gives warm cream (current); "--sky" at 1 gives light blue; "--cherry" at 0.6 pink; "--steel" at 0.8 grey.
+ * "--sun" at 0.17 gives a light, fresh cream (current); "--wood" at 0.4 a browner cream;
+ * "--sky" at 1 light blue; "--cherry" at 0.6 pink; "--steel" at 0.8 grey.
  * Everything colourful (T lines, trains, markers, whatever we add next) goes on top.
  */
-const BASE_TONE = "--wood";
-const BASE_STRENGTH = 0.4;
+const BASE_TONE = "--sun";
+const BASE_STRENGTH = 0.17;
+
+/** Water gets its own soft blue, so a warm base does not turn rivers yellow or brown. */
+const WATER_TONE = "--sky";
 
 /** A shade of the base colour: 0 is plain paper, 1 is the base colour at full strength. */
 const shade = (amount: number) => blend("--paper", BASE_TONE, amount * BASE_STRENGTH);
@@ -83,8 +87,8 @@ export async function loadMapStyle(): Promise<StyleSpecification> {
   const land = shade(0.4);
   const park = shade(0.22);
   const block = shade(0.58); // building footprints
-  const water = shade(0.85);
-  const text = blend(BASE_TONE, "--ink", 0.6); // labels: the same colour, darkened so they stay readable
+  const water = blend("--paper", WATER_TONE, 0.4);
+  const text = blend("--wood", "--ink", 0.5); // labels: the same colour, darkened so they stay readable
 
   style.layers = style.layers.flatMap((layer): LayerSpecification[] => {
     const sourceLayer = "source-layer" in layer ? layer["source-layer"] : undefined;
@@ -152,9 +156,9 @@ export function addDoodleTextures(map: MapLibreMap) {
   canvas.width = canvas.height = size;
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
   if (!ctx || map.hasImage("scribble")) return;
-  ctx.fillStyle = shade(0.85);
+  ctx.fillStyle = blend("--paper", WATER_TONE, 0.4);
   ctx.fillRect(0, 0, size, size);
-  ctx.strokeStyle = shade(0.55);
+  ctx.strokeStyle = blend("--paper", WATER_TONE, 0.75);
   ctx.lineCap = "round";
   // Slanted strokes of uneven weight, repeated past the edges so the tile joins up with itself.
   [0, 13, 29, 41, 54].forEach((offset, i) => {
