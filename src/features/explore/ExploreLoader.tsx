@@ -41,6 +41,9 @@ export function ExploreLoader() {
   // Someone who has already been welcomed on this browser goes straight to the map: no card, no dive.
   const welcomed = useSyncExternalStore(nothingToWatch, welcomedOnLoad, () => false);
   const skipGate = deepLinked || flagged || returning || welcomed;
+  // The welcome is drawn only once the browser is running the page. If the server drew it, a returning visitor would see it flash
+  // (the server cannot know they were welcomed) until the page woke up and removed it.
+  const hydrated = useSyncExternalStore(nothingToWatch, () => true, () => false);
   const entry = skipGate ? ATLAS : chosen;
   const [phase, setPhase] = useState<GatePhase | "gone">("gate");
   const [status, setStatus] = useState(NOTHING_READY);
@@ -96,7 +99,7 @@ export function ExploreLoader() {
       <div aria-hidden className="fixed inset-0 z-30 bg-stone" />
       {/* The first-map hint belongs only to a visit that began with the welcome and chose a starting place. */}
       <ExploreMap entry={entry} onStatus={onStatus} onReveal={onReveal} guided={!skipGate && (chosen.kind === "geo" || chosen.kind === "spot")} />
-      {!skipGate && phase !== "gone" && (
+      {hydrated && !skipGate && phase !== "gone" && (
         <DiveGate
           phase={phase}
           status={status}

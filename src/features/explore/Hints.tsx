@@ -25,7 +25,7 @@ const hit = (a: Rect, b: Rect) => a.l < b.r && a.r > b.l && a.t < b.b && a.b > b
  * The first-discovery hint: one small liquid-glass callout, tied to one real challenge pin that is on screen and
  * still open. It sits on whichever side of that pin leaves every other pin, the nav and the screen edges clear,
  * and if no side is clear (or no pin is suitable) it simply does not show. The map stays fully usable; the first
- * thing the rider does (a tap anywhere else, a key, "Got it") puts it away for good. Never shown twice.
+ * thing the rider does (a tap anywhere else, Escape, "Got it") puts it away for good. Never shown twice.
  */
 export function MapHint({
   candidates,
@@ -90,16 +90,22 @@ export function MapHint({
       return;
     }
     markSeen("mapHint");
+    // The first real interaction puts the hint away: a tap or click anywhere else (this includes pressing Enter
+    // or Space on a pin, which is a click), or Escape. Tab and other keys leave it alone, so a keyboard rider
+    // can still reach "Got it" and move through the map.
     const away = (event: Event) => {
       // A tap inside the hint is its own button's job.
       if (event.target instanceof Node && box.current?.contains(event.target)) return;
       onGone();
     };
+    const escape = (event: KeyboardEvent) => event.key === "Escape" && onGone();
     window.addEventListener("pointerdown", away, true);
-    window.addEventListener("keydown", away, true);
+    window.addEventListener("click", away, true);
+    window.addEventListener("keydown", escape, true);
     return () => {
       window.removeEventListener("pointerdown", away, true);
-      window.removeEventListener("keydown", away, true);
+      window.removeEventListener("click", away, true);
+      window.removeEventListener("keydown", escape, true);
     };
   }, [choice, onGone, onNone]);
 
