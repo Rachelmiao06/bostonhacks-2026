@@ -22,7 +22,8 @@ Issue: #2. Owner: Rachel. Only the owner edits this folder.
 - A link like `/?quest=<id>` opens that problem's ticket.
 
 ## The first visit: gate, dive, small world
-- `DiveGate.tsx` (in the first download): "Drop in where you are". Use my location, or pick Park Street / Kenmore / South / North Station, or skip to the whole map.
+- `DiveGate.tsx` (in the first download): the welcome. A small frosted-glass card (bottom-left on wide screens, a bottom sheet on phones): Use my location, Choose a station (search), or Just explore the map. Location errors say why (blocked, unavailable, timed out).
+- `onboarding.ts`: versioned local record of what was already shown (`welcomed`, `mapHint`, `ticketHint`). A welcomed browser skips the card and opens the map. `Hints.tsx`: the one-time map callout over a real pin, and the "Seen this too?" line inside a ticket.
   The map downloads behind it (`prefetch.ts` starts the subway and problem downloads at page load) and the gate shows what is ready.
 - `world.ts`: GSAP camera flight (`flyCamera`) from high over Boston down to one stop, the 3D building layer (real footprints raised, only inside an 800 m circle),
   and `chooseWorld` (nearest stop; if nothing is broken there, the closest problem; outside Boston: Park Street).
@@ -39,11 +40,8 @@ Issue: #2. Owner: Rachel. Only the owner edits this folder.
 - Motion: nothing moves on its own. Hover and selection use short springs; Reduced Motion turns them off.
 
 ## Adding the miniature buildings
-The landmarks are listed in `content.ts` (`landmarks`). Each has real coordinates and the stop its ticket belongs to.
-Until a landmark has art, a plain dashed block marks its spot. To add art:
-1. Make a PNG with a see-through background, three-quarter view, about 240px wide.
-2. Save it in `public/assets/explore/landmarks/`, for example `state-house.png`.
-3. Add `art: "/assets/explore/landmarks/state-house.png"` to that landmark in `content.ts`.
+The landmarks are listed in `content.ts` (`landmarks`). Each has real coordinates and can optionally be associated with a station ticket.
+Each landmark ID selects a matching pixel grid in `PixelLandmark.tsx`. Edit its rows to change the silhouette. The palette and CSS colour overrides live in the same file. Give each landmark a story of up to three sentences. The opening map shows landmarks alongside station rings and problem pins or clusters.
 
 ## Data
 - `/api/subway`: lines, stops and shapes from the MBTA V3 API, cached for a day, with `subway-snapshot.json` as fallback.

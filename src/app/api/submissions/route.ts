@@ -2,7 +2,7 @@
 // GET  /api/submissions?userId=...: that rider's reports, completed quests and token balance.
 import type { NextRequest } from "next/server";
 import { hasDb, query } from "@/lib/db";
-import { REWARD_TOKENS, VERIFY_REWARD_TOKENS } from "@/lib/mbta";
+import { LIKE_REWARD_TOKENS, REWARD_TOKENS, VERIFY_REWARD_TOKENS } from "@/lib/mbta";
 
 const MAX_TEXT = 2000;
 
@@ -50,14 +50,28 @@ export async function GET(request: NextRequest) {
      FROM verifications v JOIN outages o USING (alert_id) WHERE v.user_id = $1 ORDER BY v.created_at DESC`,
     [userId],
   );
+  // Like stamps other riders pressed on this rider's reports. If the likes table is not created yet,
+  // everything else keeps working and the count is simply zero.
+  const likeCounts = new Map<string, number>();
+  try {
+    const rows = await query<{ submission_id: string; n: number }>(
+      `SELECT l.submission_id, count(*)::int AS n FROM likes l JOIN submissions s ON s.id = l.submission_id
+       WHERE s.user_id = $1 AND s.status = 'completed' GROUP BY l.submission_id`,
+      [userId],
+    );
+    rows.forEach((r) => likeCounts.set(r.submission_id, r.n));
+  } catch {}
+  const withLikes = submissions.map((s) => ({ ...s, likes: likeCounts.get(s.id) ?? 0 }));
+  const likesReceived = [...likeCounts.values()].reduce((sum, n) => sum + n, 0);
   const completed = submissions.filter((s) => s.status === "completed");
   return Response.json({
-    submissions,
+    submissions: withLikes,
+    likesReceived,
     verifications,
     completedQuestIds: completed.map((s) => s.alert_id),
     verifiedQuestIds: verifications.map((v) => v.alert_id),
-    // Tokens are counted, not stored: one reward per completed quest, so no double rewards.
-    tokenBalance: completed.length * REWARD_TOKENS + verifications.length * VERIFY_REWARD_TOKENS,
+    // Tokens are counted, not stored: one reward per completed quest, one per check, one per like stamp received.
+    tokenBalance: completed.length * REWARD_TOKENS + verifications.length * VERIFY_REWARD_TOKENS + likesReceived * LIKE_REWARD_TOKENS,
   });
 }
 

@@ -23,9 +23,9 @@ const BACKGROUND = '#ebe5d9'; // warm stone
 
 /**
  * @param {HTMLElement} container
- * @param {{ isUnlocked: (stage: string) => boolean, onPhase?: (phase: string) => void, instant?: boolean }} options
+ * @param {{ isUnlocked: (stage: string, k: number) => boolean, onPhase?: (phase: string) => void, instant?: boolean, onHotspot?: (id: string, state: string) => void, onHover?: (id: string, on: boolean) => void }} options
  */
-export function mountIsland(container, { isUnlocked, onPhase, instant = false }) {
+export function mountIsland(container, { isUnlocked, onPhase, onHotspot, onHover, instant = false }) {
 	const size = () => ({ w: Math.max(1, container.clientWidth), h: Math.max(1, container.clientHeight) });
 	let { w, h } = size();
 
@@ -67,22 +67,65 @@ export function mountIsland(container, { isUnlocked, onPhase, instant = false })
 	scene.add(sun);
 	scene.add(new THREE.HemisphereLight('#fde8d2', '#7a6a5c', 0.55));
 
-	const world = buildWorld(scene, { isUnlocked });
+	const world = buildWorld(scene, {
+		isUnlocked,
+		onHotspot,
+		onHover: (id, on) => {
+			pointerOnObject = on;
+			onHover?.(id, on);
+		},
+	});
 	if (instant) world.snapIsland();
 	const focus = world.focusTarget ?? new THREE.Vector3(0, 0.6, 0);
 
 	const camera = new THREE.PerspectiveCamera(28, w / h, 0.1, 100);
 	camera.position.set(S(9), S(6.5), S(11));
 	// on tall (phone) screens the island is wider than the view: back the camera off to fit it
-	camera.position.multiplyScalar(Math.max(1, 1.1 / camera.aspect));
+	camera.position.multiplyScalar(Math.max(0.88, 1.1 / camera.aspect)); // a little closer than before on wide screens, backed off on tall ones
+	// on a tall (phone) screen, look down a bit more steeply so the island fills the screen instead of leaving empty sky
+	if (camera.aspect < 0.9) camera.position.y *= 1.4;
 	// the fog starts relative to the default camera distance: push it back by the same factor or the whole scene looks washed out
 	scene.fog.near *= Math.max(1, 1.1 / camera.aspect);
 	scene.fog.far *= Math.max(1, 1.1 / camera.aspect);
 	const controls = new OrbitControls(camera, renderer.domElement);
 	controls.target.copy(focus);
 	controls.enableDamping = true;
-	controls.autoRotate = true;
-	controls.autoRotateSpeed = 0.35;
+	// A gentle sway instead of a full spin: the near side of the island, where the journal and gifts are, never turns
+	// out of view, so their labels stay attached and on screen. It pauses while you drag and while a ticket is open.
+	controls.autoRotate = false;
+	const SWAY_AMPLITUDE = 0.5; // radians, about 29 degrees each way
+	const SWAY_PERIOD = 46; // seconds for a full there-and-back
+	const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+	let swayHeld = false;
+	let pointerOnObject = false; // hold still while a pointer is on an object, so it cannot drift from under it
+	let userActive = false;
+	let idleAt = 0;
+	let swayLast = 0;
+	let swayResume = true;
+	controls.addEventListener('start', () => {
+		userActive = true;
+	});
+	controls.addEventListener('end', () => {
+		userActive = false;
+		idleAt = performance.now() / 1000;
+	});
+	const swayAxis = new THREE.Vector3(0, 1, 0);
+	const swayOffset = new THREE.Vector3();
+	function sway() {
+		const now = performance.now() / 1000;
+		if (flight || swayHeld || pointerOnObject || userActive || reducedMotion.matches || now - idleAt < 2.5) {
+			swayResume = true;
+			return;
+		}
+		const az = SWAY_AMPLITUDE * Math.sin((now * Math.PI * 2) / SWAY_PERIOD);
+		if (swayResume) {
+			swayResume = false;
+		} else {
+			swayOffset.copy(camera.position).sub(controls.target).applyAxisAngle(swayAxis, az - swayLast);
+			camera.position.copy(controls.target).add(swayOffset);
+		}
+		swayLast = az;
+	}
 	controls.maxPolarAngle = Math.PI * 0.47;
 	controls.minDistance = 4;
 	controls.maxDistance = S(30) * Math.max(1, 1.1 / camera.aspect);
@@ -144,6 +187,45 @@ export function mountIsland(container, { isUnlocked, onPhase, instant = false })
 	const screenCenter = new THREE.Vector2(0, 0);
 	let focusDist = camera.position.distanceTo(controls.target);
 
+	// A guided look: fly the camera toward one object (so a first-time rider is shown where to look next), or back
+	// to the overview. It pauses the sway while it runs, and any drag by the rider cancels it. Reduced Motion jumps.
+	const home = { pos: camera.position.clone(), target: controls.target.clone() };
+	let flight = null; // { t, dur, fromPos, toPos, fromTarget, toTarget }
+	controls.addEventListener('start', () => {
+		flight = null;
+	});
+	const ease = (u) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
+	function flyTo(pos, target) {
+		if (reducedMotion.matches) {
+			camera.position.copy(pos);
+			controls.target.copy(target);
+			flight = null;
+			return;
+		}
+		flight = { t: 0, dur: 1.7, fromPos: camera.position.clone(), toPos: pos.clone(), fromTarget: controls.target.clone(), toTarget: target.clone() };
+	}
+	function stepFlight(dt) {
+		if (!flight) return;
+		flight.t += dt;
+		const k = ease(Math.min(1, flight.t / flight.dur));
+		camera.position.lerpVectors(flight.fromPos, flight.toPos, k);
+		controls.target.lerpVectors(flight.fromTarget, flight.toTarget, k);
+		if (flight.t >= flight.dur) flight = null;
+	}
+	const flyObj = new THREE.Vector3();
+	function focusOn(id) {
+		hotspot(id).group.getWorldPosition(flyObj);
+		const c = home.target;
+		const out = new THREE.Vector3(flyObj.x - c.x, 0, flyObj.z - c.z);
+		if (out.lengthSq() < 1e-4) out.set(0, 0, 1);
+		out.normalize();
+		const horizontal = Math.hypot(home.pos.x - c.x, home.pos.z - c.z) * 0.8;
+		const pos = new THREE.Vector3(c.x + out.x * horizontal, (home.pos.y - c.y) * 0.72 + c.y, c.z + out.z * horizontal);
+		const target = c.clone().lerp(flyObj, 0.85);
+		target.y = flyObj.y + 0.45; // the object sits a little below the middle, with room for a tip over it
+		flyTo(pos, target);
+	}
+
 	const timer = new THREE.Timer();
 	const FOCUS_HOLD = 4;
 	const focusLock = { point: new THREE.Vector3(), until: -1 };
@@ -174,12 +256,16 @@ export function mountIsland(container, { isUnlocked, onPhase, instant = false })
 	};
 	addEventListener('keydown', onKey);
 
+	const anchorPoint = new THREE.Vector3();
+	const hotspot = (id) => world.hotspots.find((h) => h.id === id);
 	let lastPhase = '';
 	renderer.setAnimationLoop(() => {
 		timer.update();
 		const rawDt = timer.getDelta();
 		const dt = Math.min(rawDt, 0.05);
 		const t = timer.getElapsed();
+		stepFlight(Math.min(rawDt, 0.25)); // real elapsed time, so the guided look takes the same time on a slow device
+		sway();
 		controls.update(dt);
 		if (t < focusLock.until) {
 			focusDist = camera.position.distanceTo(focusLock.point);
@@ -207,7 +293,37 @@ export function mountIsland(container, { isUnlocked, onPhase, instant = false })
 		/** Replay the knit-in with whatever is unlocked right now. */
 		replay: () => world.playIntro(),
 		offerGift: (stages, label, onKnitted) => world.offerGift(stages, label, onKnitted),
+		/** New pieces fall onto the island from above. pick(stage, k) chooses which. */
+		dropIn: (pick, onDone) => world.dropIn(pick, onDone),
 		acceptGift: () => world.acceptGift(),
+		/** Set a gift box's state ('locked' | 'ready' | 'opened'), e.g. to close the lid of the unlock box again. */
+		setHotspotState: (id, state, instant) => hotspot(id)?.setState?.(state, instant),
+		/** The local-treat gift. States: 'locked' | 'ready' | 'opened'. */
+		setGiftStates: (states, instant) => states.forEach((st, i) => hotspot(`gift-${i}`)?.setState?.(st, instant)),
+		/** Open a hotspot (journal or a gift) with its little animation; returns the state it ends in. */
+		openHotspot: (id) => hotspot(id)?.open(),
+		/** Glow a hotspot, e.g. while its page control has keyboard focus. */
+		highlightHotspot: (id, on) => hotspot(id)?.highlight?.(on),
+		/** Where a hotspot is on screen, in container pixels, so labels and tickets can sit next to it. */
+		hotspotScreen: (id, out) => {
+			hotspot(id).anchor(anchorPoint).project(camera);
+			out.x = (anchorPoint.x * 0.5 + 0.5) * container.clientWidth;
+			out.y = (0.5 - anchorPoint.y * 0.5) * container.clientHeight;
+			out.visible = anchorPoint.z < 1;
+			return out;
+		},
+		/** The existing island objects that stand for each journey step, to clone into the collection gallery. */
+		getCollectibleSources: () => world.collectibles(),
+		/** Fly the camera toward a hotspot (the journal or a gift), smoothly. */
+		focusHotspot: (id) => focusOn(id),
+		/** Fly the camera back to the overview it started with. */
+		resetCamera: () => flyTo(home.pos, home.target),
+		/** Hold the gentle camera sway while a ticket is open, so the camera stays where it is. */
+		holdCamera: (hold) => {
+			swayHeld = hold;
+			// after letting go, wait a moment before swaying again, so the view is exactly as it was when it was held
+			if (!hold) idleAt = performance.now() / 1000;
+		},
 		dispose() {
 			renderer.setAnimationLoop(null);
 			observer.disconnect();

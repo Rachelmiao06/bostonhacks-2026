@@ -23,8 +23,7 @@ export const content = {
   },
 
   progress: {
-    label: (stamps: number, tokens: number) => `${stamps} ${stamps === 1 ? "stamp" : "stamps"} · ${tokens} tokens`,
-    title: "Your collection",
+    label: "My World",
   },
 
   cluster: (n: number) => `${n} problems here. Zoom in`,
@@ -46,7 +45,6 @@ export const content = {
     openFor: (days: number) => (days < 1 ? "Opened today" : days === 1 ? "Open 1 day" : `Open ${days} days`),
     failures: (n: number) => (n === 1 ? "First time out in 90 days" : `Out ${n} times in 90 days`),
     fixedAgo: "MBTA alert resolved",
-    reward: (n: number) => `+${n} tokens`,
     report: "Report what you see",
     verify: "Check it’s working",
     continue: "Continue your report",
@@ -69,20 +67,18 @@ export const content = {
   },
 
   celebrate: {
-    title: "Ticket stamped",
-    already: "Already in your collection",
-    tokens: (n: number) => `+${n} tokens`,
-    stamp: (category: string) => `${category} stamp added to your collection`,
+    title: "Your little world just grew!",
+    already: "Already part of your world",
     honest: "Completed in Tada. This does not send anything to the MBTA.",
     collection: "Visit my world",
     another: "Continue exploring",
-    newPiece: (name: string) => `Your island has a new piece waiting: ${name}.`,
-    stampsSoFar: (n: number, total: number) => `${n} of ${total} stamps toward your island`,
+    /** Only for the very first recorded contribution: the little world is discovered, not explained. */
+    first: { title: "Your little world just grew!", body: "Your contribution added something new to your world.", keep: "Keep exploring" },
+    newPiece: (name: string) => `Next time you visit, ${name} lands on your island.`,
   },
 
   /** Below this zoom the landmark models are hidden, so the far-out view stays clean. */
-  landmarkMinZoom: 11.5,
-  landmarkPlaceholder: "Model to come",
+  landmarkMinZoom: 11,
   landmarkProblems: (name: string, n: number, done: number) =>
     `${name}: ${n} ${n === 1 ? "problem" : "problems"} at this stop${done ? `, ${done} done by you` : ""}`,
   /** Problems within this many pixels of each other merge into one cluster. 0 = never. */
@@ -124,54 +120,85 @@ export const kindLabels: Record<QuestKind, string> = {
   suspension: "Service suspended",
 };
 
-/**
- * The miniature buildings. A small hand-picked set, never the whole city.
- * `art` is the picture to float over the map: a PNG with a see-through background in
- * public/assets/explore/landmarks/, drawn in three-quarter view, about 240px wide.
- * Until a landmark has `art`, a plain stand-in block shows where it will go.
- * `stationId` is the stop whose ticket opens when the landmark is tapped.
- */
+/** Landmarks tell local history at their real coordinates. */
 export type Landmark = {
-  id: string;
+  id: PixelArtId;
   name: string;
   longitude: number;
   latitude: number;
-  stationId: string;
-  art?: string;
-  /** PROTOTYPE: a cute pixel-art miniature drawn in code (PixelLandmark.tsx). Wins over `art`. */
-  pixel?: PixelArtId;
+  stationId?: string;
+  story: string;
 };
 
 export const landmarks: Landmark[] = [
-  // PROTOTYPE station: the Old State House stands right on top of State station.
-  { id: "old-state-house", name: "Old State House", longitude: -71.0575, latitude: 42.3587, stationId: "place-state", pixel: "old-state-house" },
-  { id: "state-house", name: "State House", longitude: -71.0638, latitude: 42.3588, stationId: "place-pktrm" },
-  { id: "fenway-park", name: "Fenway Park", longitude: -71.0972, latitude: 42.3467, stationId: "place-kencl" },
-  { id: "public-library", name: "Boston Public Library", longitude: -71.0782, latitude: 42.3493, stationId: "place-coecl" },
-  { id: "south-station", name: "South Station", longitude: -71.0552, latitude: 42.3519, stationId: "place-sstat" },
-  { id: "td-garden", name: "TD Garden", longitude: -71.0621, latitude: 42.3662, stationId: "place-north" },
+  {
+    id: "old-state-house", name: "Old State House", longitude: -71.0575, latitude: 42.3587, stationId: "place-state",
+    story: "On July 18, 1776, Bostonians gathered below this balcony for the city’s first public reading of the Declaration of Independence. Six years earlier, the Boston Massacre had taken place just outside.",
+  },
+  {
+    id: "state-house", name: "State House", longitude: -71.0638, latitude: 42.3588, stationId: "place-pktrm",
+    story: "Samuel Adams laid the cornerstone here in 1795. In 1802, Paul Revere covered the dome in copper.",
+  },
+  {
+    id: "fenway-park", name: "Fenway Park", longitude: -71.0972, latitude: 42.3467, stationId: "place-kencl",
+    story: "Rain twice delayed Fenway’s first regular-season game. On April 20, 1912, the Red Sox finally beat New York 7–6 in the eleventh inning.",
+  },
+  {
+    id: "public-library", name: "Boston Public Library", longitude: -71.0782, latitude: 42.3493, stationId: "place-coecl",
+    story: "When workers laid the cornerstone in 1888, Oliver Wendell Holmes dedicated a poem to this public library. On March 11, 1895, readers finally walked through its doors on Copley Square.",
+  },
+  {
+    id: "south-station", name: "South Station", longitude: -71.0552, latitude: 42.3519, stationId: "place-sstat",
+    story: "Boston’s railroads once dropped passengers at separate terminals across the city. On New Year’s Day in 1899, South Station opened to bring five rail lines under one roof.",
+  },
+  {
+    id: "td-garden", name: "TD Garden", longitude: -71.0621, latitude: 42.3662, stationId: "place-north",
+    story: "On June 17, 2008, Boston fans watched the Celtics defeat the Lakers in Game 6 here. The win gave the Celtics their seventeenth NBA championship.",
+  },
+  {
+    id: "tea-party-ships", name: "Boston Tea Party Ships & Museum", longitude: -71.0512, latitude: 42.3522,
+    story: "On December 16, 1773, protesters boarded three ships and threw their cargo of tea into Boston Harbor to protest a British tax. Today you can step aboard replica ships at the Congress Street Bridge.",
+  },
 ];
 
-/** The arrival gate: the first thing a new rider sees, while the map loads behind it. */
+/** The welcome card: the one thing a first-time rider sees, floating over the map while it loads. */
 export const dive = {
-  title: "Where are you right now?",
-  intro: "We drop you into the nearest T stop. Your location stays in your browser.",
+  eyebrow: "Tada · Welcome",
+  title: "Where should we start?",
+  intro: "Find T issues near you. Your location stays in your browser.",
   useLocation: "Use my location",
   locating: "Finding the nearest stop…",
-  denied: "We could not get your location. Pick a place instead.",
-  orStart: "Or start at",
-  skip: "Just show the map",
-  /** One quiet status line, so waiting never feels like nothing is happening. */
-  status: (ready: number, total: number) => (ready >= total ? "Map ready" : `Loading the map · ${ready} of ${total}`),
+  chooseStation: "Choose a station",
+  skip: "Just explore the map",
+  pickTitle: "Pick a station",
+  search: "Search stations",
+  popular: "Popular starts",
+  noMatch: "No station matches that.",
+  back: "Back",
+  /** Why location did not work, kept calm, always with a way forward. */
+  errors: {
+    denied: "This site is blocked from your location. Click the lock icon in the address bar, set Location to Allow, then try again. Or choose a station.",
+    system: "Your computer is not letting the browser share a location. On a Mac: System Settings, Privacy & Security, Location Services, switch your browser on. Or choose a station.",
+    unavailable: "We could not work out where you are. Choose a station, or just explore the map.",
+    timeout: "That took too long. Try again, choose a station, or just explore the map.",
+    unsupported: "This browser cannot share a location. Choose a station instead.",
+  },
+  flying: "Finding problems near you…",
   waiting: "Almost there…",
   failed: "The map data did not load. Refresh to try again.",
-  /** The starting places on the gate. Each is the stop of a landmark in `landmarks`. */
+  /** The quick picks above the station search. Each is the stop of a landmark in `landmarks`. */
   spots: [
     { label: "Park Street", stationId: "place-pktrm" },
     { label: "Kenmore · Fenway", stationId: "place-kencl" },
     { label: "South Station", stationId: "place-sstat" },
     { label: "North Station", stationId: "place-north" },
   ],
+};
+
+/** One-time hints, shown where they matter and never again. */
+export const hints = {
+  map: { title: "Every pin is a challenge.", body: "Tap one to explore.", dismiss: "Got it" },
+  ticket: { title: "Seen this too?", body: "Share what you noticed or help verify it." },
 };
 
 /** The small 3D world around one stop, and the questions asked inside it. */
@@ -184,7 +211,14 @@ export const world = {
   far: "You are outside the T area, so we started you at Park Street.",
   quiet: (from: string) =>
     `Nothing is broken near ${from} right now. We moved you to the closest problem.`,
-  coach: "Tap a pin. Type what you see. Get a stamp.",
+  legend: {
+    open: "What are the pins?",
+    close: "Hide",
+    title: "Reading the map",
+    number: "The number is how many problems are at that stop.",
+    landmark: "A pixel building is a landmark near a stop. Tap it to see its problems.",
+    ring: "A ring on a line is a T stop with nothing to report.",
+  },
   seeCity: "See the whole city",
   backToBlock: "Back to my block",
   you: "You are here",
@@ -214,5 +248,5 @@ export const world = {
   placeholder: "Type what you see…",
   enterHint: "Enter to check · Shift+Enter for a new line",
   coachName: "AI coach",
-  edited: "You changed your answer. Check it again to unlock the stamp.",
+  edited: "You changed your answer. Check it again to finish.",
 };

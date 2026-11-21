@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { categoryInfo, categoryOf, categoryStyle } from "./category";
 import { Celebration } from "./Celebration";
 import { content, kindLabels, world } from "./content";
+import { firstGlow, TicketHint, useFirstTicket } from "./Hints";
 import { refreshProgress } from "./progress";
 import { AtlasButton, AtlasTextarea, ErrorNote, Eyebrow } from "./ui";
 import { VerifyFlow } from "./VerifyFlow";
@@ -33,6 +34,8 @@ type Props = {
 export function WorldQuest({ quests, index, onIndex, onClose, onFullForm }: Props) {
   const quest = quests[Math.min(index, quests.length - 1)];
   const root = useRef<HTMLElement>(null);
+  // First ticket ever? Decided once when the bubble opens (a hook, so it sits above the early return).
+  const firstTicket = useFirstTicket();
 
   // Slides up from the bottom of the screen.
   useEffect(() => {
@@ -113,9 +116,14 @@ export function WorldQuest({ quests, index, onIndex, onClose, onFullForm }: Prop
         </p>
 
         {verify ? (
-          <VerifyFlow key={`verify-${quest.id}`} quest={quest} onDone={onClose} />
+          <>
+            <TicketHint show={firstTicket} />
+            <div className={cn("rounded-2xl", firstTicket && firstGlow)}>
+              <VerifyFlow key={`verify-${quest.id}`} quest={quest} onDone={onClose} />
+            </div>
+          </>
         ) : (
-          <ReportBody key={`report-${quest.id}`} quest={quest} onDone={onClose} onFullForm={() => onFullForm(quest)} />
+          <ReportBody key={`report-${quest.id}`} quest={quest} first={firstTicket} onDone={onClose} onFullForm={() => onFullForm(quest)} />
         )}
       </div>
     </section>
@@ -156,7 +164,7 @@ function Bubble({ text }: { text: string }) {
   );
 }
 
-function ReportBody({ quest, onDone, onFullForm }: { quest: Quest; onDone: () => void; onFullForm: () => void }) {
+function ReportBody({ quest, first, onDone, onFullForm }: { quest: Quest; first: boolean; onDone: () => void; onFullForm: () => void }) {
   const r = useReport(quest);
   const textRef = useRef<HTMLTextAreaElement>(null);
 
@@ -209,6 +217,8 @@ function ReportBody({ quest, onDone, onFullForm }: { quest: Quest; onDone: () =>
         ))}
       </div>
 
+      <TicketHint show={first} />
+
       <div className="space-y-1">
         <label htmlFor="world-answer" className="sr-only">
           {flow.textLabel}
@@ -227,7 +237,7 @@ function ReportBody({ quest, onDone, onFullForm }: { quest: Quest; onDone: () =>
           }}
           placeholder={world.placeholder}
           aria-invalid={r.tooLong || undefined}
-          className="resize-none"
+          className={cn("resize-none", first && firstGlow)}
         />
         <p className="flex justify-between gap-2 text-[0.7rem] text-taupe">
           <span className="hidden sm:inline">{world.enterHint}</span>
@@ -240,7 +250,7 @@ function ReportBody({ quest, onDone, onFullForm }: { quest: Quest; onDone: () =>
           {r.checking ? flow.checking : world.send}
         </AtlasButton>
         <AtlasButton fill="bg-cat-verify" disabled={!r.canComplete} onClick={r.complete}>
-          {r.completing ? flow.completing : (<>{world.stamp}<span className="max-sm:hidden"> · {content.ticket.reward(quest.rewardTokens)}</span></>)}
+          {r.completing ? flow.completing : world.stamp}
         </AtlasButton>
         <button
           type="button"

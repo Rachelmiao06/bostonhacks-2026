@@ -2,51 +2,206 @@ import { cn } from "@/lib/utils";
 
 // Cute pixel-art miniatures for the map, drawn from character grids (like the pixel train),
 // so they stay crisp at any size and every colour is a theme token.
-// PROTOTYPE: one building for now, to judge the look before drawing more.
+// p brick red, c shaded masonry, m green, v dark green, l blue glass, r orange roof.
 //
-// o outline   b brick front   s brick side (in shade)   w window   d door
+// o outline   w window   d door
 // t tower     r roof          g gold                    . empty
 const ART = {
   "old-state-house": [
-    "..........g...........",
-    ".........ggg..........",
-    "..........o...........",
-    ".........ooo..........",
-    "........otwto.........",
-    "........ottto.........",
-    "........owwwo.........",
-    ".......ootttoo........",
-    ".......otwtwto........",
-    "......ooooooooo.......",
-    ".....orrrrrrrrro......",
-    "....orrrrrrrrrrro.....",
-    "...ooooooooooooooo....",
-    "...obbbbbbbbbbbbbsso..",
-    "...obwwbbwwbbwwbbsso..",
-    "...obwwbbwwbbwwbbssso.",
-    "...obbbbbbbbbbbbbssso.",
-    "...obbbbbbbbbbbbbssso.",
-    "...obwwbbwwbbwwbbssso.",
-    "...obwwbbwwbbwwbbssso.",
-    "...obbbbbbbbbbbbbssso.",
-    "...obbbbbbddbbbbbssso.",
-    "...obbbbbbddbbbbbssso.",
-    "...oooooooooooooooooo.",
+    ".........gg.............",
+    "........ggog............",
+    "..........o.............",
+    ".........ooo............",
+    "........omvvo...........",
+    ".......owwwwwo..........",
+    ".......owldwro..........",
+    ".......owldwro..........",
+    "......oowwwwwroo........",
+    ".......owwdwro..........",
+    ".......owddwro..........",
+    ".....ooowwwwrooooo......",
+    "....ommmowwoommmmvo.....",
+    "...ommmowppwommmmmvo....",
+    "..oommowppppwommmmvvo...",
+    "..owwowppwwppwowwwwwwo..",
+    "..opppppwddwppppocccco..",
+    "..opwlppwllwppwlocdlco..",
+    "..opwwppwwwwppwwocwlco..",
+    "..oppppowwwwopppocccco..",
+    "..owwwwowwwwowwworrrro..",
+    "..opwlppodwoppwlocdlco..",
+    "..opwwppoddoppwwocwlco..",
+    "..opppppoddoppppocccco..",
+    "..owwwwwrrrrwwwworrrro..",
+    "..oooooooooooooooooooo..",
+  ],
+  "state-house": [
+    ".............g.............",
+    "............ogo............",
+    "............owo............",
+    "..........oogggoo.........",
+    ".........ogwwgggggo........",
+    "........ogwwgggggggo.......",
+    "........oggggggggggo.......",
+    ".......oooooooooooooo......",
+    ".......owtwttwttwtwto......",
+    "..oooooooooooooooooooooo...",
+    ".oppppppppoottooopppppppo..",
+    ".opddpppoottwwttooppddppo..",
+    ".opwwpoottwwwwwwttoopwwpo..",
+    ".opppoooooooooooooooppppo..",
+    ".opddpwtotwtotwtotwpddppo..",
+    ".opwwpwtotwtotwtotwpwwppo..",
+    ".oppppwtotwtotwtotwpppppo..",
+    ".oooooowwwwwwwwwwwooooooo..",
+    "......orrrrrrrrrrrro.......",
+    ".....oooooooooooooooo......",
+  ],
+  "fenway-park": [
+    "....o.........o............",
+    "....wg........wg...........",
+    "...ooooooooooooooooo.......",
+    "...ovvvvvvvvvvvvvvvvoo.....",
+    "...ovmmvvvvvvvvmvvvvovo....",
+    "..oovvvvvvvvvvvvvvvvovoo...",
+    ".opooooooooooooooooooovvo..",
+    "opppommmmmmmmmmmmmmmoovvvo.",
+    "oppommmmmmmmmmmmmoooocccco.",
+    "oppommmmmmmmccccommmmoccoo.",
+    "oppommmmmcccttttccmmmmoco..",
+    ".oppommmccttmmtttccmmooco..",
+    "..oppommmccttmmttccmoccco..",
+    "...oppommmccttttccmocccoo..",
+    "....oppommmccwwccmocccoo...",
+    ".....oppommmcwccmocccoo....",
+    "......oppommmwmoccccoo.....",
+    ".......oppoooooccccoo......",
+    "........opppppccccoo.......",
+    ".........oooooooooo........",
+  ],
+  "public-library": [
+    "....ooooooooooooooooooo....",
+    "...ommrmmrmmrmmrmmrmmroo...",
+    "..ommmmmmmmmmmmmmmmmmorro..",
+    ".oooooooooooooooooooooocco.",
+    ".owwwwwwwwwwwwwwwwwwwoccco.",
+    ".ottdtttdtttdtttdtttdocdco.",
+    ".otdldtdldtdldtdldtdlocdco.",
+    ".otdldtdldtdldtdldtdloccco.",
+    ".owwwwwwwwwwwwwwwwwwwoccco.",
+    ".ottttttoottoottootttoccco.",
+    ".ottdttoddooddooddotttocdco.",
+    ".otdldtoddooddooddotdocdco.",
+    ".otdldtoddooddooddotdoccco.",
+    ".oooooowwwwwwwwwwwooooooo..",
+    ".....orrrrrrrrrrrrro.......",
+    "....ooooooooooooooooo......",
+  ],
+  "south-station": [
+    ".............o.............",
+    "............owo............",
+    "..........oowwwoo..........",
+    ".........opwwdwwpo.........",
+    ".........opwddwwpo.........",
+    "........oopwwwwpooo........",
+    "...ooooorppooooopprooooo...",
+    "..ommmmmppppppppppmmmmmmo..",
+    ".ooooooowwwwwwwwwwoooooooo.",
+    ".opdwdwppdwdwdwdwppdwdwpoo.",
+    ".opdwdwppdwdwdwdwppdwdwpco.",
+    ".opppppppppppppppppppppco.",
+    ".owwwwwwwwooooowwwwwwwwco.",
+    ".opddpddpotllltopddpddpco.",
+    ".opllpllopllwllpollpllpco.",
+    ".opllpllopllwllpollpllpco.",
+    ".oooooooorrrrrroooooooooo.",
+    ".......oooooooooo.........",
+  ],
+  "tea-party-ships": [
+    "..........oggg.............",
+    "..........o........oggg....",
+    ".......ooooooo.....o.......",
+    ".......owwwwro..ooooooo....",
+    "......owwwwwro..owwwwro....",
+    "......oooooooo.owwwwwro....",
+    "..........o....oooooooo....",
+    ".....oooooooooo....o.......",
+    ".....owwwwwwrro.oooooooo...",
+    "....owwwwwwwrro.owwwwrro...",
+    "....oooooooooooowwwwwrro...",
+    "..........o....ooooooooo..o",
+    ".ooo......o........o....oo.",
+    ".oppoo....o..oggo..o..oo...",
+    ".opppoooooooooooooooooo....",
+    "..occcppppppppppppppco.....",
+    "...occccgcccgcccgccco......",
+    "....occcccccccccccoo.......",
+    ".....ooooooooooooo.........",
+    "...llmmmlll..lllmmmlll.....",
+  ],
+  "td-garden": [
+    ".......ooooooooooo.........",
+    ".....oorrrrrrrrrrrooo......",
+    "...oowwwwwwwwwwwwwrrroo....",
+    "..owwwwwwwwwwwwwwwwwrrroo..",
+    ".ooooooooooooooooooooorcco.",
+    ".otttttttttttttttttttorcco.",
+    ".otvvvvtvvvvvvvvvvvvvovcco.",
+    ".otvvvvtvvvvvvvvvvvvvovcco.",
+    ".ogggggggggggggggggggogcco.",
+    ".oooommmmmmmmmmmmooooovcco.",
+    ".olllommmmmmmmmmollldovcco.",
+    ".olllottttmtmtmmollllovcco.",
+    ".olllommtmmtmmtmollllovcco.",
+    ".olllommtmmtmmtmollllovcco.",
+    ".olllommtmmtmtmmollllovcco.",
+    ".ooodoooooooooooooodooooo..",
+    "..owwllllwllllwllllwwooo...",
+    "...ooooooooooooooooooo.....",
   ],
 } as const;
 
 export type PixelArtId = keyof typeof ART;
 
+// Deep, saturated palette so the buildings read as solid objects on the pale map.
+// Each colour can still be overridden with a --landmark-* CSS variable.
 const FILL: Record<string, string> = {
+  p: "fill-[var(--landmark-brick,#d9453b)]",
+  c: "fill-[var(--landmark-masonry-shadow,#8a2f2c)]",
+  m: "fill-[var(--landmark-mint,#2f9d6b)]",
+  v: "fill-[var(--landmark-green,#17503b)]",
+  l: "fill-[var(--landmark-glass,#2a7fd0)]",
   o: "fill-graphite",
-  b: "fill-cat-service",
-  s: "fill-cat-service opacity-70",
   w: "fill-ivory",
   d: "fill-graphite",
   t: "fill-ivory",
-  r: "fill-stone-deep",
+  r: "fill-[var(--landmark-roof,#e9732a)]",
   g: "fill-sun",
 };
+
+// Combine adjacent pixels of one colour into SVG paths so map zooms need few DOM nodes.
+function pixelPaths(rows: readonly string[]) {
+  const paths = new Map<string, string>();
+  rows.forEach((row, y) => {
+    for (const run of row.matchAll(/([a-z])\1*/g)) {
+      const colour = run[1];
+      const length = run[0].length;
+      paths.set(colour, (paths.get(colour) ?? "") + `M${run.index} ${y}h${length}v1h-${length}z`);
+    }
+  });
+  return Array.from(paths);
+}
+
+const sprites = new Map(Object.entries(ART).map(([id, rows]) => [
+  id, { width: Math.max(...rows.map(row => row.length)), height: rows.length, paths: pixelPaths(rows) },
+]));
+
+export const landmarkWidth = { station: 84, scenic: 70 } as const;
+
+export function landmarkHeight(art: PixelArtId, width: number) {
+  const sprite = sprites.get(art)!;
+  return width * sprite.height / sprite.width;
+}
 
 type Props = {
   art: PixelArtId;
@@ -56,23 +211,17 @@ type Props = {
 };
 
 export function PixelLandmark({ art, size = 72, className }: Props) {
-  const rows = ART[art];
-  const w = Math.max(...rows.map((row) => row.length));
-  const h = rows.length;
+  const { width: w, height: h, paths } = sprites.get(art)!;
   return (
     <svg
       viewBox={`0 0 ${w} ${h}`}
       width={size}
-      height={(size * h) / w}
+      height={landmarkHeight(art, size)}
       shapeRendering="crispEdges"
       aria-hidden
       className={cn("block shrink-0", className)}
     >
-      {rows.flatMap((row, y) =>
-        [...row].map((char, x) =>
-          char === "." ? null : <rect key={`${x}-${y}`} x={x} y={y} width={1} height={1} className={FILL[char]} />,
-        ),
-      )}
+      {paths.map(([colour, d]) => <path key={colour} d={d} className={FILL[colour]} />)}
     </svg>
   );
 }

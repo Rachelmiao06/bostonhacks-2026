@@ -8,6 +8,7 @@ import { Stamp } from "@/components/shared/stamp";
 import { cn } from "@/lib/utils";
 import { categoryInfo, categoryOf, categoryStyle } from "./category";
 import { content, kindLabels, type Landmark } from "./content";
+import { firstGlow, TicketHint, useFirstTicket } from "./Hints";
 import type { SubwayLine, SubwayStation } from "./types";
 
 type Props = {
@@ -19,8 +20,6 @@ type Props = {
   onIndex: (index: number) => void;
   done: ReadonlySet<string>;
   landmark?: Landmark;
-  /** The map's current landmark scale: a pixel landmark grows with zoom, so the ticket floats above it by the same amount. */
-  landmarkScale?: number;
   /** Wide screens pin the ticket above the stop; phones dock it at the bottom. */
   docked: boolean;
   onContribute: (quest: Quest) => void;
@@ -41,12 +40,11 @@ export function ProblemTicket(props: Props) {
     );
   }
   return (
-    // A pixel landmark stands on its stop, so its ticket floats above the building instead of over it.
     <Marker
       longitude={props.station.longitude}
       latitude={props.station.latitude}
       anchor="bottom"
-      offset={[0, props.landmark?.pixel ? -Math.round(93 * (props.landmarkScale ?? 1) + 30) : -48]}
+      offset={[0, -48]}
       style={{ zIndex: 10 }}
     >
       {ticket}
@@ -151,6 +149,7 @@ function ProblemBody({ quest, done, onContribute }: { quest: Quest; done: boolea
   const style = categoryStyle[category];
   const Icon = style.icon;
   const verify = quest.mode === "verify";
+  const firstTicket = useFirstTicket();
   // MBTA headers often start with the unit name; only print it separately when they do not.
   const showFacility = quest.facilityName && !quest.header.startsWith(quest.facilityName);
 
@@ -173,18 +172,7 @@ function ProblemBody({ quest, done, onContribute }: { quest: Quest; done: boolea
             tone={cn(style.text, style.border)}
             className="mt-1"
           />
-        ) : (
-          <span
-            aria-hidden
-            className={cn(
-              "mt-1 grid size-14 shrink-0 -rotate-12 place-items-center rounded-full border-2 border-dashed font-mono text-[0.6rem] font-semibold opacity-70",
-              style.text,
-              style.border,
-            )}
-          >
-            +{quest.rewardTokens}
-          </span>
-        )}
+        ) : null}
       </div>
 
       <dl className="mt-3 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[0.62rem] tracking-wide text-taupe uppercase">
@@ -198,17 +186,15 @@ function ProblemBody({ quest, done, onContribute }: { quest: Quest; done: boolea
             <dd>{content.ticket.failures(quest.failuresLast90Days)}</dd>
           </div>
         )}
-        <div>
-          <dt className="sr-only">Reward</dt>
-          <dd>{content.ticket.reward(quest.rewardTokens)}</dd>
-        </div>
       </dl>
+
+      {!done && <TicketHint show={firstTicket} className="mt-3.5" />}
 
       <div className="mt-3.5 flex flex-wrap items-center gap-x-4 gap-y-2">
         <button
           type="button"
           onClick={() => onContribute(quest)}
-          className="cursor-pointer rounded-full bg-graphite px-4 py-2 text-sm font-medium text-ivory outline-none transition-opacity hover:opacity-90 focus-visible:ring-4 focus-visible:ring-graphite/30"
+          className={cn("cursor-pointer rounded-full bg-graphite px-4 py-2 text-sm font-medium text-ivory outline-none transition-opacity hover:opacity-90 focus-visible:ring-4 focus-visible:ring-graphite/30", !done && firstTicket && firstGlow)}
         >
           {done ? content.ticket.seeYours : verify ? content.ticket.verify : content.ticket.report}
         </button>

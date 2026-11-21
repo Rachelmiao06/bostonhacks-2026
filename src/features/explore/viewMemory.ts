@@ -4,6 +4,9 @@
 import type { PaddingOptions } from "maplibre-gl";
 
 const KEY = "tparty.explore.view";
+// The last stop the rider picked, kept across tabs so My World can point gifts at places near it.
+// It is a public station id, not the rider's location.
+const LAST_STATION_KEY = "tparty.explore.lastStation";
 
 export type SavedView = {
   longitude: number;
@@ -34,6 +37,7 @@ export function saveView(patch: Partial<SavedView>) {
     const raw = window.sessionStorage.getItem(KEY);
     const current = raw ? (JSON.parse(raw) as Partial<SavedView>) : {};
     window.sessionStorage.setItem(KEY, JSON.stringify({ stationId: null, questIndex: 0, ...current, ...patch }));
+    if (typeof patch.stationId === "string") window.localStorage.setItem(LAST_STATION_KEY, patch.stationId);
   } catch {
     // storage blocked: the map just starts fresh next time
   }
@@ -66,5 +70,16 @@ export function clearReturnFromIsland() {
     window.sessionStorage.removeItem(FROM_ISLAND_KEY);
   } catch {
     // nothing to clear
+  }
+}
+
+/** The stop the rider has picked on the map (this tab first, else the last one picked), or null if they never did. */
+export function selectedStationId(): string | null {
+  try {
+    const raw = window.sessionStorage.getItem(KEY);
+    const fromTab = raw ? (JSON.parse(raw) as Partial<SavedView>).stationId : null;
+    return fromTab ?? window.localStorage.getItem(LAST_STATION_KEY);
+  } catch {
+    return null;
   }
 }

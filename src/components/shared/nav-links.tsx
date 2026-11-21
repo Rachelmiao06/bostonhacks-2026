@@ -33,9 +33,19 @@ function Links({ items, pathname }: { items: Item[]; pathname: string | null }) 
               href={item.href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "relative block rounded-xl px-2.5 py-2 text-[0.82rem] font-medium whitespace-nowrap outline-none transition-colors focus-visible:ring-2 focus-visible:ring-graphite/40 sm:px-3.5 sm:text-sm",
-                active ? "bg-graphite text-ivory" : "text-taupe hover:bg-stone-deep/60 hover:text-graphite",
+                "relative block rounded-full px-3 py-2 font-heading text-[0.82rem] font-semibold whitespace-nowrap outline-none transition-colors focus-visible:ring-2 focus-visible:ring-graphite/40 sm:px-4 sm:text-sm",
+                active ? "text-ivory" : "text-taupe hover:bg-ivory/60 hover:text-graphite",
               )}
+              // The current tab is the same pressed green glass as the primary buttons.
+              style={
+                active
+                  ? {
+                      background: "linear-gradient(180deg, color-mix(in oklab, var(--leaf) 30%, var(--cat-verify)) 0%, var(--cat-verify) 100%)",
+                      boxShadow:
+                        "inset 0 1px 0 color-mix(in oklab, var(--ivory) 55%, transparent), 0 4px 10px -5px color-mix(in oklab, var(--cat-verify) 70%, transparent)",
+                    }
+                  : undefined
+              }
             >
               {item.short ? (
                 <>
@@ -68,7 +78,7 @@ export function MoreMenu({ items }: { items: Item[] }) {
     <Menu.Root>
       <Menu.Trigger
         aria-label="More pages"
-        className="grid size-9 cursor-pointer place-items-center rounded-xl text-taupe outline-none hover:bg-stone-deep/60 hover:text-graphite focus-visible:ring-2 focus-visible:ring-graphite/40 data-popup-open:bg-stone-deep/60"
+        className="grid size-9 cursor-pointer place-items-center rounded-full text-taupe outline-none hover:bg-ivory/60 hover:text-graphite focus-visible:ring-2 focus-visible:ring-graphite/40 data-popup-open:bg-ivory/60"
       >
         <Ellipsis className="size-4" />
       </Menu.Trigger>
