@@ -4,6 +4,7 @@ import Link from "next/link";
 import { PartyPopper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { content } from "./content";
+import { challengeHref } from "./links";
 import { PhotoField } from "./PhotoField";
 import { ReviewPanel } from "./ReviewPanel";
 import type { Quest } from "./sample-quests";
@@ -43,7 +44,7 @@ export function SubmitForm({ quest, state }: { quest: Quest; state: AppState }) 
         <label htmlFor="feedback" className="font-heading text-lg font-bold">
           {content.textLabel}
         </label>
-        <p id="feedback-hint" className="text-sm text-paper/80">
+        <p id="feedback-hint" className="text-sm text-foreground/80">
           {content.textHint}
         </p>
         <textarea
@@ -56,7 +57,7 @@ export function SubmitForm({ quest, state }: { quest: Quest; state: AppState }) 
           rows={6}
           className="min-h-40 w-full resize-y rounded-2xl border-2 border-ink bg-paper p-4 text-base text-ink shadow-chip outline-none placeholder:text-muted-foreground focus-visible:ring-4 focus-visible:ring-sky/60 disabled:opacity-70"
         />
-        {!s.completed && s.status !== "empty" && <p className="text-xs text-paper/70">{content.savedIndicator}</p>}
+        {!s.completed && s.status !== "empty" && <p className="text-xs text-foreground/70">{content.savedIndicator}</p>}
       </div>
 
       <PhotoField
@@ -77,7 +78,7 @@ export function SubmitForm({ quest, state }: { quest: Quest; state: AppState }) 
               {content.complete}
             </Button>
           </div>
-          {s.hint && <p className="text-sm text-paper/80">{HINT_TEXT[s.hint]}</p>}
+          {s.hint && <p className="text-sm text-foreground/80">{HINT_TEXT[s.hint]}</p>}
         </div>
       )}
 
@@ -89,10 +90,10 @@ export function SubmitForm({ quest, state }: { quest: Quest; state: AppState }) 
 
       {s.review && <ReviewPanel result={s.review.result} isCurrent={s.review.isCurrent} />}
 
-      {s.rewarded && !s.completed && <p className="text-sm text-paper/80">{content.alreadyRewarded}</p>}
+      {s.rewarded && !s.completed && <p className="text-sm text-foreground/80">{content.alreadyRewarded}</p>}
 
       <p className="text-sm">
-        <Link href="/challenge" className="font-bold text-sky underline-offset-4 hover:underline">
+        <Link href={challengeHref()} className="font-bold text-sky underline-offset-4 hover:underline">
           ← {content.backToList}
         </Link>
       </p>

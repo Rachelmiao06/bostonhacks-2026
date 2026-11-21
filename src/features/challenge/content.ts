@@ -58,3 +58,113 @@ export function instructionsFor(kind: "elevator" | "escalator" | "access") {
   const thing = kind === "access" ? "access issue" : kind;
   return `Tell the MBTA how this ${thing} outage affects you. Be specific: which station, what time, what you had to do instead, and what you would like to see changed. A photo is optional.`;
 }
+
+// Text for the live quest page at /challenges/[id].
+export const details = {
+  loading: "Loading quest...",
+  loadFailed: "We could not load quests right now. Please refresh to try again.",
+  notFoundTitle: "Quest not found",
+  notFoundBody:
+    "This quest may have ended, or the link is wrong. MBTA alerts come and go, so pick a fresh one on the map.",
+  backToExplore: "Back to Explore",
+  communityLabel: "Community Mission · unofficial, not an MBTA request",
+  communityNote:
+    "T Party builds missions from public MBTA alerts. The MBTA did not ask for this feedback, and completing it here sends nothing to the MBTA.",
+  snapshotNote: "MBTA could not be reached, so this shows saved alert data.",
+  stationLabel: "Station",
+  linesLabel: "Lines",
+  kindLabel: "Kind",
+  openLabel: "Open for",
+  failuresLabel: "Broken in last 90 days",
+  rewardLabel: "Reward",
+  alertLabel: "MBTA's alert",
+  sourceLink: "See this alert on mbta.com",
+  noLines: "Bus or commuter rail",
+  reportMode: "Report quest",
+  verifyMode: "Verify quest",
+  resolvedNote: "MBTA marked this fixed. Is it really working again?",
+};
+
+export const kindLabels = {
+  elevator: "Elevator",
+  escalator: "Escalator",
+  access: "Accessibility",
+  station: "Station change",
+  closure: "Station closure",
+  shuttle: "Shuttle buses",
+  suspension: "Service suspended",
+} as const;
+
+export function daysOpenText(days: number) {
+  if (days < 1) return "Less than a day";
+  return days === 1 ? "1 day" : `${days} days`;
+}
+
+export function failuresText(n: number) {
+  return n === 1 ? "1 time" : `${n} times`;
+}
+
+// Text for what the rider does on /challenges/[id].
+export const flow = {
+  steps: ["Write", "Check with AI", "Revise", "Complete"],
+  stepsLabel: "Your progress",
+  stepHelp: [
+    "Tell us what you see. Tap a question below for a sentence starter.",
+    "Ready? The AI coach scores clarity and detail. It cannot verify facts.",
+    "The coach has suggestions. Edit your report, then check again.",
+    "Your report passed. Complete it to earn tokens.",
+  ],
+  promptsTitle: "Need ideas? Tap a question to add a starter",
+  prompts: [
+    { label: "When?", starter: "I was here on [day] at about [time]." },
+    { label: "Where exactly?", starter: "It is the one at [platform / entrance / lobby]." },
+    { label: "What did you see?", starter: "I saw that " },
+    { label: "How did it affect you?", starter: "Because of this I had to " },
+    { label: "What would help?", starter: "It would help if " },
+  ],
+  textLabel: "Your report",
+  textPlaceholder: "Example: The escalator to the Alewife platform was stopped on Friday at 8:30am, so I carried my stroller down the stairs...",
+  charCount: (n: number) => `${n} / 2000`,
+  draftSaved: "Your words are saved on this device.",
+  check: "Check with AI",
+  checking: "Checking...",
+  complete: "Complete quest",
+  completing: "Completing...",
+  hintEmpty: "Write something or add a photo to unlock the AI check.",
+  hintNeedsCheck: "Run the AI check on this version to unlock Complete.",
+  hintNeedsPass: "Revise using the suggestions, then check again to unlock Complete.",
+  notChecked: "Not checked: you changed your report after this check. Check again to unlock Complete.",
+  reviewTitle: "AI coach",
+  passed: "Looks good",
+  needsRevision: "Needs revision",
+  suggestionsTitle: "Try this",
+  scoreNames: { relevance: "Relevance", specificity: "Specificity", completeness: "Completeness", photoRelevance: "Photo fit" },
+  aiDisclaimer: "The AI coach helps with clarity and detail. It cannot verify facts, and a photo is never proof.",
+  photoNote: "Photos are shrunk on your device, sent once for the AI check, and not stored.",
+
+  verifyTitle: "Is it working again?",
+  verifyHelp: "Go and look, then tap what you see. One tap earns tokens.",
+  working: "Working again",
+  stillBroken: "Still broken",
+  noteLabel: "Note (optional)",
+  notePlaceholder: "Anything worth adding, like which level you checked.",
+  sending: "Sending...",
+  verifiedWorking: "You said it is working again.",
+  verifiedBroken: "You said it is still broken.",
+
+  doneTitle: "Quest complete!",
+  tokensEarned: (n: number) => `+${n} tokens`,
+  doneBody: "Completed in T Party. This does not send anything to the MBTA.",
+  alreadyDone: "You already finished this quest.",
+  tellMbta: "Also tell the MBTA",
+  tellMbtaHelp: "Optional. Opens the MBTA's official feedback page in a new tab. T Party does not send anything for you.",
+  tellMbtaSaved: "Noted: you opened the MBTA's page.",
+  mbtaUrl: "https://www.mbta.com/customer-support",
+  backToExplore: "Find another quest",
+
+  errors: {
+    network: "We could not reach T Party. Check your connection and try again. Your report is still here.",
+    ai: "The AI coach could not answer just now. Your report is safe here. Please try again in a moment.",
+    fallback: "Something went wrong. Your report is still here. Please try again.",
+  },
+};

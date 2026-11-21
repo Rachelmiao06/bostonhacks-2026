@@ -4,15 +4,19 @@ What: a real, interactive map of Boston styled as a small architectural atlas (S
 Issue: #2. Owner: Rachel. Only the owner edits this folder.
 
 ## How it fits together
-- `Explore.tsx`: just the map, full screen under the site nav (server). `ExploreLoader.tsx`: loads it in the browser only (`next/dynamic`, `ssr: false`).
-- `ExploreMap.tsx`: puts the layers together. All map settings and colours come from `src/lib/map.ts`.
-- `StationMarker.tsx`: three levels. A stop is a small ring in its line colour; a transfer hub is a larger ring;
-  a mission (an elevator out, or a landmark stop) is a dashed ticket stamp. Completed turns filled or green; selected lifts.
-- `LandmarkMarker.tsx`: the few miniature buildings floating over the map, each pinned to its real coordinates.
-  They hover over a soft shadow, lift on hover, pop when selected, grow with zoom and hide when zoomed far out.
-- `MissionTicket.tsx`: the small printed ticket that appears above the selected stop. "View mission" opens `StationSheet.tsx`.
-- `TrainsLayer.tsx`: live trains as dots in their line colour.
-- `progress.ts`: completed stations, saved in the browser. `content.ts`: all text, the sample missions and the landmark list.
+- The map is the home page (`/`); `/explore` shows the same thing.
+- `ExploreMap.tsx`: puts the layers together. Map settings and the map's own colours come from `src/lib/map.ts`.
+- `quests.ts`: open problems from `/api/quests` (no extra MBTA call), grouped by subway stop and clustered by on-screen distance.
+- `category.tsx` + `categories` in `content.ts`: four kinds built only from what MBTA alerts contain
+  (Service changes, Accessibility, Escalators & station, Check it's fixed). No cleanliness or crowding: there is no data for them.
+- `ProblemMarker.tsx`: a pin per stop with problems (most urgent category, count) and a cluster bubble when pins would overlap.
+- `ProblemTicket.tsx`: the printed ticket for a stop, pinned above it on wide screens, docked at the bottom on phones.
+- `ContributePanel.tsx`: contribute without leaving the map. `ReportFlow.tsx` draws PR #14's `useReport` hook;
+  `VerifyFlow.tsx` uses PR #14's `api.ts`. The rules live in `features/challenge`, never here.
+- `Celebration.tsx`: pixel train + stamp after a contribution; static with Reduced Motion.
+- `progress.ts`: this rider's contributions from `/api/submissions`, shared by the map, My Journey and Collection.
+- `StationMarker.tsx`, `LandmarkMarker.tsx`, `TrainsLayer.tsx`: quiet stop rings, floating landmarks, live trains.
+- A link like `/?quest=<id>` opens that problem's ticket.
 
 ## The look
 - Palette: `ATLAS` in `src/lib/map.ts` (stone land, sage-grey water, ivory roads, sandstone buildings, taupe outlines, sage parks).
@@ -38,7 +42,7 @@ Until a landmark has art, a plain dashed block marks its spot. To add art:
 
 ## Choices made (change freely)
 - Green B, C, D and E count as one Green Line (70 stops). Mattapan is its own line (8 stops).
-- Missions are five unofficial sample challenges, always labelled as not from the MBTA.
-- "Mark as completed" is a stand-in until the real challenge flow (`features/challenge`) exists.
-- The sheet is built here on the Base UI dialog because `components/ui` has no Sheet yet.
+- Problems whose stop is not on the subway map (bus or commuter rail only) are not shown.
+- Progress is hidden, not faked, when the database is unavailable.
+- The panel is built here on the Base UI dialog because `components/ui` has no Sheet yet.
 - `screenshots/` holds the PR screenshots only; safe to delete after merge.

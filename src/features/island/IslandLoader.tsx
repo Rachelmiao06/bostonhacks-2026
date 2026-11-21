@@ -7,6 +7,6 @@ import { content } from "./content";
 export const IslandScene = dynamic(() => import("./IslandScene"), {
   ssr: false,
   loading: () => (
-    <div className="absolute inset-0 grid place-items-center font-pixel text-[0.6rem] text-ink">{content.loading}</div>
+    <div className="absolute inset-0 grid place-items-center font-pixel text-[0.6rem] text-graphite">{content.loading}</div>
   ),
 });

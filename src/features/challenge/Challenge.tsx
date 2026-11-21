@@ -7,6 +7,7 @@ import { Coins } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { content, instructionsFor } from "./content";
+import { challengeHref, PRACTICE_ID_PARAM, practiceHref } from "./links";
 import { findQuest, sampleQuests, type Quest } from "./sample-quests";
 import { SubmitForm } from "./SubmitForm";
 import { resetEverything, submissionStatus, tokenBalance, useAppState, type AppState } from "./storage";
@@ -15,17 +16,17 @@ import { cn } from "@/lib/utils";
 // The quest comes from the URL (/challenge?id=...) so it works for live quests later too.
 export function Challenge() {
   return (
-    <Suspense fallback={<p className="font-pixel text-xs text-paper/70">Loading...</p>}>
+    <Suspense fallback={<p className="font-pixel text-xs text-foreground/70">Loading...</p>}>
       <ChallengeInner />
     </Suspense>
   );
 }
 
 function ChallengeInner() {
-  const id = useSearchParams().get("id");
+  const id = useSearchParams().get(PRACTICE_ID_PARAM);
   const state = useAppState();
 
-  if (!state) return <p className="font-pixel text-xs text-paper/70">Loading...</p>;
+  if (!state) return <p className="font-pixel text-xs text-foreground/70">Loading...</p>;
 
   const quest = id ? findQuest(id) : null;
   return (
@@ -44,7 +45,7 @@ function ChallengeInner() {
             <CardTitle>{content.notFound}</CardTitle>
           </CardHeader>
           <CardContent>
-            <Link href="/challenge" className="font-bold underline">
+            <Link href={challengeHref()} className="font-bold underline">
               {content.backToList}
             </Link>
           </CardContent>
@@ -100,7 +101,7 @@ function QuestPicker({ state }: { state: AppState }) {
     <section className="space-y-5">
       <div>
         <h1 className="font-heading text-3xl font-bold">{content.pickerTitle}</h1>
-        <p className="text-paper/80">{content.pickerIntro}</p>
+        <p className="text-foreground/80">{content.pickerIntro}</p>
       </div>
       <ul className="grid gap-5">
         {sampleQuests.map((q) => {
@@ -108,7 +109,7 @@ function QuestPicker({ state }: { state: AppState }) {
           return (
             <li key={q.id}>
               <Link
-                href={`/challenge?id=${q.id}`}
+                href={practiceHref(q.id)}
                 className="group block rounded-2xl outline-none focus-visible:ring-4 focus-visible:ring-sky/60"
               >
                 <Card className="transition-shadow group-hover:shadow-tile-lift">

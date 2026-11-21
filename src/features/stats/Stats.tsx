@@ -15,10 +15,10 @@ export function Stats() {
     <div className="mx-auto max-w-4xl space-y-8">
       <header className="space-y-2">
         <h1 className="font-heading text-3xl font-bold">{content.title}</h1>
-        <p className="text-paper/80">{content.intro}</p>
+        <p className="text-foreground/80">{content.intro}</p>
       </header>
 
-      {state.kind === "loading" && <p className="font-pixel text-xs text-paper/70">{content.loading}</p>}
+      {state.kind === "loading" && <p className="font-pixel text-xs text-foreground/70">{content.loading}</p>}
 
       {state.kind === "error" && (
         <Card>
@@ -47,7 +47,7 @@ export function Stats() {
 function SourceBanner({ state }: { state: Extract<ReturnType<typeof useStats>["state"], { kind: "live" | "sample" }> }) {
   if (state.kind === "live") {
     return (
-      <p className="flex flex-wrap items-center gap-2 text-sm text-paper/80">
+      <p className="flex flex-wrap items-center gap-2 text-sm text-foreground/80">
         <Pill tone="leaf">{content.liveBadge}</Pill>
         {content.updated} {formatDate(state.data.generatedAt)}
       </p>

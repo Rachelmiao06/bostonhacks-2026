@@ -21,7 +21,7 @@ export default function IslandScene({ stages, onReady }: { stages: Set<string>; 
     const el = box.current;
     if (!el) return;
     let cancelled = false;
-    import("./island/mount.js")
+    import("./yarn-world/mount.js")
       .then(({ mountIsland }) => {
         if (cancelled) return;
         const h = mountIsland(el, { isUnlocked: (stage: string) => stagesRef.current.has(stage) }) as Handle;
@@ -37,6 +37,6 @@ export default function IslandScene({ stages, onReady }: { stages: Set<string>; 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (failed) return <p className="p-6 text-ink">{content.error}</p>;
+  if (failed) return <p className="p-6 text-graphite">{content.error}</p>;
   return <div ref={box} className="absolute inset-0" />;
 }

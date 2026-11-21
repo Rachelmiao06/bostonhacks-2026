@@ -76,7 +76,7 @@ const bytes = new Map();
 	const names = new Set(AMBIENCE_FILES);
 	for (const cue of Object.values(CUES)) for (const file of cue.files) names.add(file);
 	for (const name of names) {
-		const req = fetch(`/assets/rewards/sfx/${name}.mp3`).then((res) => res.arrayBuffer());
+		const req = fetch(`/assets/island/sfx/${name}.mp3`).then((res) => res.arrayBuffer());
 		req.catch(() => {}); // a missing sample just stays silent
 		bytes.set(name, req);
 	}

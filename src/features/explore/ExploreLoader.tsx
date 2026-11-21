@@ -8,7 +8,7 @@ import { content } from "./content";
 const ExploreMap = dynamic(() => import("./ExploreMap"), {
   ssr: false,
   loading: () => (
-    <div className="fixed inset-0 z-30 grid place-items-center bg-paper font-pixel text-[0.6rem] text-ink">
+    <div className="fixed inset-0 z-30 grid place-items-center bg-stone font-ui text-sm text-taupe">
       {content.loading}
     </div>
   ),
