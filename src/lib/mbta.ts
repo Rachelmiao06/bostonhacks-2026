@@ -51,7 +51,7 @@ export type Quest = {
   resolvedAt?: string;
   /** How many times this unit has been out in the last 90 days, counting this one. Set when the database is available. */
   failuresLast90Days?: number;
-  /** Always a T Party mission built from real MBTA data, never an official MBTA request for comment. */
+  /** Always a Tada mission built from real MBTA data, never an official MBTA request for comment. */
   type: "community_mission";
   sourceUrl: string;
   rewardTokens: number;

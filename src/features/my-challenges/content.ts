@@ -16,7 +16,7 @@ export const content = {
   draft: "Draft",
   needsRevision: "Coach has suggestions",
   passed: "Passed the check",
-  completedInApp: "Completed in T Party",
+  completedInApp: "Completed in Tada",
   handedOff: "You also opened the MBTA’s page",
   nowFixed: "MBTA has since marked this fixed",
   working: "You said it is working again",
