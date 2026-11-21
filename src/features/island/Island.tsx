@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { markLeftForIsland } from "@/features/explore/viewMemory";
 import { refreshProgress, stampCount, useMyProgress, type ProgressState } from "@/features/explore/progress";
 import { content, stagesFor, unlockTiers } from "./content";
-import { IslandScene } from "./IslandLoader";
+import { IslandLoading, IslandScene } from "./IslandLoader";
 import type { IslandHandle } from "./IslandScene";
 import { readSeen, writeSeen } from "./seen";
 
@@ -50,8 +50,8 @@ export function Island() {
 
   if (!plan) {
     return (
-      <section className="fixed inset-0 z-30 grid place-items-center bg-stone font-pixel text-[0.6rem] text-graphite">
-        {content.loading}
+      <section className="fixed inset-0 z-30 grid place-items-center bg-stone">
+        <IslandLoading />
       </section>
     );
   }

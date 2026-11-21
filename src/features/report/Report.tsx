@@ -5,8 +5,8 @@ import { AlertTriangle, ArrowLeft, RefreshCw } from "lucide-react";
 import { Activity } from "./Activity";
 import { checkPhoto, findNearby, ReportApiError } from "./api";
 import { Camera, type Shot } from "./Camera";
-import { CameraMark } from "./CameraMark";
 import { content } from "./content";
+import { KnittedCamera, KnittedFlower, KnittedHills, YarnBall } from "./Knitted";
 import { Prepare } from "./Prepare";
 import { Result, type Analysis } from "./Result";
 import { loadCases, saveCase } from "./store";
@@ -105,7 +105,7 @@ function Entry({ onStart, onActivity }: { onStart: () => void; onActivity: () =>
   }, []);
   return (
     <section className="mx-auto grid w-full max-w-xl justify-items-center gap-6 py-6 text-center motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-300 sm:py-12">
-      <CameraMark className="w-44 sm:w-52" />
+      <KnittedCamera className="w-48 sm:w-56" />
       <div className="grid gap-3">
         <h1 className="font-serif text-5xl leading-[1.05] font-semibold text-balance sm:text-6xl">{content.entry.headline}</h1>
         <p className="mx-auto max-w-md text-lg text-taupe text-balance">{content.entry.body}</p>
@@ -118,6 +118,7 @@ function Entry({ onStart, onActivity }: { onStart: () => void; onActivity: () =>
           {content.entry.activity(count)}
         </button>
       )}
+      <KnittedHills className="mt-4 w-full" />
     </section>
   );
 }
@@ -168,13 +169,16 @@ function Analyzing({ shot, note, onDone, onError }: { shot: Shot; note: string; 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
-    <section className="mx-auto grid w-full max-w-xl justify-items-center gap-5 py-8 text-center" aria-live="polite" aria-busy="true">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={shot.thumb} alt="" className="size-28 rounded-3xl object-cover shadow-float motion-safe:animate-pulse" />
+    <section className="mx-auto grid w-full max-w-xl justify-items-center gap-6 py-8 text-center" aria-live="polite" aria-busy="true">
+      <YarnBall className="w-56 sm:w-64" />
       <div>
         <h1 className="font-serif text-3xl font-semibold">{content.analyzing.title}</h1>
         <p className="mt-1 text-taupe">{content.analyzing.body}</p>
       </div>
+      {/* Your own photo stays visible, small, so it is clear what is being looked at. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={shot.thumb} alt="" className="size-14 rounded-2xl object-cover shadow-float" />
+      <KnittedHills className="mt-2 w-full" />
     </section>
   );
 }
@@ -207,6 +211,7 @@ function Done({ followed, onView }: { followed: boolean; onView: () => void }) {
   return (
     <section className="mx-auto grid w-full max-w-md gap-4 rounded-3xl border border-hairline bg-ivory p-5 shadow-float motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200" aria-live="polite">
       <div>
+        <KnittedFlower tone="white" className="mb-2 w-12" />
         <h1 className="font-serif text-3xl leading-tight font-semibold">{followed ? content.done.followedTitle : content.done.savedTitle}</h1>
         <p className="mt-1 text-sm text-taupe">{followed ? content.done.followedBody : content.done.savedBody}</p>
       </div>

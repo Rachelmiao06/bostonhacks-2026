@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { fetchStatus } from "./api";
 import { CaseRow, stageOfCity } from "./CaseRow";
 import { content } from "./content";
+import { KnittedFlower } from "./Knitted";
 import { demoStage } from "./demo-case";
 import { loadCases, nowMs, saveCase } from "./store";
 import { PrimaryButton } from "./ui";
@@ -86,6 +87,7 @@ export function Activity({ highlight, onCamera }: { highlight?: string; onCamera
   if (!cases.length) {
     return (
       <div className="grid justify-items-center gap-4 py-10 text-center">
+        <KnittedFlower className="w-16" />
         <p className="text-taupe">{content.activity.empty}</p>
         <PrimaryButton onClick={onCamera}>{content.activity.emptyCta}</PrimaryButton>
       </div>

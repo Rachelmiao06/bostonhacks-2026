@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, CircleHelp, ChevronRight, ExternalLink, Landmark, MessageCircle, Phone } from "lucide-react";
+import { AlertTriangle, CircleHelp, ChevronRight, ExternalLink, MessageCircle, Phone } from "lucide-react";
 import { AskTada } from "./AskTada";
 import type { Shot } from "./Camera";
 import { content, MBTA_REPORT, OFFICIAL_311 } from "./content";
+import { KnittedIcon } from "./Knitted";
 import { Disclosure, PrimaryButton, SecondaryButton } from "./ui";
 import type { CheckResult } from "./types";
 
@@ -54,9 +55,7 @@ export function Verdict({ shot, result, onRetake, onCancel }: { shot: Shot; resu
 
           <section className="grid gap-3 rounded-2xl bg-sage p-4" aria-label={content.result.helpLabel}>
             <div className="flex items-start gap-3">
-              <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-ivory" aria-hidden>
-                <Landmark className="size-5 text-cat-verify" />
-              </span>
+              <KnittedIcon name="bank" className="size-12 shrink-0" />
               <div>
                 <p className="text-xs font-medium tracking-wide text-taupe uppercase">{content.result.helpLabel}</p>
                 <p className="font-serif text-2xl font-semibold">{mbta ? content.verdict.mbta.name : content.verdict.otherTitle}</p>

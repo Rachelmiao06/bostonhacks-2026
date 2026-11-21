@@ -41,3 +41,6 @@ Query through the datastore API (`datastore_search_sql`; cast `latitude`/`longit
 - Sending: simulate, or open the official 311 page with the draft? (An outside-app submission route was not found; Open311 returned 503.)
 - Demo: seed one case that flips to a closure note on cue.
 - Stages: three (matches the data) rather than four.
+
+## Knitted art
+Transparent WebP crops in `public/assets/report/` (cut from the "Knitted Tada UI Asset Sheet", whose cut-out background was already transparent; faint colour glow under the cut-out was removed). Used sparingly and never on functional buttons: camera (entry hero, floats), red yarn ball (analyzing, breathes), hills with flowers (bottom of entry and analyzing, mirrored so the flower clears the floating chat button), wool icon discs (permission note and "Who can help"), a flower on the saved screen and the empty activity state. `Knitted.tsx` holds them; motion is off for reduced motion. Not used: the sheet's text buttons, the LV.3 badge and the progress bar (their text is baked in), and the island map and lock badges (My T World is a live 3D scene). A copy of the yarn ball is in `public/assets/island/` for the My T World loading state.

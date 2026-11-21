@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, ChevronRight, Landmark, MessageCircle, Search } from "lucide-react";
+import { Check, ChevronRight, MessageCircle, Search } from "lucide-react";
 import { findNearby } from "./api";
 import { AskTada } from "./AskTada";
 import type { Shot } from "./Camera";
 import { CATEGORIES, teamFor } from "./categories";
 import { content } from "./content";
+import { KnittedIcon } from "./Knitted";
 import { Sheet, PrimaryButton, SecondaryButton, field } from "./ui";
 import type { CheckResult, NearbyCase } from "./types";
 
@@ -141,9 +142,7 @@ export function Result({
         ) : (
           <section className="grid gap-3 rounded-2xl bg-sage p-4" aria-label={content.result.helpLabel}>
             <div className="flex items-start gap-3">
-              <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-ivory" aria-hidden>
-                <Landmark className="size-5 text-cat-verify" />
-              </span>
+              <KnittedIcon name="bank" className="size-12 shrink-0" />
               <div>
                 <p className="text-xs font-medium tracking-wide text-taupe uppercase">{content.result.helpLabel}</p>
                 <p className="font-serif text-2xl font-semibold">{content.result.boston}</p>

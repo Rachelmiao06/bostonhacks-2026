@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Camera as CameraIcon, CameraOff, MapPin, MapPinOff, ShieldCheck, X } from "lucide-react";
+import { CameraOff, MapPin, MapPinOff, ShieldCheck, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { KnittedIcon } from "./Knitted";
 import { Disclosure, Panel, PrimaryButton, SecondaryButton } from "./ui";
 import { content, OFFICIAL_311 } from "./content";
 import { markPrimerSeen, primerSeen } from "./store";
@@ -147,9 +148,7 @@ export function Camera({ onShot, onClose }: { onShot: (s: Shot) => void; onClose
         <ul className="grid gap-3 text-sm">
           {[content.camera.primerCamera, content.camera.primerLocation].map(([title, body], i) => (
             <li key={title} className="flex gap-3">
-              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-stone-deep/60" aria-hidden>
-                {i === 0 ? <CameraIcon className="size-4" /> : <MapPin className="size-4" />}
-              </span>
+              <KnittedIcon name={i === 0 ? "camera" : "location"} className="size-11 shrink-0" />
               <span>
                 <strong className="block">{title}</strong>
                 <span className="text-taupe">{body}</span>
