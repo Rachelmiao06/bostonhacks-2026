@@ -59,7 +59,11 @@ const WIGGLE_LIFT = 0.25; // peak upward speed of the tip during a tug
 const WIGGLE_POINTS = 7; // rope particles at the tail that move
 const GIFT_PULL = 0.6; // how far the new piece's thread must be pulled out to knit the piece in
 const GIFT_POP_T = 1.1; // s a piece takes to spring into place
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const GIFT_STAGGER = 0.13; // s between the pieces of one gift
+const DROP_H = 3.2; // world units a dropped piece falls from
+const DROP_FALL = 0.7; // s it takes to fall
+const DROP_T = 1.4; // s until a dropped piece has landed and settled
 const COLLAPSE_HINT_T = 6; // s after the intro ends that hint reports 'collapse'
 const BALL_THREAD_DIR = [0.55, 0.83]; // xz direction the ball thread trails (toward the default camera)
 const BALL_THREAD_Y = -0.68; // anchor height on the unit ball, relative to its center
@@ -841,7 +845,7 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 			refreshBase(it);
 			hideItem(it);
 			// pieces the player has not earned yet never knit in: they count as done and stay hidden
-			it.locked = !isUnlocked(it.stage);
+			it.locked = !isUnlocked(it.stage, it.k);
 			it.phase = it.locked ? 3 : 0;
 			it.pt = 0;
 			it.rho = it.stage === 'cloud' ? CLOUD_RHO[it.k % CLOUD_RHO.length] : rhoOf(it.base.x, it.base.z);
@@ -1074,6 +1078,23 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 		onGift = onKnitted ?? null;
 		return true;
 	}
+	// New pieces fall onto the island from above, one after another. `pick(stage, k)` says which items.
+	// Returns false (and does nothing) when no item matches.
+	function dropIn(pick, onDone) {
+		hideHandle(giftH);
+		gift = null;
+		const picked = items.filter((it) => pick(it.stage, it.k));
+		if (!picked.length) return false;
+		for (const it of picked) {
+			refreshBase(it);
+			it.locked = true;
+			it.landed = false;
+			hideItem(it);
+		}
+		gift = { items: picked, popping: true, t: 0, drop: true, label: '' };
+		onGift = onDone ?? null;
+		return true;
+	}
 	function startGift() {
 		gift.popping = true;
 		gift.t = 0;
@@ -1090,6 +1111,29 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 			const t = gift.t - i * GIFT_STAGGER;
 			if (t <= 0) return void (done = false);
 			it.w.visible = true;
+			if (gift.drop) {
+				// a dropped piece falls from above, lands with a little squash and settles
+				if (reducedMotion.matches) {
+					place(it, 1, 1, 1, it.base.x, it.base.y, it.base.z);
+					return;
+				}
+				const u = Math.min(1, t / DROP_FALL);
+				let sy = 1;
+				let sx = 1;
+				if (t > DROP_FALL) {
+					const k = t - DROP_FALL;
+					const sq = Math.exp(-k * 7) * Math.sin(k * 20) * 0.16;
+					sy = 1 - sq;
+					sx = 1 + sq * 0.6;
+					if (!it.landed) {
+						it.landed = true;
+						playPop({ pitch: 0.9 + 0.12 * i });
+					}
+				}
+				place(it, sx, sy, sx, it.base.x, it.base.y + DROP_H * (1 - u * u), it.base.z);
+				if (t < DROP_T) done = false;
+				return;
+			}
 			const s = Math.max(1e-3, springOut(t, 13, 0.5));
 			place(it, s, s, s, it.base.x, it.base.y, it.base.z);
 			if (t < GIFT_POP_T) done = false;
@@ -1299,6 +1343,7 @@ export function setupWeave({ root, ground, items: specs, kit, H, groundAt, threa
 		playIntro,
 		skipIntro,
 		offerGift,
+		dropIn,
 		// the no-drag way to knit the waiting piece in
 		acceptGift() {
 			if (state === 'idle' && gift && !gift.popping) startGift();

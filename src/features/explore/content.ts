@@ -23,8 +23,7 @@ export const content = {
   },
 
   progress: {
-    label: (stamps: number, tokens: number) => `${stamps} ${stamps === 1 ? "stamp" : "stamps"} · ${tokens} tokens`,
-    title: "Your collection",
+    label: "My World",
   },
 
   cluster: (n: number) => `${n} problems here. Zoom in`,
@@ -46,7 +45,6 @@ export const content = {
     openFor: (days: number) => (days < 1 ? "Opened today" : days === 1 ? "Open 1 day" : `Open ${days} days`),
     failures: (n: number) => (n === 1 ? "First time out in 90 days" : `Out ${n} times in 90 days`),
     fixedAgo: "MBTA alert resolved",
-    reward: (n: number) => `+${n} tokens`,
     report: "Report what you see",
     verify: "Check it’s working",
     continue: "Continue your report",
@@ -69,17 +67,14 @@ export const content = {
   },
 
   celebrate: {
-    title: "Ticket stamped",
-    already: "Already in your collection",
-    tokens: (n: number) => `+${n} tokens`,
-    stamp: (category: string) => `${category} stamp added to your collection`,
+    title: "Your little world just grew!",
+    already: "Already part of your world",
     honest: "Completed in Tada. This does not send anything to the MBTA.",
     collection: "Visit my world",
     another: "Continue exploring",
     /** Only for the very first recorded contribution: the little world is discovered, not explained. */
     first: { title: "Your little world just grew!", body: "Your contribution added something new to your world.", keep: "Keep exploring" },
-    newPiece: (name: string) => `Your island has a new piece waiting: ${name}.`,
-    stampsSoFar: (n: number, total: number) => `${n} of ${total} stamps toward your island`,
+    newPiece: (name: string) => `Next time you visit, ${name} lands on your island.`,
   },
 
   /** Below this zoom the landmark models are hidden, so the far-out view stays clean. */
@@ -253,5 +248,5 @@ export const world = {
   placeholder: "Type what you see…",
   enterHint: "Enter to check · Shift+Enter for a new line",
   coachName: "AI coach",
-  edited: "You changed your answer. Check it again to unlock the stamp.",
+  edited: "You changed your answer. Check it again to finish.",
 };

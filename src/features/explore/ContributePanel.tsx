@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Dialog } from "@base-ui/react/dialog";
-import { ArrowLeft, ChevronDown, Clock, Coins, ExternalLink, Info, RotateCcw, TriangleAlert } from "lucide-react";
+import { ArrowLeft, ChevronDown, Clock, ExternalLink, Info, RotateCcw, TriangleAlert } from "lucide-react";
 import type { Quest } from "@/lib/mbta";
 import { cn } from "@/lib/utils";
 import { challengeHref } from "@/features/challenge/links";
@@ -107,7 +107,7 @@ function PanelBody({ quest, onClose }: { quest: Quest; onClose: () => void }) {
             </div>
           </details>
 
-          {/* Days open, repeat count, reward: icons and numbers. The full phrases are for screen readers. */}
+          {/* Days open, repeat count: icons and numbers. The full phrases are for screen readers. */}
           <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[0.72rem] text-taupe">
             {!verify && (
               <li className="inline-flex items-center gap-1">
@@ -123,11 +123,6 @@ function PanelBody({ quest, onClose }: { quest: Quest; onClose: () => void }) {
                 <span className="sr-only">{content.ticket.failures(quest.failuresLast90Days)}</span>
               </li>
             )}
-            <li className="inline-flex items-center gap-1 text-graphite">
-              <Coins className="size-3.5" aria-hidden />
-              <span aria-hidden>+{quest.rewardTokens}</span>
-              <span className="sr-only">{content.ticket.reward(quest.rewardTokens)}</span>
-            </li>
           </ul>
 
           {/* Kept visible and short: this is not an MBTA request. */}

@@ -19,6 +19,8 @@ import { setupSmoke } from './smoke.js';
 import { setupMeadow } from './meadow.js';
 import { setupKite } from './kite.js';
 import { buildBlanket } from './blanket.js';
+import { buildParcel } from './parcel.js';
+import { buildJournal } from './journal.js';
 import { LAYOUT, L, S, H, ROLL, HOUSE, BALL, FLOWER_CLUSTERS } from './layout.js';
 
 // ---------------------------------------------------------------------------
@@ -1086,7 +1088,7 @@ function buildThreadPath() {
 // ---------------------------------------------------------------------------
 // World
 // ---------------------------------------------------------------------------
-export function buildWorld(scene, { isUnlocked } = {}) {
+export function buildWorld(scene, { isUnlocked, onHotspot, onHover } = {}) {
 	const rand = mulberry32(20261031);
 	const root = new THREE.Group();
 	scene.add(root);
@@ -1123,6 +1125,43 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 	const flowerClusters = buildFlowers(root, rand);
 	const { posts, runs: fenceRuns } = buildFence(root);
 	const stones = buildStones(root);
+
+	// Three things to explore, on the near side of the island, each one a small object in the knitted world:
+	// a journal (your history) and two gift boxes: 'gift-0' is a local treat (it opens a voucher) and 'unlock' is
+	// "unlock more of your island" (it opens the collection gallery). The page sets the treat's state
+	// ('ready' | 'opened'); poking an object, or hovering it with a pointer, tells the page which one
+	// (onHotspot(id, state), onHover(id, on)).
+	const SPOTS = {
+		journal: { at: L(-2.6, 3.0), yaw: 0.5 },
+		'gift-0': { at: L(1.6, 4.0), yaw: -0.5 },
+		unlock: { at: L(3.6, 3.0), yaw: 0.9 },
+	};
+	const ground = ([x, z]) => {
+		const [sx, sz] = settle(x, z, 0.9);
+		return { x: sx, z: sz, y: heightAt(sx, sz) - 0.02 };
+	};
+	const journalSpot = ground(SPOTS.journal.at);
+	const journal = buildJournal({ parent: root, kit: { mat, P }, ...journalSpot, yaw: SPOTS.journal.yaw });
+	const treat = buildParcel({ parent: root, kit: { mat, P }, ...ground(SPOTS['gift-0'].at), yaw: SPOTS['gift-0'].yaw, wrap: 'cream', ribbon: 'coral' });
+	const unlockBox = buildParcel({ parent: root, kit: { mat, P }, ...ground(SPOTS.unlock.at), yaw: SPOTS.unlock.yaw, wrap: 'cream', ribbon: 'blue' });
+	const gifts = [treat, unlockBox];
+	const hotspots = [
+		{ id: 'journal', ...journal, open: () => 'ready' },
+		{ id: 'gift-0', ...treat, open: () => treat.open() },
+		{ id: 'unlock', ...unlockBox, open: () => unlockBox.open() },
+	];
+	for (const h of hotspots) {
+		h.group.scale.setScalar(1.8); // big enough that a first-time rider notices them, still clearly part of the world
+		const inner = h.group.userData.onHover;
+		h.group.userData.onHover = (on) => {
+			inner?.(on);
+			onHover?.(h.id, on);
+		};
+		h.group.userData.onPoke = () => {
+			if (weave.busy) return;
+			onHotspot?.(h.id, h.open());
+		};
+	}
 
 	// ground a sheep may trot over: on the island, off the river, clear of trees, house, ball, fence and stones
 	const blockers = [
@@ -1284,6 +1323,7 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 		smoke.update(t, dt);
 		kite.update(t, dt);
 		meadow.update(t, dt);
+		for (const h of hotspots) h.update(t, dt);
 		weave.update(t, dt);
 		// the first gust sweeps over the island as soon as the knit-in finishes; cloud shadows fade in with it
 		const busy = weave.busy;
@@ -1329,6 +1369,8 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 			{ obj: ballG, stage: 'ball', follow: ballRig.group, drop: 0.5 },
 			...sheep.map((s) => ({ obj: s.g, stage: 'sheep' })),
 			...clouds.map((c) => ({ obj: c.pivot, stage: 'cloud' })),
+			{ obj: journal.group, stage: 'journal' },
+			...gifts.map((g) => ({ obj: g.group, stage: 'gift' })),
 			...windProps.items,
 			...water.items,
 			...groundArt.items,
@@ -1364,6 +1406,25 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 	// the thread and the sheep are only grabbable while the world is fully there
 	const gate = (g) => ({ pick: (ray, camera) => (weave.busy ? null : g.pick(ray, camera)), grab: () => g.grab() });
 
+	// Pieces of the island for the collection gallery: for each journey step (same order as `unlockSteps` in the page),
+	// the existing objects that stand for it. The page CLONES them into its own preview scene (same geometry and
+	// materials), so the island itself is never touched or moved.
+	const propItems = windProps.items.filter((i) => i.stage === 'prop');
+	const collectibleSources = [
+		() => [flowerClusters[0].group], // grass and the first flowers
+		() => [trees[0].g], // a round tree
+		() => [pines[0].g, pines[1].g], // two pine trees
+		() => [stones[0], stones[1], stones[3]], // stones by the river
+		() => [houseAnchor], // the cottage
+		() => [groundArt.items.find((i) => i.stage === 'garden').obj, fenceRuns[0].group], // its garden and fence
+		() => [sheep[0].g], // a sheep
+		() => [trees[1].g, flowerClusters[1].group], // more trees and flowers
+		() => [sheep[1].g, sheep[2].g], // the rest of the flock
+		() => [bridgeG], // the bridge and the river's little life
+		() => [propItems[propItems.length - 1].obj], // a kite, laundry and pinwheels (a pinwheel stands for them)
+		() => [clouds[0].cloud, clouds[1].cloud], // clouds
+	];
+
 	return {
 		update,
 		focusTarget: new THREE.Vector3(0, 0.6, 0),
@@ -1381,8 +1442,12 @@ export function buildWorld(scene, { isUnlocked } = {}) {
 		snapIsland: () => resetAll(true),
 		// a hidden piece (by stage names) that a loose thread on the quilt knits in when pulled
 		offerGift: (stages, label, onKnitted) => weave.offerGift(stages, label, onKnitted),
+		// new pieces fall onto the island from above
+		dropIn: (pick, onDone) => weave.dropIn(pick, onDone),
 		acceptGift: () => weave.acceptGift(),
 		setPullSpan: (v) => weave.setPullSpan(v),
+		hotspots,
+		collectibles: () => collectibleSources.map((f) => f()),
 		get phase() {
 			return weave.phase;
 		},

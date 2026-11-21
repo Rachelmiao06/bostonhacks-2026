@@ -9,7 +9,7 @@ import { PixelTrain } from "@/components/shared/pixel-train";
 import { Stamp } from "@/components/shared/stamp";
 import { flow } from "@/features/challenge/content";
 import { cn } from "@/lib/utils";
-import { unlockTiers } from "@/features/island/content";
+import { unlockSteps } from "@/features/island/content";
 import { categoryInfo, categoryOf, categoryStyle } from "./category";
 import { content } from "./content";
 import { stampCount, useMyProgress } from "./progress";
@@ -18,7 +18,8 @@ import { AtlasButton } from "./ui";
 
 type Props = {
   quest: Quest;
-  tokens: number;
+  /** The server's reward for this contribution. Kept for callers; My World shows island growth, not a balance. */
+  tokens?: number;
   /** Finished on an earlier visit: no fanfare, just the stamp. */
   already: boolean;
   /** Report quests can save "opened the MBTA page"; verify quests have nowhere to save it. */
@@ -32,7 +33,7 @@ type Props = {
  * After a contribution: a tiny pixel train pulls in along a track, the ticket gets stamped,
  * a few pixel sparks pop. About 1.5 seconds. With Reduced Motion, everything is simply there.
  */
-export function Celebration({ quest, tokens, already, handedOff, onHandOff, extra, onDone }: Props) {
+export function Celebration({ quest, already, handedOff, onHandOff, extra, onDone }: Props) {
   const reduce = useReducedMotion() ?? false;
   const animate = !reduce && !already;
   const category = categoryOf(quest);
@@ -43,7 +44,7 @@ export function Celebration({ quest, tokens, already, handedOff, onHandOff, extr
   const progress = useMyProgress();
   const stamps = progress.status === "ready" ? stampCount(progress.data) : null;
   const firstOne = !already && stamps === 1;
-  const piece = !already && stamps !== null && stamps >= 1 && stamps <= unlockTiers.length ? unlockTiers[stamps - 1] : null;
+  const piece = !already && stamps !== null && stamps >= 1 && stamps <= unlockSteps.length ? unlockSteps[stamps - 1] : null;
 
   // The panel may be scrolled down to the buttons: bring the stamp into view.
   useEffect(() => {
@@ -100,15 +101,10 @@ export function Celebration({ quest, tokens, already, handedOff, onHandOff, extr
           {already ? content.celebrate.already : firstOne ? content.celebrate.first.title : content.celebrate.title}
         </h3>
         {firstOne && <p className="text-sm text-taupe">{content.celebrate.first.body}</p>}
-        {!already && <p className="font-pixel text-[0.7rem] leading-relaxed text-graphite">{content.celebrate.tokens(tokens)}</p>}
-        {!already && <p className="text-sm text-taupe">{content.celebrate.stamp(info.label)}</p>}
         {piece && stamps !== null && (
           <p className="flex items-start gap-2 rounded-xl border border-hairline bg-ivory px-3 py-2 text-sm">
             <span aria-hidden className="mt-1 size-2 shrink-0 rotate-45 bg-cat-station" />
-            <span>
-              <span className="block font-medium">{content.celebrate.newPiece(piece.name)}</span>
-              <span className="block text-xs text-taupe">{content.celebrate.stampsSoFar(stamps, unlockTiers.length)}</span>
-            </span>
+            <span className="block font-medium">{content.celebrate.newPiece(piece.name)}</span>
           </p>
         )}
       </div>
@@ -135,7 +131,7 @@ export function Celebration({ quest, tokens, already, handedOff, onHandOff, extr
         {firstOne ? (
           <>
             <Link
-              href="/island"
+              href="/world"
               className={`${primaryClass} h-10 px-5 text-sm`}
               style={primaryStyle}
             >
@@ -149,7 +145,7 @@ export function Celebration({ quest, tokens, already, handedOff, onHandOff, extr
           <>
             <AtlasButton onClick={onDone}>{content.celebrate.another}</AtlasButton>
             <Link
-              href="/island"
+              href="/world"
               className="inline-flex h-10 items-center rounded-full border border-graphite/25 px-4 text-sm font-medium outline-none hover:bg-stone focus-visible:ring-4 focus-visible:ring-graphite/25"
             >
               {content.celebrate.collection}
