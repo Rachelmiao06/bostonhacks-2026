@@ -10,6 +10,10 @@ export const site = {
     { href: "/my-challenges", label: "My Journey", short: "Journey" },
     { href: "/rewards", label: "Collection", short: "Collection" },
   ],
-  /** Quieter pages, in the "more" menu. */
-  moreNav: [{ href: "/about", label: "About" }],
+  /** Quieter pages, in the "more" menu. Quests is the list of every quest; Stats are the team's KPIs. */
+  moreNav: [
+    { href: "/challenge", label: "Quests" },
+    { href: "/stats", label: "Stats" },
+    { href: "/about", label: "About" },
+  ],
 };

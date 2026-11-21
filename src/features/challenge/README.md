@@ -2,6 +2,13 @@
 
 What: the live quest page at `/challenges/[id]` (id = a quest id from `/api/quests`), plus the older practice page at `/challenge` (sample quests, offline coach) that it replaces.
 
+## Who owns what
+- **Louie** (quest hub at `/challenge`): `Challenge.tsx`, `SubmitForm.tsx`, `useSubmission.ts`, `review.ts`, `storage.ts`, `sample-quests.ts`, `PhotoField.tsx`, `photo.ts`.
+- **Rachel** (one quest at `/challenges/[id]`): `QuestPage.tsx`, `ReportForm.tsx`, `VerifyForm.tsx`, `RewardCard.tsx`, `useQuest.ts`, `useReport.ts`, `api.ts`, and `src/app/challenges/[id]/`.
+- **Shared in this folder:** `content.ts`, one section each.
+
+One quest = `/challenges/[id]`. The report rules are `useReport` (the server is the source of truth). Louie's browser-only flow will be retired by Louie in his own PR.
+
 ## Live page: /challenges/[id]
 - `QuestPage.tsx` + `useQuest.ts`: details from `/api/quests` (no extra MBTA call), Community Mission label, "quest not found" page.
 - `ReportForm.tsx` + `useReport.ts`: guided steps (Write → Check with AI → Revise → Complete), tap-to-add question starters, text and/or one photo, `/api/review` check, "not checked" after any edit, Complete via `/api/submissions` only after a passing check on the unchanged report. Text is saved to localStorage on every keystroke; photos stay in memory (shrunk under 4 MB) and are never stored.
@@ -62,8 +69,17 @@ One form for every quest; AI never confirms facts or treats a photo as proof; "c
 - A small photo from the picker is stored exactly as given.
 - Not covered: HEIC files (the type check rejects them), and a live in-page camera preview (`getUserMedia`). Needs a real phone to confirm `capture` opens the camera app.
 
+## How other screens link here
+Always use `challengeHref` from `links.ts`. It is the only place that builds these URLs:
+- `challengeHref(quest.id)` gives `/challenges/<id>`, the live one-quest page (report or verify). `quest.id` is the MBTA alert id from `/api/quests`.
+- `challengeHref()` with no id gives `/challenge`, the quest hub (the list). The "Quests" tab in the nav (`src/lib/config.ts`) points there.
+
+**For the map (`features/explore`):** link a station's quest with `<Link href={challengeHref(quest.id)}>`, using quests from `/api/quests` whose `stationId` matches the tapped station. Do not embed the report or verify form in the map, and do not write `/challenges/...` by hand.
+
+**Temporary:** the old practice page at `/challenge` still opens its made-up sample quests in place (`?id=`), through `practiceHref` in `links.ts`. Both go away when the hub moves to live quests.
+
 ## Decisions made here (also belong in docs/DECISIONS.md, left out to avoid a merge conflict)
-- Quest page is `/challenge?id=<id>`, read on the client, not `/challenges/[id]`: live quests are unknown at build time and Cache Components rejects unknown dynamic params.
+- `/challenge` is the quest hub and `/challenges/<id>` is one quest. The old practice page still lives at `/challenge?id=<sample id>` until the hub moves to live quests (see "Temporary" above).
 - Sample quests and the offline practice reviewer stand in until `/api/quests` and `/api/review` are wired in.
 - Complete unlocks only after a current AI check passes (`requirePassToComplete` in `content.ts`). [TBD] confirm with team.
 - Photos stay in IndexedDB on the device. Limit is 4 MB, matching the server review route (`src/app/api/review/route.ts`).

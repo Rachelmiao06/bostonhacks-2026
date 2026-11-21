@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu } from "@base-ui/react/menu";
@@ -12,12 +13,19 @@ const isActive = (href: string, pathname: string | null) =>
   pathname !== null && (href === "/" ? pathname === "/" || pathname.startsWith("/explore") : pathname.startsWith(href));
 
 function Links({ items, pathname }: { items: Item[]; pathname: string | null }) {
+  const row = useRef<HTMLUListElement>(null);
+
+  // From Louie's PR #12: if the tabs ever outgrow a phone, the row scrolls sideways and keeps the current tab in view.
+  useEffect(() => {
+    row.current?.querySelector('[aria-current="page"]')?.scrollIntoView({ inline: "center", block: "nearest" });
+  }, [pathname]);
+
   return (
-    <ul className="flex items-center">
+    <ul ref={row} className="flex min-w-0 items-center overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {items.map((item) => {
         const active = isActive(item.href, pathname);
         return (
-          <li key={item.href}>
+          <li key={item.href} className="shrink-0">
             <Link
               href={item.href}
               aria-current={active ? "page" : undefined}

@@ -5,6 +5,7 @@ import { Dialog } from "@base-ui/react/dialog";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import type { Quest } from "@/lib/mbta";
 import { cn } from "@/lib/utils";
+import { challengeHref } from "@/features/challenge/links";
 import { categoryInfo, categoryOf, categoryStyle } from "./category";
 import { content, kindLabels } from "./content";
 import { ReportFlow } from "./ReportFlow";
@@ -54,9 +55,9 @@ function PanelBody({ quest, onClose }: { quest: Quest; onClose: () => void }) {
         <Dialog.Close className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full px-2.5 text-xs font-medium text-taupe outline-none hover:bg-stone-deep/60 hover:text-graphite focus-visible:ring-2 focus-visible:ring-graphite/25">
           <ArrowLeft className="size-3.5" aria-hidden /> {content.panel.back}
         </Dialog.Close>
-        {/* The same quest on its own page, so it can be shared. Swap for challengeHref() once PR #12 lands. */}
+        {/* The same quest on its own page, so it can be shared. */}
         <Link
-          href={`/challenges/${encodeURIComponent(quest.id)}`}
+          href={challengeHref(quest.id)}
           className="inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-xs font-medium text-taupe outline-none hover:bg-stone-deep/60 hover:text-graphite focus-visible:ring-2 focus-visible:ring-graphite/25"
         >
           {content.panel.fullPage} <ExternalLink className="size-3" aria-hidden />
