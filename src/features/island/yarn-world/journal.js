@@ -91,7 +91,7 @@ export function buildJournal({ parent, kit, x = 0, y = 0, z = 0, yaw = 0 }) {
 
 	const tmp = new THREE.Vector3();
 	function anchor(out) {
-		return group.getWorldPosition(out ?? tmp).add(new THREE.Vector3(0, 0.4, 0)); // just above the book, for labels and tickets
+		return group.getWorldPosition(out ?? tmp).add(new THREE.Vector3(0, 0.6, 0)); // just above the book (the group is drawn 1.8x), for labels and tickets
 	}
 
 	return { group, update, highlight, anchor };

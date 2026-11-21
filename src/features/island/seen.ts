@@ -46,3 +46,21 @@ export function writeParcelOpened(giftId: string) {
     // storage blocked: the gift simply shows closed again next time
   }
 }
+
+/** How many first-visit tips this browser has finished (0 to 3). Display memory only. */
+export function readOnboard(): number {
+  try {
+    const n = Number(window.localStorage.getItem(`tparty.island.onboard:${getRiderId()}`));
+    return Number.isInteger(n) && n >= 0 && n <= 3 ? n : 0;
+  } catch {
+    return 0;
+  }
+}
+
+export function writeOnboard(step: number) {
+  try {
+    window.localStorage.setItem(`tparty.island.onboard:${getRiderId()}`, String(Math.min(3, Math.max(0, Math.floor(step)))));
+  } catch {
+    // storage blocked: the tips simply show again next time
+  }
+}

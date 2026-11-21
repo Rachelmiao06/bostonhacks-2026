@@ -7,7 +7,7 @@ import type { IslandHandle } from "./IslandScene";
 
 const MARGIN = 8;
 const TOP_MIN = 84; // under the nav and the title
-const ABOVE = 18; // px between the label and the object
+const ABOVE = 26; // px between the label and the object
 
 export type TagIcon = "book" | "gift" | "lock";
 
@@ -68,18 +68,18 @@ export function HotspotLabel({
       aria-hidden
       style={{ opacity: 0 }}
       className={cn(
-        "pointer-events-none absolute top-0 left-0 z-10 flex w-max max-w-[10.5rem] items-center gap-1.5 border border-ivory/70 bg-linear-to-b from-ivory/75 to-ivory/30 font-ui text-graphite shadow-float backdrop-blur-xl backdrop-saturate-150 will-change-transform",
-        expanded ? "rounded-xl px-2.5 py-1" : "rounded-full py-0.5 pr-2 pl-1.5",
+        "pointer-events-none absolute top-0 left-0 z-10 flex w-max max-w-[13rem] items-center gap-2 border border-ivory/70 bg-linear-to-b from-ivory/75 to-ivory/30 font-ui text-graphite shadow-float backdrop-blur-xl backdrop-saturate-150 will-change-transform",
+        expanded ? "rounded-2xl px-3 py-1.5" : "rounded-full py-1 pr-3 pl-2",
       )}
     >
-      <Icon className={cn("shrink-0", expanded ? "size-3.5" : "size-3")} aria-hidden />
+      <Icon className={cn("shrink-0", expanded ? "size-4.5" : "size-4")} aria-hidden />
       {expanded ? (
         <span className="min-w-0">
-          <span className="block truncate text-[0.7rem] leading-tight font-semibold">{title}</span>
-          <span className="block text-[0.6rem] leading-tight text-graphite/70">{sub}</span>
+          <span className="block truncate text-[0.85rem] leading-tight font-semibold">{title}</span>
+          <span className="block text-[0.72rem] leading-tight text-graphite/70">{sub}</span>
         </span>
       ) : (
-        <span className="text-[0.62rem] leading-tight font-semibold">{tag}</span>
+        <span className="text-[0.8rem] leading-tight font-semibold">{tag}</span>
       )}
     </div>
   );

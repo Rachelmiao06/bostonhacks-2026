@@ -38,7 +38,12 @@ export function JournalTicket({ progress, known, handle, onClose, onRetry }: Pro
       <div className="p-4">
         <p className="font-mono text-[0.6rem] tracking-[0.14em] text-taupe uppercase">{h.subtitle}</p>
         <h2 className="mt-1 font-serif text-xl leading-tight font-semibold">{h.title}</h2>
-        {known !== null && <p className="text-xs text-taupe">{content.journey.summary(known, unlockSteps.length)}</p>}
+        {known !== null && (
+          <p className="text-xs text-taupe">
+            {content.journey.summary(known, unlockSteps.length)}
+            {known < unlockSteps.length && <span className="block">{content.journey.nextPiece(unlockSteps[known].name)}</span>}
+          </p>
+        )}
 
         <div className="mt-3 max-h-[min(20rem,48svh)] space-y-4 overflow-y-auto border-t border-dashed border-graphite/20 pt-3 pr-1">
           {progress.status === "loading" && <p className="text-sm text-taupe">{h.loading}</p>}
@@ -68,9 +73,14 @@ export function JournalTicket({ progress, known, handle, onClose, onRetry }: Pro
         </div>
 
         <p className="mt-3 text-[0.68rem] text-taupe">{h.honest}</p>
-        <button data-autofocus type="button" onClick={onClose} className={cn("mt-3", closeButtonClass)}>
-          {content.gift.close}
-        </button>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <button data-autofocus type="button" onClick={onClose} className={closeButtonClass}>
+            {content.gift.close}
+          </button>
+          <Link href="/" className="inline-flex h-9 items-center rounded-full border border-graphite/30 px-3 text-xs font-medium outline-none hover:border-graphite/60 focus-visible:ring-4 focus-visible:ring-graphite/20">
+            {content.journey.contribute}
+          </Link>
+        </div>
       </div>
     </TicketFrame>
   );

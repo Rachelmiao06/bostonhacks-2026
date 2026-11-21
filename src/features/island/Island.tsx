@@ -4,7 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { markLeftForIsland } from "@/features/explore/viewMemory";
 import { refreshProgress, stampCount, useMyProgress, type ProgressState } from "@/features/explore/progress";
 import { allowedFor, content, giftMilestones, giftStatesFor, isIn, unlockSteps, type GiftState } from "./content";
+import { attributions } from "@/lib/places";
 import { demoGifts } from "./gifts";
+import Link from "next/link";
+import { CoachMark } from "./CoachMark";
 import { GiftTicket } from "./GiftTicket";
 import { HotspotLabel, type TagIcon } from "./HotspotLabel";
 import { IslandHelp } from "./IslandHelp";
@@ -12,7 +15,7 @@ import { JournalTicket } from "./JournalTicket";
 import { IslandScene } from "./IslandLoader";
 import type { IslandHandle } from "./IslandScene";
 import { useNearbyPlaces } from "./usePlaces";
-import { readParcelOpened, readSeen, writeParcelOpened, writeSeen } from "./seen";
+import { readOnboard, readParcelOpened, readSeen, writeOnboard, writeParcelOpened, writeSeen } from "./seen";
 
 const total = unlockSteps.length;
 
@@ -132,6 +135,9 @@ function IslandView({
     openedRef.current = opened;
   }, [opened]);
   const places = useNearbyPlaces(true);
+  // First-visit tips, one at a time: 0 the gift, 1 the journal, 2 how the world grows, 3 done. Not shown in the preview.
+  const [coach, setCoach] = useState(() => (preview ? 3 : readOnboard()));
+  const [coachReady, setCoachReady] = useState(false);
   const handle = useRef<IslandHandle | null>(null);
   const dropRef = useRef<(h: IslandHandle, index: number) => void>(() => {});
 
@@ -208,6 +214,7 @@ function IslandView({
     }
     handle.current?.holdCamera(true);
     setHover(null);
+    setCoach((c) => (c === 0 && id === "gift-0") || (c === 1 && id === "journal") ? c + 1 : c);
     setTicket(id);
   }, []);
   const onHover = useCallback((id: string, on: boolean) => setHover((h) => (on ? id : h === id ? null : h)), []);
@@ -220,6 +227,23 @@ function IslandView({
   useEffect(() => {
     handle.current?.setGiftStates(giftStatesFor(known, openedRef.current));
   }, [known]);
+
+  // The tips wait a moment after the island is knitted, and are remembered (display memory only).
+  useEffect(() => {
+    if (phase !== "idle" || preview) return;
+    const t = window.setTimeout(() => setCoachReady(true), 2500);
+    return () => window.clearTimeout(t);
+  }, [phase, preview]);
+  useEffect(() => {
+    if (!preview) writeOnboard(coach);
+  }, [coach, preview]);
+  const coachTarget = coachReady && phase === "idle" && ticket === null ? (coach === 0 ? "gift-0" : coach === 1 ? "journal" : null) : null;
+  useEffect(() => {
+    if (!coachTarget) return;
+    const h = handle.current;
+    h?.highlightHotspot(coachTarget, true);
+    return () => h?.highlightHotspot(coachTarget, false);
+  }, [coachTarget]);
 
   const unlocked = useMemo(() => isIn(allowedFor(known)), [known]);
   const canKnit = phase === "ball" && plan.mode === "first";
@@ -268,6 +292,24 @@ function IslandView({
         )}
       </div>
 
+      {/* First-visit tips: point at the gift, then the journal, then say how the world grows */}
+      {coachTarget && <CoachMark key={coachTarget} id={coachTarget} text={coach === 0 ? content.coach.gift : content.coach.journal} skipLabel={content.coach.skip} onSkip={() => setCoach(3)} handle={handle} />}
+      {coachReady && phase === "idle" && ticket === null && coach === 2 && (
+        <div className="absolute inset-x-3 bottom-16 z-20 mx-auto flex max-w-sm flex-col gap-2 rounded-2xl border border-ivory/80 bg-ivory/95 p-3.5 text-graphite shadow-float backdrop-blur-xl sm:bottom-20">
+          <p role="status" className="text-sm leading-snug font-medium">
+            {content.coach.grow}
+          </p>
+          <div className="flex items-center gap-3">
+            <Link href="/" onClick={() => setCoach(3)} className="inline-flex h-9 items-center rounded-full bg-graphite px-4 text-xs font-medium text-ivory outline-none hover:opacity-90 focus-visible:ring-4 focus-visible:ring-graphite/25">
+              {content.coach.openMap}
+            </Link>
+            <button type="button" onClick={() => setCoach(3)} className="cursor-pointer text-xs text-taupe underline underline-offset-2 outline-none hover:text-graphite focus-visible:ring-2 focus-visible:ring-graphite/30">
+              {content.coach.gotIt}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Keyboard and screen-reader way to each object; they show when focused, and focusing one highlights it */}
       {phase === "idle" && ticket === null && (
         <div className="pointer-events-none absolute inset-x-0 bottom-16 z-10 flex flex-col items-center gap-1 not-focus-within:sr-only">
@@ -311,6 +353,7 @@ function IslandView({
           place={placeList[Number(ticket.slice(5))] ?? null}
           noPlace={places.status === "ready" ? null : places.status}
           stationName={places.status === "ready" ? places.stationName : ""}
+          attribution={places.status === "ready" ? places.attribution : attributions.osm}
           handle={handle}
           onClose={closeTicket}
         />

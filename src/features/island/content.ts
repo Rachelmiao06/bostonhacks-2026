@@ -95,17 +95,28 @@ export const content = {
     nearby: (distance: string | null, station: string) => (distance ? `Nearby · ${distance}` : `Near ${station}`),
     viewOnMap: "View on Map",
     note: (station: string) => `A place to discover near ${station}. Tada has no offer or partnership with it.`,
-    credit: (who: string) => `Photo: ${who} · Google Maps`,
-    creditNoPhoto: "Google Maps",
+    photoBy: (who: string) => `Photo: ${who}`,
     pickStop: "Pick a stop on the map and your gifts will point to real places near it.",
     lookupFailed: "Could not look up nearby places just now, so this is an example.",
     looking: "Looking for places near your stop…",
+  },
+
+  // First-visit tips, one at a time: the gift, the journal, then how the world grows
+  coach: {
+    gift: "A little gift is waiting. Tap it to open.",
+    journal: "This is your journal. Tap it to see what you have done.",
+    grow: "Contribute on the map and new things drop onto your island and more gifts open.",
+    openMap: "Open the map",
+    gotIt: "Got it",
+    skip: "Skip tips",
   },
 
   journey: {
     title: "Your journey",
     summary: (known: number, total: number) => `${known} of ${total} pieces on your island`,
     next: (need: number) => `Next gift after ${need} more ${need === 1 ? "contribution" : "contributions"}`,
+    nextPiece: (name: string) => `Next on your island: ${name}`,
+    contribute: "Contribute on the map",
     allGifts: "Every gift on your island is open.",
     unknown: "Could not check your progress just now.",
     start: "A quilt, a river and a ball of yarn",

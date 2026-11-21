@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Check, ExternalLink, Gift as GiftIcon, Lock, MapPin, Utensils } from "lucide-react";
 import { formatDistance, type NearbyPlace } from "@/lib/places";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,8 @@ type Props = {
   /** Why there is no place (so the demo can say so): the rider has not picked a stop, the lookup failed, or it is still running. */
   noPlace: "no-station" | "unavailable" | "loading" | null;
   stationName: string;
+  /** The credit the places source requires (OpenStreetMap or Google Maps). */
+  attribution: { text: string; url: string };
   handle: React.RefObject<IslandHandle | null>;
   onClose: () => void;
 };
@@ -29,7 +32,7 @@ type Props = {
  * The gift's ticket: the offer on one side, your journey on the other, so you can see what you have and what opens next.
  * Demo gifts are labelled, and their code works nowhere. A real, server-issued offer would show its real code and status.
  */
-export function GiftTicket({ gift, index, state, known, place, noPlace, stationName, handle, onClose }: Props) {
+export function GiftTicket({ gift, index, state, known, place, noPlace, stationName, attribution, handle, onClose }: Props) {
   const [revealed, setRevealed] = useState(false);
 
   const g = content.gift;
@@ -60,7 +63,7 @@ export function GiftTicket({ gift, index, state, known, place, noPlace, stationN
               </p>
             ) : (
               place ? (
-                <PlaceCard place={place} stationName={stationName} />
+                <PlaceCard place={place} stationName={stationName} attribution={attribution} />
               ) : (
                 <>
                   {noPlace && <p className="mt-3 text-[0.72rem] text-taupe">{noPlace === "no-station" ? content.place.pickStop : noPlace === "unavailable" ? content.place.lookupFailed : content.place.looking}</p>}
@@ -117,8 +120,13 @@ function Journey({ known, highlight }: { known: number | null; highlight: number
       <h3 className="font-serif text-base font-semibold">{j.title}</h3>
       <p className="mt-0.5 text-xs text-taupe">
         {known === null ? j.unknown : j.summary(known, total)}
+        {known !== null && known < total && <span className="block">{j.nextPiece(unlockSteps[known].name)}</span>}
         {known !== null && (next ? <span className="block font-medium text-graphite">{j.next(next.need)}</span> : <span className="block font-medium text-graphite">{j.allGifts}</span>)}
       </p>
+
+      <Link href="/" className="mt-2 inline-flex h-8 items-center rounded-full border border-graphite/30 px-3 text-xs font-medium outline-none hover:border-graphite/60 focus-visible:ring-4 focus-visible:ring-graphite/20">
+        {j.contribute}
+      </Link>
 
       <ol className="mt-3 max-h-60 space-y-1.5 overflow-y-auto pr-1 text-xs sm:max-h-[17rem]">
         <Row done label={j.start} gift={giftAt(0)} highlight={highlight} known={known} />
@@ -162,7 +170,7 @@ function Row({ done, current, label, gift, highlight, known }: { done?: boolean;
 }
 
 /** A real nearby business: photo (with its credit), where it is, how far, and a link to Google Maps. No offer. */
-function PlaceCard({ place, stationName }: { place: NearbyPlace; stationName: string }) {
+function PlaceCard({ place, stationName, attribution }: { place: NearbyPlace; stationName: string; attribution: { text: string; url: string } }) {
   const [photoFailed, setPhotoFailed] = useState(false);
   const p = content.place;
   const distance = formatDistance(place.distanceM);
@@ -172,7 +180,7 @@ function PlaceCard({ place, stationName }: { place: NearbyPlace; stationName: st
       <div className="relative aspect-[21/9] overflow-hidden rounded-xl bg-stone sm:aspect-[16/9]">
         {showPhoto ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={`/api/places/photo?name=${encodeURIComponent(place.photo!.name)}&w=480`} alt={place.name} loading="lazy" onError={() => setPhotoFailed(true)} className="size-full object-cover" />
+          <img src={place.photo!.src} alt={place.name} loading="lazy" onError={() => setPhotoFailed(true)} className="size-full object-cover" />
         ) : (
           <span className="grid size-full place-items-center text-taupe">
             <Utensils className="size-7" aria-hidden />
@@ -195,7 +203,10 @@ function PlaceCard({ place, stationName }: { place: NearbyPlace; stationName: st
         {p.viewOnMap} <ExternalLink className="size-3" aria-hidden />
       </a>
       <p className="text-[0.66rem] leading-snug text-taupe">
-        {p.note(stationName)} {place.photo && !photoFailed ? p.credit(place.photo.credit) : p.creditNoPhoto}
+        {p.note(stationName)} {place.photo && !photoFailed ? `${p.photoBy(place.photo.credit)} · ` : ""}
+        <a href={attribution.url} target="_blank" rel="noopener noreferrer" className="underline">
+          {attribution.text}
+        </a>
       </p>
     </div>
   );

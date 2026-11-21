@@ -1152,7 +1152,7 @@ export function buildWorld(scene, { isUnlocked, onHotspot, onHover } = {}) {
 		...gifts.map((g, i) => ({ id: `gift-${i}`, ...g, open: () => g.open() })),
 	];
 	for (const h of hotspots) {
-		h.group.scale.setScalar(1.3); // small enough to belong to the world, big enough to find
+		h.group.scale.setScalar(1.8); // big enough that a first-time rider notices them, still clearly part of the world
 		const inner = h.group.userData.onHover;
 		h.group.userData.onHover = (on) => {
 			inner?.(on);
