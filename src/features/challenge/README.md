@@ -3,11 +3,20 @@
 What: the live quest page at `/challenges/[id]` (id = a quest id from `/api/quests`), plus the older practice page at `/challenge` (sample quests, offline coach) that it replaces.
 
 ## Who owns what
-- **Louie** (quest hub at `/challenge`): `Challenge.tsx`, `SubmitForm.tsx`, `useSubmission.ts`, `review.ts`, `storage.ts`, `sample-quests.ts`, `PhotoField.tsx`, `photo.ts`.
+- **Louie** (quest hub at `/challenge`): everything in `hub/` (`Hub.tsx`, `useQuestHub.ts`, `api.ts`, `content.ts`), `links.ts`, and, until they are retired, `Challenge.tsx`, `SubmitForm.tsx`, `useSubmission.ts`, `review.ts`, `storage.ts`, `sample-quests.ts`, `PhotoField.tsx`, `photo.ts`.
 - **Rachel** (one quest at `/challenges/[id]`): `QuestPage.tsx`, `ReportForm.tsx`, `VerifyForm.tsx`, `RewardCard.tsx`, `useQuest.ts`, `useReport.ts`, `api.ts`, and `src/app/challenges/[id]/`.
 - **Shared in this folder:** `content.ts`, one section each.
 
 One quest = `/challenges/[id]`. The report rules are `useReport` (the server is the source of truth). Louie's browser-only flow will be retired by Louie in his own PR.
+
+## Quest hub: /challenge
+`src/app/challenge/page.tsx` renders `hub/Hub.tsx`. It lists live quests from `/api/quests` (report and verify), each card linking with `challengeHref(quest.id)` to `/challenges/<id>`, with optional filters by line and by type.
+- `hub/useQuestHub.ts` holds all the logic (loading, errors, filters, the token balance). `Hub.tsx` only draws, so the screen can be redesigned freely as long as it keeps using the hook.
+- **Tokens come from the server:** `GET /api/submissions?userId=` with `getRiderId()` from `src/lib/rider.ts`. The browser never counts tokens. When the balance cannot be read (database not connected, or a failure) the screen says so instead of showing 0.
+- If MBTA could not be reached, the quests are saved data and the hub says so in a banner.
+- Old links `/challenge?id=<id>` redirect to `/challenges/<id>` (client side, in `Hub.tsx`).
+- A quest that the server says is done shows a "Done" badge.
+- `hub/screenshots/` holds PR screenshots only; safe to delete after merge.
 
 ## Live page: /challenges/[id]
 - `QuestPage.tsx` + `useQuest.ts`: details from `/api/quests` (no extra MBTA call), Community Mission label, "quest not found" page.

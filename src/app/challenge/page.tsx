@@ -1,5 +1,5 @@
-import { Challenge } from "@/features/challenge/Challenge";
+import { Hub } from "@/features/challenge/hub/Hub";
 
 export default function Page() {
-  return <Challenge />;
+  return <Hub />;
 }
