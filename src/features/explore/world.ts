@@ -34,7 +34,7 @@ export type CameraView = {
 
 /** Greater Boston from high above: where every dive starts. On phones Boston sits higher, clear of the card below. */
 export function overviewView(phone: boolean): CameraView {
-  return { center: [-71.07, phone ? 42.26 : 42.31], zoom: 9.8, pitch: 0, bearing: 0 };
+  return { center: [-71.071, phone ? 42.331 : 42.341], zoom: phone ? 11.8 : 12.6, pitch: 0, bearing: 0 };
 }
 
 export function worldView(center: LngLat, phone: boolean): CameraView {

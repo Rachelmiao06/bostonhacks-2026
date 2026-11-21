@@ -40,11 +40,8 @@ Issue: #2. Owner: Rachel. Only the owner edits this folder.
 - Motion: nothing moves on its own. Hover and selection use short springs; Reduced Motion turns them off.
 
 ## Adding the miniature buildings
-The landmarks are listed in `content.ts` (`landmarks`). Each has real coordinates and the stop its ticket belongs to.
-Until a landmark has art, a plain dashed block marks its spot. To add art:
-1. Make a PNG with a see-through background, three-quarter view, about 240px wide.
-2. Save it in `public/assets/explore/landmarks/`, for example `state-house.png`.
-3. Add `art: "/assets/explore/landmarks/state-house.png"` to that landmark in `content.ts`.
+The landmarks are listed in `content.ts` (`landmarks`). Each has real coordinates and can optionally be associated with a station ticket.
+Each landmark ID selects a matching pixel grid in `PixelLandmark.tsx`. Edit its rows to change the silhouette. The palette and CSS colour overrides live in the same file. Give each landmark a story of up to three sentences. The opening map shows landmarks alongside station rings and problem pins or clusters.
 
 ## Data
 - `/api/subway`: lines, stops and shapes from the MBTA V3 API, cached for a day, with `subway-snapshot.json` as fallback.
