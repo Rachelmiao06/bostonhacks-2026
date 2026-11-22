@@ -16,29 +16,45 @@ export const coach = {
     skip: "Skip",
   },
 
-  /** The live feed that plays once the map has zoomed to the rider's start. */
-  live: {
-    label: "Tada live guide",
-    title: "Tada Live",
-    sub: "A quick guide to the map",
-    skip: "Skip",
-    close: "Close guide",
-    author: "Trolley",
+  /** Short tips that pop up one at a time, each next to the thing it explains, then go away. */
+  tips: [
+    {
+      id: "pin",
+      place: "right",
+      title: "Every pin is a challenge",
+      text: "Tap one, tell us what you see there. It takes about a minute.",
+      ms: 5000,
+    },
+    {
+      id: "kinds",
+      place: "left",
+      title: "Four kinds of problems",
+      text: "",
+      ms: 8000,
+    },
+    {
+      id: "world",
+      place: "world",
+      title: "Finish one, grow your island",
+      text: "Every challenge you complete adds to My World.",
+      ms: 5000,
+    },
+    {
+      id: "trolley",
+      place: "trolley",
+      title: "Stuck? Ask Trolley",
+      text: "Questions about the map or a mission, any time.",
+      ms: 5000,
+    },
+  ] as const,
+
+  /** One line per problem kind, shown in the "Four kinds" tip. */
+  kinds: {
+    service: "Closed stops, shuttle buses",
+    access: "Elevators out. Can everyone get around?",
+    station: "Broken escalators, station changes",
+    verify: "MBTA says it's fixed. Go confirm.",
   },
 
-  /** Chat-style messages, in order. A `kind` adds that problem category's icon and colour as a tag. */
-  messages: [
-    { text: "You made it! This is the area around your stop." },
-    { text: "Every pin on the map is a real MBTA problem." },
-    { text: "Tap a pin, because every pin is a challenge. Tell us what you see there, it takes about a minute." },
-    { kind: "service", text: "Service changes: a stop is closed, shuttle buses replace trains, or a line is suspended." },
-    { kind: "access", text: "Accessibility: can everyone get in and around? Think elevators, for wheelchairs, strollers and tired legs. This pin means one is out." },
-    { kind: "station", text: "Escalators & station: a broken escalator, or a change inside a station." },
-    { kind: "verify", text: "Check if it’s working: the MBTA says it’s fixed. Go look and confirm. Easy win." },
-    { text: "The number on a pin is how many problems are at that stop." },
-    { text: "Little pixel buildings are Boston landmarks. Tap one for its story and the problems nearby." },
-    { text: "Finish a challenge and your island grows in My World. Find it in the top bar." },
-    { text: "Report, also in the top bar, lets you snap a photo of anything wrong." },
-    { text: "Stuck? Tap me, the round button at the bottom right. Now pick a pin and solve one!" },
-  ] satisfies { text: string; kind?: "service" | "access" | "station" | "verify" }[],
+  skip: "Skip tips",
 };
