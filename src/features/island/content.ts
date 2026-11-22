@@ -116,6 +116,7 @@ export const content = {
     exampleEmpty: "Example page: your reports and fixes will land here as stickers.",
     examplePreview: "Example page for the preview. Nothing here is yours.",
     exampleTag: "Example",
+    exampleOffline: "Example page while your history cannot load. Nothing here is yours.",
   },
 
   // The paper voucher a gift unfolds into

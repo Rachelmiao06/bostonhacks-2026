@@ -104,7 +104,10 @@ export function JournalSheet({ progress, known, preview = false, onClose, onRetr
   const today = useMemo(() => new Date(), []);
   const real = progress.status === "ready" ? progress.data : null;
   const isEmpty = real !== null && real.submissions.length === 0 && real.verifications.length === 0;
-  const demo = preview || isEmpty;
+  // Examples fill the page when there is nothing real to show: an empty journal, the preview, or a history that cannot load
+  // (then the error stays visible too, so the examples are never taken for the rider's own).
+  const unavailable = progress.status === "unavailable";
+  const demo = preview || isEmpty || unavailable;
   const data = demo ? demoProgress(today) : real;
 
   const entries = useMemo<Entry[]>(() => {
@@ -217,7 +220,7 @@ export function JournalSheet({ progress, known, preview = false, onClose, onRetr
             </header>
 
             {progress.status === "loading" && !preview && <p className="mt-4 text-xl text-taupe">{h.loading}</p>}
-            {progress.status === "unavailable" && !preview && (
+            {unavailable && !preview && (
               <p role="alert" className="mt-4 flex flex-wrap items-center gap-2 text-xl text-taupe">
                 {h.unavailable}
                 <button type="button" onClick={onRetry} className="cursor-pointer rounded-full bg-graphite px-3 py-0.5 font-ui text-xs font-medium text-ivory outline-none hover:opacity-90 focus-visible:ring-4 focus-visible:ring-graphite/25">
@@ -226,7 +229,7 @@ export function JournalSheet({ progress, known, preview = false, onClose, onRetr
               </p>
             )}
             {demo && showCalendar && (
-              <p className="mt-2 inline-block -rotate-1 rounded-sm bg-cat-station/20 px-2 py-0.5 text-base">{preview ? t.examplePreview : t.exampleEmpty}</p>
+              <p className="mt-2 inline-block -rotate-1 rounded-sm bg-cat-station/20 px-2 py-0.5 text-base">{preview ? t.examplePreview : unavailable ? t.exampleOffline : t.exampleEmpty}</p>
             )}
 
             {showCalendar && (
