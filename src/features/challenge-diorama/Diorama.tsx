@@ -39,8 +39,8 @@ type LM = {
 
 export const LANDMARKS: Record<Landmark, LM> = {
   elevator: {
-    label: "elevator", base: L("tower", 540, 800, 262, 94, 118), lamp: { x: 293, y: 80, dw: 56 }, glow: { x: 321, y: 104, r: 46 },
-    sign: { x: 318, y: 238, dw: 46 }, bubble: { x: 348, y: 64 }, smoke: { x: 300, y: 76 }, opening: { x: 328, y: 181, w: 30, h: 66 },
+    label: "elevator", base: L("tower", 880, 1352, 262, 90, 118), lamp: { x: 293, y: 80, dw: 56 }, glow: { x: 321, y: 104, r: 46 },
+    sign: { x: 318, y: 238, dw: 46 }, bubble: { x: 348, y: 64 }, smoke: { x: 300, y: 76 }, opening: { x: 328, y: 176, w: 31, h: 63 },
   },
   escalator: {
     label: "escalator", base: L("escalator", 640, 661, 230, 106, 150), lamp: { x: 336, y: 100, dw: 30 }, glow: { x: 351, y: 112, r: 26 },
@@ -88,20 +88,20 @@ export type DioramaProps = {
 const FIXED = {
   skyDay: L("sky-day", 1200, 782, 40, 0, 340),
   skyDusk: L("sky-dusk", 1200, 777, 40, 0, 340),
-  tile: L("base-tile", 900, 681, 20, 110, 380),
+  tile: L("base-tile", 1300, 974, 20, 110, 380),
   building: L("building", 900, 703, 6, 96, 205),
   sign: L("sign", 520, 544, 0, 0, 40),
   rider: L("rider", 340, 557, 170, 212, 46),
   note: L("bubble-note", 600, 462, 150, 148, 84),
   question: L("bubble-question", 600, 479, 0, 0, 62),
   seal: L("seal", 520, 542, 322, 290, 74),
-  puff1: L("puff-1", 120, 98, 0, 0, 46),
-  puff2: L("puff-2", 80, 75, 0, 0, 28),
-  puff3: L("puff-3", 75, 71, 0, 0, 26),
-  spark1: L("spark-1", 58, 62, 0, 0, 22),
-  spark2: L("spark-2", 88, 79, 0, 0, 32),
-  spark3: L("spark-3", 75, 65, 0, 0, 24),
-  spark4: L("spark-4", 61, 66, 0, 0, 22),
+  puff1: L("puff-1", 320, 258, 0, 0, 46),
+  puff2: L("puff-2", 200, 181, 0, 0, 28),
+  puff3: L("puff-3", 240, 205, 0, 0, 32),
+  spark1: L("spark-1", 150, 155, 0, 0, 22),
+  spark2: L("spark-2", 200, 204, 0, 0, 32),
+  spark3: L("spark-3", 150, 155, 0, 0, 26),
+  spark4: L("spark-4", 150, 157, 0, 0, 20),
 };
 const LAMP_IMG: Record<Status, { src: string; w: number; h: number }> = {
   working: { src: `${A}/lamp-green.webp`, w: 340, h: 328 },
@@ -407,7 +407,7 @@ export function Diorama(p: DioramaProps) {
                 {img(lm.base, lm.alt ? "gateOpen" : "lmBase")}
                 {lm.alt && img(lm.alt, "gateClosed", hidden)}
                 {lm.opening && (
-                  <div className="absolute overflow-hidden" style={{ left: `${(lm.opening.x / SW) * 100}%`, top: `${(lm.opening.y / SH) * 100}%`, width: `${(lm.opening.w / SW) * 100}%`, height: `${(lm.opening.h / SH) * 100}%`, clipPath: "polygon(0 19%, 100% 0, 100% 83%, 0 100%)" }}>
+                  <div className="absolute overflow-hidden" style={{ left: `${(lm.opening.x / SW) * 100}%`, top: `${(lm.opening.y / SH) * 100}%`, width: `${(lm.opening.w / SW) * 100}%`, height: `${(lm.opening.h / SH) * 100}%`, clipPath: "polygon(0 13%, 100% 0, 100% 83%, 0 100%)" }}>
                     <div ref={reg("doorL")} className="absolute inset-0" style={{ clipPath: "inset(0 50% 0 0)" }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={`${A}/door-a.webp`} alt="" draggable={false} className="size-full select-none object-fill" />
