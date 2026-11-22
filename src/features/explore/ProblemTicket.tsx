@@ -1,14 +1,18 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { ChevronLeft, ChevronRight, ExternalLink, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import type { Quest } from "@/lib/mbta";
 import { Marker } from "@/lib/map";
 import { Stamp } from "@/components/shared/stamp";
 import { cn } from "@/lib/utils";
+import { PixelIcon } from "@/features/missions/PixelIcon";
+import { templateFor } from "@/features/missions/templates";
+import { text as missionText } from "@/features/missions/content";
 import { categoryInfo, categoryOf, categoryStyle } from "./category";
-import { content, kindLabels, type Landmark } from "./content";
+import { content, type Landmark } from "./content";
 import { firstGlow, TicketHint, useFirstTicket } from "./Hints";
+import { primaryClass, primaryStyle } from "./glass";
 import type { SubwayLine, SubwayStation } from "./types";
 
 type Props = {
@@ -58,7 +62,7 @@ const PIXEL_STEPS = (t: number) => Math.ceil(t * 9) / 9;
 function TicketCard({ station, lines, quests, index, onIndex, done, landmark, docked, onContribute, onClose }: Props) {
   const quest = quests[index];
   const stationLines = lines.filter((line) => station.lineIds.includes(line.id));
-  // PROTOTYPE reveal: on the map, the ticket "prints" upward out of its stop in pixel-sized steps.
+  // PROTOTYPE reveal: on the map, the card "prints" upward out of its stop in pixel-sized steps.
   const reduce = useReducedMotion() ?? false;
   const printOut = !docked && !reduce;
 
@@ -68,10 +72,10 @@ function TicketCard({ station, lines, quests, index, onIndex, done, landmark, do
       aria-label={station.name}
       initial={
         printOut
-          ? { opacity: 1, clipPath: "inset(100% -40% -40% -40% round 12px)", y: 6 }
+          ? { opacity: 1, clipPath: "inset(100% -40% -40% -40% round 24px)", y: 6 }
           : { opacity: 0, y: docked ? 24 : 10, scale: docked ? 1 : 0.96 }
       }
-      animate={printOut ? { opacity: 1, clipPath: "inset(-40% -40% -40% -40% round 12px)", y: 0 } : { opacity: 1, y: 0, scale: 1 }}
+      animate={printOut ? { opacity: 1, clipPath: "inset(-40% -40% -40% -40% round 24px)", y: 0 } : { opacity: 1, y: 0, scale: 1 }}
       transition={
         printOut
           ? { clipPath: { duration: 0.45, ease: PIXEL_STEPS }, y: { type: "spring", stiffness: 300, damping: 26 } }
@@ -79,46 +83,40 @@ function TicketCard({ station, lines, quests, index, onIndex, done, landmark, do
       }
       onClick={(event) => event.stopPropagation()}
       className={cn(
-        "relative cursor-default overflow-visible rounded-xl border border-hairline bg-ivory font-ui text-graphite shadow-ticket",
+        "relative cursor-default overflow-hidden rounded-3xl border border-ivory/90 bg-linear-to-b from-ivory/95 via-ivory/88 to-ivory/78 font-ui text-graphite shadow-[inset_0_1px_0_var(--color-ivory),var(--shadow-ticket)] backdrop-blur-2xl backdrop-saturate-150",
         docked ? "w-full" : "w-[19.5rem]",
       )}
     >
-      {/* Stub: issuer, position, close */}
-      <header className="flex items-center justify-between gap-2 px-4 pt-3 font-mono text-[0.6rem] tracking-[0.14em] text-taupe uppercase">
-        <span>{content.ticket.issuer}</span>
-        <span className="flex items-center gap-0.5">
+      <header className="flex items-center justify-between gap-2 px-4 pt-3">
+        <h2 className="min-w-0 truncate font-serif text-[1.2rem] leading-tight font-semibold tracking-tight">{station.name}</h2>
+        <span className="flex shrink-0 items-center gap-0.5 text-xs text-taupe">
           {quests.length > 1 && (
             <>
               <IconButton label={content.ticket.prev} disabled={index === 0} onClick={() => onIndex(index - 1)}>
-                <ChevronLeft className="size-3.5" />
+                <ChevronLeft className="size-4" />
               </IconButton>
               <span className="tabular-nums">{content.ticket.number(index + 1, quests.length)}</span>
               <IconButton label={content.ticket.next} disabled={index === quests.length - 1} onClick={() => onIndex(index + 1)}>
-                <ChevronRight className="size-3.5" />
+                <ChevronRight className="size-4" />
               </IconButton>
             </>
           )}
           <IconButton label={content.close} onClick={onClose}>
-            <X className="size-3.5" />
+            <X className="size-4" />
           </IconButton>
         </span>
       </header>
 
-      <div className="px-4 pt-1 pb-3">
-        <h2 className="font-serif text-[1.35rem] leading-tight font-semibold tracking-tight">{station.name}</h2>
-        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-taupe">
-          {stationLines.map((line) => (
-            <span key={line.id} className="flex items-center gap-1.5">
-              {/* Line colour comes from the MBTA API, not typed in. */}
-              <span className="h-1.5 w-3 rounded-full" style={{ backgroundColor: line.color }} />
-              {line.name}
-            </span>
-          ))}
-          {landmark && <span>· {content.ticket.landmark(landmark.name)}</span>}
-        </div>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 pb-1 text-xs text-taupe">
+        {stationLines.map((line) => (
+          <span key={line.id} className="flex items-center gap-1.5">
+            {/* Line colour comes from the MBTA API, not typed in. */}
+            <span className="h-1.5 w-3 rounded-full" style={{ backgroundColor: line.color }} />
+            {line.name}
+          </span>
+        ))}
+        {landmark && <span>· {content.ticket.landmark(landmark.name)}</span>}
       </div>
-
-      <Perforation />
 
       <AnimatePresence mode="wait" initial={false}>
         {quest ? (
@@ -132,93 +130,47 @@ function TicketCard({ station, lines, quests, index, onIndex, done, landmark, do
             <ProblemBody quest={quest} done={done.has(quest.id)} onContribute={onContribute} />
           </motion.div>
         ) : (
-          <p className="px-4 pt-3 pb-4 text-sm text-taupe">{content.ticket.nothingHere}</p>
+          <p className="px-4 pt-2 pb-4 text-sm text-taupe">{content.ticket.nothingHere}</p>
         )}
       </AnimatePresence>
-
-      {/* Tail pointing at the stop (pinned tickets only) */}
-      {!docked && (
-        <span aria-hidden className="absolute -bottom-1.5 left-1/2 size-3 -translate-x-1/2 rotate-45 border-r border-b border-hairline bg-ivory" />
-      )}
     </motion.article>
   );
 }
 
+/** One problem as a mission teaser: what to check, in one line. The full alert stays one tap away in the mission. */
 function ProblemBody({ quest, done, onContribute }: { quest: Quest; done: boolean; onContribute: (quest: Quest) => void }) {
   const category = categoryOf(quest);
   const style = categoryStyle[category];
-  const Icon = style.icon;
-  const verify = quest.mode === "verify";
+  const template = templateFor(quest);
   const firstTicket = useFirstTicket();
-  // MBTA headers often start with the unit name; only print it separately when they do not.
-  const showFacility = quest.facilityName && !quest.header.startsWith(quest.facilityName);
 
   return (
-    <div className="px-4 pt-3 pb-3.5">
+    <div className="px-4 pt-2 pb-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 space-y-1.5">
-          <p className={cn("inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[0.7rem] font-semibold", style.soft, style.text)}>
-            <Icon className="size-3.5" aria-hidden />
-            {verify ? categoryInfo("verify").label : kindLabels[quest.kind]}
+          <p className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold", style.soft, style.text)}>
+            <PixelIcon name={template.icon} className="size-3.5" />
+            {template.chip}
           </p>
-          {showFacility && <p className="text-sm leading-snug font-semibold">{quest.facilityName}</p>}
-          <p className="line-clamp-3 text-sm leading-snug text-graphite/85">{quest.header}</p>
+          <p className="font-serif text-[1.05rem] leading-snug font-semibold">{template.title}</p>
+          <p className="text-sm leading-snug text-taupe">{template.task}</p>
         </div>
         {done ? (
-          <Stamp
-            size="sm"
-            top={categoryInfo(category).stamp}
-            middle={verify ? content.ticket.stampChecked : content.ticket.stampDone}
-            tone={cn(style.text, style.border)}
-            className="mt-1"
-          />
+          <Stamp size="sm" top={categoryInfo(category).stamp} middle={quest.mode === "verify" ? content.ticket.stampChecked : content.ticket.stampDone} tone={cn(style.text, style.border)} className="mt-1" />
         ) : null}
       </div>
 
-      <dl className="mt-3 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[0.62rem] tracking-wide text-taupe uppercase">
-        <div>
-          <dt className="sr-only">Status</dt>
-          <dd>{verify ? content.ticket.fixedAgo : content.ticket.openFor(quest.daysOpen)}</dd>
-        </div>
-        {quest.failuresLast90Days !== undefined && (
-          <div>
-            <dt className="sr-only">History</dt>
-            <dd>{content.ticket.failures(quest.failuresLast90Days)}</dd>
-          </div>
-        )}
-      </dl>
+      {!done && <TicketHint show={firstTicket} className="mt-3" />}
 
-      {!done && <TicketHint show={firstTicket} className="mt-3.5" />}
-
-      <div className="mt-3.5 flex flex-wrap items-center gap-x-4 gap-y-2">
-        <button
-          type="button"
-          onClick={() => onContribute(quest)}
-          className={cn("cursor-pointer rounded-full bg-graphite px-4 py-2 text-sm font-medium text-ivory outline-none transition-opacity hover:opacity-90 focus-visible:ring-4 focus-visible:ring-graphite/30", !done && firstTicket && firstGlow)}
-        >
-          {done ? content.ticket.seeYours : verify ? content.ticket.verify : content.ticket.report}
-        </button>
-        <a
-          href={quest.sourceUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-1 text-xs font-medium text-taupe underline decoration-hairline underline-offset-4 hover:text-graphite"
-        >
-          {content.ticket.source} <ExternalLink className="size-3" aria-hidden />
-        </a>
-      </div>
-
-      <p className="mt-3 text-[0.68rem] text-taupe">{content.ticket.unofficial}</p>
-    </div>
-  );
-}
-
-/** Dashed tear line with a notch punched from each edge. */
-function Perforation() {
-  return (
-    <div aria-hidden className="relative border-t border-dashed border-graphite/20">
-      <span className="absolute top-0 -left-2 size-4 -translate-y-1/2 rounded-full border-r border-hairline bg-stone" />
-      <span className="absolute top-0 -right-2 size-4 -translate-y-1/2 rounded-full border-l border-hairline bg-stone" />
+      <button
+        type="button"
+        onClick={() => onContribute(quest)}
+        style={primaryStyle}
+        className={cn(primaryClass, "mt-3.5 h-11 w-full px-5 text-[0.95rem]", !done && firstTicket && firstGlow)}
+      >
+        {done ? missionText.seeYours : missionText.viewMission} <span aria-hidden>→</span>
+      </button>
+      <p className="mt-2.5 text-xs text-taupe">{missionText.community}</p>
     </div>
   );
 }
@@ -230,7 +182,7 @@ function IconButton({ label, disabled, onClick, children }: { label: string; dis
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      className="grid size-6 cursor-pointer place-items-center rounded-full text-taupe outline-none hover:bg-stone-deep/60 hover:text-graphite focus-visible:ring-2 focus-visible:ring-graphite/30 disabled:cursor-default disabled:opacity-30 disabled:hover:bg-transparent"
+      className="grid size-8 cursor-pointer place-items-center rounded-full text-taupe outline-none hover:bg-stone-deep/60 hover:text-graphite focus-visible:ring-2 focus-visible:ring-graphite/30 disabled:cursor-default disabled:opacity-30 disabled:hover:bg-transparent"
     >
       {children}
     </button>

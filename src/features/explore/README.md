@@ -13,9 +13,9 @@ Issue: #2. Owner: Rachel. Only the owner edits this folder.
 - `verified.ts` + `PinFace` in `ProblemMarker.tsx`: a pin turns a quiet green only when its source is named:
   "MBTA marked this working again · <time>" (from `Quest.resolvedAt`) or "Riders report it is working · <n> riders"
   (no live data yet). Preview at `/explore/verified`. Never says "fixed".
-- `ProblemTicket.tsx`: the printed ticket for a stop, pinned above it on wide screens, docked at the bottom on phones.
-- `ContributePanel.tsx`: contribute without leaving the map. `ReportFlow.tsx` draws PR #14's `useReport` hook;
-  `VerifyFlow.tsx` uses PR #14's `api.ts`. The rules live in `features/challenge`, never here.
+- `ProblemTicket.tsx`: the small glass card for a stop: category chip, the mission question, one line, "View mission". Pinned above the stop on wide screens, docked at the bottom on phones.
+- `ContributePanel.tsx`: the panel over the map. It only hosts `features/missions` (the guided mission). The old
+  `ReportFlow.tsx` is gone; `VerifyFlow.tsx` is still used by the 3D-world speech bubble (`WorldQuest.tsx`).
 - `Celebration.tsx`: pixel train + stamp after a contribution; static with Reduced Motion.
 - `progress.ts`: this rider's contributions from `/api/submissions`, shared by the map, My Journey and Collection.
 - `StationMarker.tsx`, `LandmarkMarker.tsx`, `TrainsLayer.tsx`: quiet stop rings, floating landmarks, live trains.
