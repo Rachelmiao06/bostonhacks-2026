@@ -13,12 +13,15 @@ import { IslandHelp } from "./IslandHelp";
 import { JournalSheet } from "./JournalSheet";
 import { Tour } from "./Tour";
 import { WorldNotes } from "./WorldNotes";
-import { IslandLoading, IslandScene } from "./IslandLoader";
+import { IslandLoading, IslandScene, preloadIsland } from "./IslandLoader";
 import type { IslandHandle } from "./IslandScene";
 import { useNearbyPlaces } from "./usePlaces";
 import { readParcelOpened, readSeen, readTourDone, writeParcelOpened, writeSeen, writeTourDone } from "./seen";
 
 const total = unlockSteps.length;
+
+// The page is client-only: as soon as this file loads in the browser, fetch the scene's code in parallel with the stamp count.
+if (typeof window !== "undefined") preloadIsland();
 
 const hotspotIds = ["journal", "gift-0", "unlock"];
 
