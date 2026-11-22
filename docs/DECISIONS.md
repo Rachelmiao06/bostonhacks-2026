@@ -78,4 +78,4 @@ One line each: date · what · why.
 
 - 2026-11-21 · Explore's own one-time "Every pin is a challenge" map hint is switched off (`hintAllowed = false` in `ExploreMap.tsx`; the `MapHint` component and `mapHint` flag remain) · the coach's guide card says the same thing and two identical "Got it" boxes looked broken.
 
-- 2026-11-21 · The "Near <stop>" name tag on the zoomed map is now a small frosted card (pin icon, stop name, one grey line, no border) and the coach banners sit lower on narrow screens so they never touch it or "See the whole city" · the old mono-caps two-line box looked heavy and the banners crowded it.
+- 2026-11-21 · The "Near <stop> / N problems" box at the top left of the zoomed map is replaced by a small "Near you / N problems nearby" tag on the map beside the start stop (`ExploreMap.tsx`, strings in `world.nearYou` and `world.nearbyCount`); the top-left slot only shows the "outside the T area" / "nothing broken near here" notes when there is one · the information belongs next to the place it describes, and the coach banners need the top corners.

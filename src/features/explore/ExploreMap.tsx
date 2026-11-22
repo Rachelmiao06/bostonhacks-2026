@@ -40,7 +40,6 @@ import { clusterStops, problemStops, useQuests, type Cluster, type ProblemStop }
 import { StationMarker } from "./StationMarker";
 import { TrainsLayer } from "./TrainsLayer";
 import type { LiveData, SubwayData, SubwayStation } from "./types";
-import { MapPin } from "lucide-react";
 import { AtlasButton } from "./ui";
 import { WorldQuest } from "./WorldQuest";
 import {
@@ -622,6 +621,20 @@ export default function ExploreMap({ entry, onStatus, onReveal, guided = false }
                 </span>
               </Marker>
             )}
+            {mode === "world" && arrived && worldInfo && (
+              <Marker longitude={worldInfo.station.longitude} latitude={worldInfo.station.latitude} anchor="left" offset={[22, 0]} style={{ zIndex: 6, pointerEvents: "none" }}>
+                <div role="status" className="w-max rounded-2xl bg-ivory/85 px-3 py-1.5 font-ui shadow-float backdrop-blur-xl backdrop-saturate-150 motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:delay-300 motion-safe:duration-500">
+                  <p className="flex items-center gap-2 font-heading text-sm leading-tight font-semibold text-graphite">
+                    <span aria-hidden className="relative flex size-2.5">
+                      <span className="absolute inline-flex size-full rounded-full bg-cat-verify opacity-60 motion-safe:animate-ping" />
+                      <span className="relative inline-flex size-2.5 rounded-full bg-cat-verify" />
+                    </span>
+                    {worldText.nearYou}
+                  </p>
+                  <p className="pl-[1.125rem] text-xs text-taupe">{worldText.nearbyCount(worldProblemCount)}</p>
+                </div>
+              </Marker>
+            )}
             {data && selected && wide && mode === "atlas" && (
               <ProblemTicket
                 station={selected}
@@ -651,15 +664,10 @@ export default function ExploreMap({ entry, onStatus, onReveal, guided = false }
         <div className="pointer-events-none absolute inset-x-0 top-[3.75rem] flex flex-col gap-2 px-2 sm:top-[4.75rem] sm:flex-row sm:items-start sm:justify-between sm:px-4">
           <div className="pointer-events-auto min-w-0">
             {mode === "atlas" && quests.status === "ready" && <FilterBar counts={counts} show={show} onToggle={toggleFilter} />}
-            {mode === "world" && arrived && worldInfo && (
-              <div aria-live="polite" className="w-fit max-w-72 rounded-2xl bg-ivory/80 px-3 py-2 shadow-float backdrop-blur-xl backdrop-saturate-150">
-                <div className="flex items-center gap-2">
-                  <MapPin className="size-4 shrink-0 text-cat-verify" aria-hidden />
-                  <p className="font-heading text-sm leading-tight font-semibold text-graphite">{worldText.near(worldInfo.station.name)}</p>
-                </div>
-                <p className="mt-0.5 pl-6 font-ui text-xs text-taupe">{worldText.problems(worldProblemCount)}</p>
-                {worldInfo.note && <p className="mt-1 pl-6 font-ui text-xs text-taupe">{worldInfo.note.kind === "far" ? worldText.far : worldText.quiet(worldInfo.note.from)}</p>}
-              </div>
+            {mode === "world" && arrived && worldInfo?.note && (
+              <p aria-live="polite" className="w-fit max-w-72 rounded-2xl bg-ivory/80 px-3 py-2 font-ui text-xs text-taupe shadow-float backdrop-blur-xl backdrop-saturate-150">
+                {worldInfo.note.kind === "far" ? worldText.far : worldText.quiet(worldInfo.note.from)}
+              </p>
             )}
           </div>
           <div className="pointer-events-auto flex items-center gap-2 self-start">
