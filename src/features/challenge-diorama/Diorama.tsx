@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
+import { play } from "./sound";
 
 // The little station. Layers are positioned in a 420 x 400 stage, in percent, so it scales with its card.
 // ROUGH TEST ART: cut from the hand-made sheet on the desktop. The final layers will replace these files in
@@ -25,6 +26,8 @@ export type DioramaProps = {
   confirmed: boolean;
   reduced: boolean;
   slow: number;
+  /** Optional synthesized sounds (off by default). */
+  sound: boolean;
 };
 
 type L = { src: string; w: number; h: number; x: number; y: number; dw: number };
@@ -40,7 +43,7 @@ const LAYERS = {
   lampRed: L("lamp-red", 151, 127, 296, 104, 50),
   lampAmber: L("lamp-amber", 150, 127, 296, 104, 50),
   sign: L("sign", 165, 171, 266, 236, 52),
-  rider: L("rider", 135, 244, 190, 226, 54),
+  rider: L("rider", 135, 244, 176, 204, 54),
   note: L("bubble-note", 204, 165, 142, 160, 92),
   question: L("bubble-question", 160, 163, 342, 60, 68),
   seal: L("seal", 197, 198, 326, 292, 68),
@@ -127,21 +130,25 @@ export function Diorama(p: DioramaProps) {
     const tl = run(gsap.timeline({ delay: wait }));
     gsap.to(doors[0], { xPercent: 0, duration: 0 });
     if (status === "working") {
-      tl.fromTo(glow, { autoAlpha: 0, scale: 0.5 }, { autoAlpha: 0.85, scale: 1.15, duration: 0.35, ease: "power2.out" })
+      tl.call(() => { if (p.sound) play("plop"); }, [], 0)
+        .fromTo(glow, { autoAlpha: 0, scale: 0.5 }, { autoAlpha: 0.85, scale: 1.15, duration: 0.35, ease: "power2.out" })
         .to(glow, { autoAlpha: 0.55, scale: 1, duration: 0.7, ease: "sine.inOut" })
-        .to(doors[0], { xPercent: -doorX, duration: 0.75, ease: "power3.out" }, "<-0.5")
+        .call(() => { if (p.sound) play("ding"); }, [], "<-0.45")
+        .to(doors[0], { xPercent: -doorX, duration: 0.75, ease: "power3.out" }, "<")
         .to(doors[1], { xPercent: doorX, duration: 0.75, ease: "power3.out" }, "<")
         .to(tower, { y: -3, duration: 0.12, yoyo: true, repeat: 1, ease: "power1.out" }, "<");
       loops.current.push(gsap.to(glow, { autoAlpha: 0.4, duration: 1.8, yoyo: true, repeat: -1, ease: "sine.inOut", delay: wait + 1.2 }));
     } else if (status === "out") {
-      tl.to(tower, { keyframes: [{ x: -3, duration: 0.05 }, { x: 3, duration: 0.06 }, { x: -2, duration: 0.06 }, { x: 2, duration: 0.06 }, { x: 0, duration: 0.08 }], ease: "none" })
+      tl.call(() => { if (p.sound) play("clunk"); }, [], 0)
+        .to(tower, { keyframes: [{ x: -3, duration: 0.05 }, { x: 3, duration: 0.06 }, { x: -2, duration: 0.06 }, { x: 2, duration: 0.06 }, { x: 0, duration: 0.08 }], ease: "none" })
         .fromTo(glow, { autoAlpha: 0, scale: 0.7 }, { keyframes: [{ autoAlpha: 0.9, duration: 0.05 }, { autoAlpha: 0.1, duration: 0.06 }, { autoAlpha: 0.8, duration: 0.05 }, { autoAlpha: 0.15, duration: 0.08 }, { autoAlpha: 0.7, scale: 1, duration: 0.12 }] }, "<")
         .fromTo(sign, { autoAlpha: 1, y: -70, rotation: -10, transformOrigin: "50% 100%" }, { y: 0, rotation: 0, duration: 0.75, ease: "bounce.out" }, "<0.1")
         .fromTo(puffs, { autoAlpha: 0.95, y: 0, scale: 0.6 }, { autoAlpha: 0, y: -34, scale: 1.5, duration: 1.3, ease: "power1.out", stagger: 0.14 }, "<0.1")
         .fromTo(sparks, { autoAlpha: 1, scale: 0.2, rotation: 0 }, { autoAlpha: 0, scale: 1.3, rotation: 90, duration: 0.7, ease: "power2.out", stagger: 0.05 }, "<0.05");
       loops.current.push(gsap.to(glow, { keyframes: [{ autoAlpha: 0.15, duration: 0.06 }, { autoAlpha: 0.8, duration: 0.05 }, { autoAlpha: 0.2, duration: 0.08 }, { autoAlpha: 0.65, duration: 0.2 }], repeat: -1, repeatDelay: 2.4, delay: wait + 2.2 }));
     } else {
-      tl.fromTo(glow, { autoAlpha: 0, scale: 0.6 }, { autoAlpha: 0.75, scale: 1.05, duration: 0.4, ease: "power2.out" })
+      tl.call(() => { if (p.sound) play("huh"); }, [], 0)
+        .fromTo(glow, { autoAlpha: 0, scale: 0.6 }, { autoAlpha: 0.75, scale: 1.05, duration: 0.4, ease: "power2.out" })
         .to(doors[0], { xPercent: -doorX, duration: 0.5, ease: "power2.out" }, "<")
         .to(doors[1], { xPercent: doorX, duration: 0.5, ease: "power2.out" }, "<")
         .fromTo(q, { autoAlpha: 1, scale: 0, transformOrigin: "10% 100%" }, { scale: 1, duration: 0.5, ease: "back.out(3)" }, "<0.15");
@@ -172,7 +179,8 @@ export function Diorama(p: DioramaProps) {
     if (p.reduced || !was === false) { gsap.set([seal, frame], { autoAlpha: 1, scale: 1, rotation: 0 }); gsap.set(seal, { rotation: -6 }); return; }
     const sparks = ["spark1", "spark2", "spark3", "spark4"].map(e).filter(Boolean) as HTMLElement[];
     const tl = run(gsap.timeline());
-    tl.fromTo(seal, { autoAlpha: 0, scale: 2.6, rotation: -26, transformOrigin: "50% 50%" }, { autoAlpha: 1, scale: 1, rotation: -6, duration: 0.4, ease: "back.out(2.2)" })
+    tl.call(() => { if (p.sound) play("stamp"); }, [], 0.3)
+      .fromTo(seal, { autoAlpha: 0, scale: 2.6, rotation: -26, transformOrigin: "50% 50%" }, { autoAlpha: 1, scale: 1, rotation: -6, duration: 0.4, ease: "back.out(2.2)" })
       .to(root, { y: 4, duration: 0.07, yoyo: true, repeat: 1, ease: "power1.out" }, "<0.32")
       .fromTo(sparks, { autoAlpha: 1, scale: 0.2, rotation: 0 }, { autoAlpha: 0, scale: 1.4, rotation: 80, duration: 0.8, ease: "power2.out", stagger: 0.06 }, "<")
       .to(rider, { y: -14, duration: 0.17, yoyo: true, repeat: 1, ease: "power2.out" }, "<0.05")
@@ -199,6 +207,28 @@ export function Diorama(p: DioramaProps) {
     card.addEventListener("pointerleave", leave);
     return () => { card.removeEventListener("pointermove", move); card.removeEventListener("pointerleave", leave); gsap.set(groups, { x: 0, y: 0 }); };
   }, [p.reduced]);
+
+  // 5. Small life, never required: the rider breathes, and tapping him or the lamp gives a little reaction.
+  useEffect(() => {
+    const rider = e("rider");
+    const body = rider?.firstElementChild as HTMLElement | null;
+    const lamps = ["lampGreen", "lampRed", "lampAmber"].map(e).filter(Boolean) as HTMLElement[];
+    if (!rider || !body) return;
+    const hop = () => {
+      if (!p.reduced) gsap.fromTo(rider, { y: 0 }, { y: -14, duration: 0.16, yoyo: true, repeat: 1, ease: "power2.out", overwrite: "auto" });
+      if (p.sound) play("tick");
+    };
+    const blink = () => {
+      const glow = e("glow");
+      if (!p.reduced && glow) gsap.fromTo(glow, { autoAlpha: 0.15 }, { autoAlpha: 0.85, duration: 0.45, ease: "power2.out", overwrite: "auto" });
+      if (p.sound) play(p.status === "working" ? "ding" : "tick");
+    };
+    rider.style.cursor = "pointer";
+    rider.addEventListener("click", hop);
+    lamps.forEach((l) => { l.style.cursor = "pointer"; l.addEventListener("click", blink); });
+    const breath = p.reduced ? null : gsap.to(body, { scaleY: 1.014, transformOrigin: "50% 100%", duration: 1.9, yoyo: true, repeat: -1, ease: "sine.inOut" });
+    return () => { rider.removeEventListener("click", hop); lamps.forEach((l) => l.removeEventListener("click", blink)); breath?.kill(); gsap.set(body, { scaleY: 1 }); };
+  }, [p.reduced, p.sound, p.status]);
 
   useEffect(() => () => {
     killLoops();
@@ -279,8 +309,7 @@ export function Diorama(p: DioramaProps) {
           {img(LAYERS.spark4, "spark4", hidden)}
         </div>
         <div ref={reg("frame")} aria-hidden className="pointer-events-none absolute inset-0" style={hidden}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={`${A}/frame.webp`} alt="" draggable={false} className="size-full object-fill" />
+          <div className="size-full" style={{ borderStyle: "solid", borderWidth: 26, borderImage: `url(${A}/frame.webp) 62 / 26px stretch`, borderRadius: 0 }} />
         </div>
       </div>
     </div>

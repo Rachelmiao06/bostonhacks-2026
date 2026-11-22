@@ -8,6 +8,7 @@ import { Sprite } from "@/features/missions/Collectibles";
 import { text } from "@/features/missions/content";
 import { cn } from "@/lib/utils";
 import { Diorama, type Status, type When } from "./Diorama";
+import { play } from "./sound";
 
 type Step = "overview" | "when" | "status" | "note" | "done";
 const ORDER: Step[] = ["overview", "when", "status", "note", "done"];
@@ -31,6 +32,8 @@ export function DioramaLab() {
   const [forced, setForced] = useState(false);
   const [slow, setSlow] = useState(false);
   const [failNext, setFailNext] = useState(false);
+  const [sound, setSound] = useState(false);
+  const tick = () => { if (sound) play("tick"); };
   const reduced = os || forced;
 
   const [step, setStep] = useState<Step>("overview");
@@ -75,6 +78,7 @@ export function DioramaLab() {
             <div className="flex flex-wrap gap-x-5 gap-y-1.5">
               <Toggle label="Reduced Motion" on={reduced} locked={os} onChange={setForced} />
               <Toggle label="Slow-mo ×3" on={slow} onChange={setSlow} />
+              <Toggle label="Sound" on={sound} onChange={setSound} />
               <Toggle label="Server fails on next share" on={failNext} onChange={setFailNext} />
             </div>
           </section>
@@ -89,7 +93,7 @@ export function DioramaLab() {
             </div>
 
             <div className="px-3">
-              <Diorama when={sceneWhen} status={status} rider={step === "note" || step === "done"} note={note.trim().length > 0} saving={phase === "saving"} failed={phase === "failed"} confirmed={phase === "saved"} reduced={reduced} slow={slow ? 3 : 1} />
+              <Diorama when={sceneWhen} status={status} rider={step === "note" || step === "done"} note={note.trim().length > 0} saving={phase === "saving"} failed={phase === "failed"} confirmed={phase === "saved"} reduced={reduced} slow={slow ? 3 : 1} sound={sound} />
             </div>
 
             <div ref={body} className="relative min-h-[17rem] overflow-hidden px-5 pt-4 pb-3">
@@ -105,9 +109,9 @@ export function DioramaLab() {
                     <Panel title={text.whenTitle("the elevator")}>
                       <fieldset className="space-y-2.5">
                         <legend className="sr-only">{text.whenTitle("the elevator")}</legend>
-                        <Choice name="when" value="now" checked={when === "now"} onChange={() => setWhen("now")} label={text.whenNow.label} hint={text.whenNow.hint} icon="spark" />
-                        <Choice name="when" value="earlier" checked={when === "earlier"} onChange={() => setWhen("earlier")} label={text.whenEarlier.label} hint={text.whenEarlier.hint} icon="train" />
-                        <Choice name="when" value="not_yet" checked={when === "not_yet"} onChange={() => setWhen("not_yet")} label={text.whenNot.label} hint={text.whenNot.hint} icon="question" />
+                        <Choice name="when" value="now" checked={when === "now"} onChange={() => { tick(); setWhen("now"); }} label={text.whenNow.label} hint={text.whenNow.hint} icon="spark" />
+                        <Choice name="when" value="earlier" checked={when === "earlier"} onChange={() => { tick(); setWhen("earlier"); }} label={text.whenEarlier.label} hint={text.whenEarlier.hint} icon="train" />
+                        <Choice name="when" value="not_yet" checked={when === "not_yet"} onChange={() => { tick(); setWhen("not_yet"); }} label={text.whenNot.label} hint={text.whenNot.hint} icon="question" />
                       </fieldset>
                       {when === "not_yet" && <p role="status" className="rounded-2xl border border-graphite/12 bg-ivory/70 p-3.5 text-sm leading-relaxed text-taupe">{text.notYetBody}</p>}
                     </Panel>
@@ -116,9 +120,9 @@ export function DioramaLab() {
                     <Panel title="What did you see?">
                       <fieldset className="space-y-2.5">
                         <legend className="sr-only">What did you see?</legend>
-                        <Choice name="status" value="working" checked={status === "working"} onChange={() => setStatus("working")} label="It’s working" hint="The doors opened and it moved" icon="check" />
-                        <Choice name="status" value="out" checked={status === "out"} onChange={() => setStatus("out")} label="It’s still out of service" hint="A sign, a closed door, or it didn’t respond" icon="barrier" />
-                        <Choice name="status" value="unsure" checked={status === "unsure"} onChange={() => setStatus("unsure")} label="I couldn’t tell" hint="That’s fine, tell us what you could see" icon="question" />
+                        <Choice name="status" value="working" checked={status === "working"} onChange={() => { tick(); setStatus("working"); }} label="It’s working" hint="The doors opened and it moved" icon="check" />
+                        <Choice name="status" value="out" checked={status === "out"} onChange={() => { tick(); setStatus("out"); }} label="It’s still out of service" hint="A sign, a closed door, or it didn’t respond" icon="barrier" />
+                        <Choice name="status" value="unsure" checked={status === "unsure"} onChange={() => { tick(); setStatus("unsure"); }} label="I couldn’t tell" hint="That’s fine, tell us what you could see" icon="question" />
                       </fieldset>
                     </Panel>
                   )}
@@ -132,10 +136,10 @@ export function DioramaLab() {
                   {step === "done" && (
                     <Panel title={text.doneTitle}>
                       <p className="text-[0.95rem] text-graphite/85">{text.doneBody}</p>
-                      <div className="flex items-center gap-3 rounded-2xl border border-graphite/12 bg-ivory/70 p-3.5" role="status">
+                      <motion.div initial={reduced ? false : { opacity: 0, y: 14, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ delay: reduced ? 0 : 1.1, type: "spring", stiffness: 260, damping: 20 }} className="flex items-center gap-3 rounded-2xl border border-graphite/12 bg-ivory/70 p-3.5" role="status">
                         <span className="grid size-16 shrink-0 place-items-center rounded-2xl bg-sun/15"><Sprite index={0} className="size-11 motion-safe:animate-float" /></span>
                         <div><p className="text-xs font-medium tracking-wide text-taupe uppercase">New for your little world</p><p className="font-semibold text-graphite">Grass and flowers</p></div>
-                      </div>
+                      </motion.div>
                     </Panel>
                   )}
                 </motion.div>
