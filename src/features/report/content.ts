@@ -51,6 +51,7 @@ export const content = {
   analyzing: { title: "Looking at your photo…", body: "Finding out what happened and who can help." },
   retry: "Try again",
   back: "Back",
+  demoBadge: "Demo mode: a photo of a picture is allowed and the spot may be a set one in Boston.",
   startOver: "Cancel",
   nothingSent: "Nothing was saved or sent.",
 

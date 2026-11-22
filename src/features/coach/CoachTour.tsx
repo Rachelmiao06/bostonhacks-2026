@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import { Camera, MapPin, Sparkles, TrainFront, X, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { categories } from "@/features/explore/content";
@@ -157,27 +157,28 @@ type Banner = { id: number; kind?: (typeof categories)[number]["id"]; hidden: bo
 const TOTAL = categories.length + 1; // one banner per problem kind, then the "every pin" banner
 const PIN_RE = /: \d+ problems?$|working again|riders? report/;
 
-/** The problem pin nearest the middle of the screen that is on screen and not under the banners or the top bar. */
-function findPin(): { x: number; y: number } | null {
+/** The problem pin (its marker button) nearest the middle of the screen that is on screen and not under the banners or the top bar. */
+function findPin(): HTMLElement | null {
   const w = window.innerWidth;
   const h = window.innerHeight;
   const best = [...document.querySelectorAll<HTMLElement>(".maplibregl-marker button[aria-label]")]
     .filter((el) => PIN_RE.test(el.getAttribute("aria-label") ?? ""))
     .map((el) => {
       const r = el.getBoundingClientRect();
-      return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width, h: r.height };
+      return { el, x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width };
     })
     .filter((p) => p.w > 0 && p.x > 40 && p.x < w - 40 && p.y > 130 && p.y < h - 90 && !(p.x > w - 350 && p.y < 420))
     .sort((a, b) => Math.hypot(a.x - w / 2, a.y - h / 2) - Math.hypot(b.x - w / 2, b.y - h / 2))[0];
-  return best ? { x: best.x, y: best.y } : null;
+  return best?.el ?? null;
 }
 
 function Feed({ onDone }: { onDone: () => void }) {
   const f = coach.feed;
   const [banners, setBanners] = useState<Banner[]>([]);
-  const [pin, setPin] = useState<{ x: number; y: number } | null>(null);
+  // The marker the guide follows. It is chosen once (and again only if that marker leaves the page), so the ring stays on
+  // one pin while the rider moves the map; PinGuide then tracks it frame by frame.
+  const [pin, setPin] = useState<HTMLElement | null>(null);
   const finalRef = useRef<HTMLDivElement>(null);
-  const [from, setFrom] = useState<{ x: number; y: number } | null>(null);
   const finalShown = banners.length >= TOTAL;
 
   // Banners arrive one at a time; each kind banner slides away after a while, the last one stays.
@@ -194,16 +195,13 @@ function Feed({ onDone }: { onDone: () => void }) {
     return () => timers.forEach((t) => window.clearTimeout(t));
   }, [f.firstDelayMs, f.gapMs, f.lingerMs]);
 
-  // Once the last banner is up, keep finding the nearest pin (the map may still be settling) and where the banner is.
+  // Once the last banner is up, pick the nearest pin (the map may still be settling, so look again until one is found
+  // and whenever the chosen marker has been removed from the page).
   useEffect(() => {
     if (!finalShown) return;
-    const read = () => {
-      setPin(findPin());
-      const r = finalRef.current?.getBoundingClientRect();
-      setFrom(r ? { x: r.left + 36, y: r.bottom } : null);
-    };
-    read();
-    const id = window.setInterval(read, 400);
+    const pick = () => setPin((cur) => (cur && cur.isConnected ? cur : findPin()));
+    pick();
+    const id = window.setInterval(pick, 400);
     return () => window.clearInterval(id);
   }, [finalShown]);
 
@@ -229,7 +227,7 @@ function Feed({ onDone }: { onDone: () => void }) {
           );
         })}
       </section>
-      {finalShown && pin && from && <PinGuide pin={pin} from={from} />}
+      {finalShown && pin && <PinGuide pin={pin} boxRef={finalRef} />}
     </>
   );
 }
@@ -269,17 +267,70 @@ function Banner({ banner, rank, isFinal, hasPin, onClose, boxRef }: { banner: Ba
   );
 }
 
-/** The lead-in to the nearest pin: a ring that pulses around it and dashes that flow from the last banner towards it. */
-function PinGuide({ pin, from }: { pin: { x: number; y: number }; from: { x: number; y: number } }) {
-  const dx = pin.x - from.x;
-  const dy = pin.y - from.y;
-  const len = Math.hypot(dx, dy) || 1;
-  const end = { x: pin.x - (dx / len) * 38, y: pin.y - (dy / len) * 38 }; // stop short of the pin so the dashes never cover it
-  const ctrl = { x: from.x - Math.min(80, len * 0.25), y: from.y + len * 0.45 };
+/**
+ * The lead-in to the nearest pin: a ring that pulses around it and dashes that flow from the last banner towards it.
+ * The shapes are moved by hand, straight on the DOM, instead of through React state. A state update is a render behind
+ * the map; this follows the marker in the same frame, so the ring stays glued to it while the rider drags or tilts the map.
+ */
+function PinGuide({ pin, boxRef }: { pin: HTMLElement; boxRef: RefObject<HTMLDivElement | null> }) {
+  const wrap = useRef<HTMLDivElement>(null);
+  const path = useRef<SVGPathElement>(null);
+  const ring = useRef<SVGCircleElement>(null);
+  const ping = useRef<SVGCircleElement>(null);
+  const tag = useRef<HTMLSpanElement>(null);
   const label = coach.feed.pin.tag;
-  const below = pin.y < window.innerHeight - 140;
+
+  useLayoutEffect(() => {
+    const place = () => {
+      const w = wrap.current;
+      const r = pin.getBoundingClientRect();
+      const box = boxRef.current?.getBoundingClientRect();
+      if (!w || !box || !pin.isConnected) return;
+      const x = r.left + r.width / 2;
+      const y = r.top + r.height / 2;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      // off screen (or not laid out yet): hide the guide until the pin comes back
+      const visible = r.width > 0 && x > 0 && x < vw && y > 0 && y < vh;
+      w.style.opacity = visible ? "1" : "0";
+      if (!visible) return;
+      const from = { x: box.left + 36, y: box.bottom };
+      const dx = x - from.x;
+      const dy = y - from.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const end = { x: x - (dx / len) * 38, y: y - (dy / len) * 38 }; // stop short of the pin so the dashes never cover it
+      const ctrl = { x: from.x - Math.min(80, len * 0.25), y: from.y + len * 0.45 };
+      path.current?.setAttribute("d", `M${from.x} ${from.y} Q${ctrl.x} ${ctrl.y} ${end.x} ${end.y}`);
+      for (const c of [ring.current, ping.current]) {
+        c?.setAttribute("cx", String(x));
+        c?.setAttribute("cy", String(y));
+      }
+      const t = tag.current;
+      if (t) {
+        t.style.left = `${x}px`;
+        t.style.top = `${y < vh - 140 ? y + 36 : y - 62}px`;
+      }
+    };
+    place();
+    // MapLibre moves a marker by rewriting the style of its wrapper element; watching that runs this in the same frame.
+    const marker = pin.closest<HTMLElement>(".maplibregl-marker") ?? pin;
+    const watcher = new MutationObserver(place);
+    watcher.observe(marker, { attributes: true, attributeFilter: ["style", "class"] });
+    // The banner slides in and the page can resize; a frame loop covers anything the observer cannot see.
+    let raf = requestAnimationFrame(function loop() {
+      place();
+      raf = requestAnimationFrame(loop);
+    });
+    window.addEventListener("resize", place);
+    return () => {
+      watcher.disconnect();
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", place);
+    };
+  }, [pin, boxRef]);
+
   return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 z-40">
+    <div ref={wrap} aria-hidden className="pointer-events-none fixed inset-0 z-40 opacity-0">
       <style>{`
         @keyframes coach-flow { to { stroke-dashoffset: -28; } }
         @keyframes coach-ping { 0% { transform: scale(.7); opacity: .7; } 70%, 100% { transform: scale(1.7); opacity: 0; } }
@@ -288,13 +339,14 @@ function PinGuide({ pin, from }: { pin: { x: number; y: number }; from: { x: num
         @media (prefers-reduced-motion: reduce) { .coach-flow, .coach-ping { animation: none; } }
       `}</style>
       <svg width="100%" height="100%" className="absolute inset-0">
-        <path d={`M${from.x} ${from.y} Q${ctrl.x} ${ctrl.y} ${end.x} ${end.y}`} fill="none" stroke="var(--cat-verify)" strokeWidth="4" strokeLinecap="round" strokeDasharray="1 13" className="coach-flow" />
-        <circle cx={pin.x} cy={pin.y} r="30" fill="none" stroke="var(--cat-verify)" strokeWidth="2.5" strokeOpacity=".8" />
-        <circle cx={pin.x} cy={pin.y} r="30" fill="none" stroke="var(--cat-verify)" strokeWidth="2" className="coach-ping" />
+        <path ref={path} fill="none" stroke="var(--cat-verify)" strokeWidth="4" strokeLinecap="round" strokeDasharray="1 13" className="coach-flow" />
+        <circle ref={ring} r="30" fill="none" stroke="var(--cat-verify)" strokeWidth="2.5" strokeOpacity=".8" />
+        <circle ref={ping} r="30" fill="none" stroke="var(--cat-verify)" strokeWidth="2" className="coach-ping" />
       </svg>
       <span
+        ref={tag}
         className="absolute rounded-full bg-ivory/90 px-2.5 py-1 font-heading text-xs font-semibold whitespace-nowrap text-graphite shadow-float backdrop-blur-md"
-        style={{ left: pin.x, top: below ? pin.y + 36 : pin.y - 62, transform: "translateX(-50%)" }}
+        style={{ transform: "translateX(-50%)" }}
       >
         {label}
       </span>

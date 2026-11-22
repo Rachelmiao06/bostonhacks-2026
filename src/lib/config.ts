@@ -10,10 +10,5 @@ export const site = {
     { href: "/report", label: "Report", short: "Report" },
     { href: "/world", label: "My World", short: "My World" },
   ],
-  /** Quieter pages, in the "more" menu. Quests is the list of every quest; Stats are the team's KPIs. */
-  moreNav: [
-    { href: "/challenge", label: "Quests" },
-    { href: "/stats", label: "Stats" },
-    { href: "/about", label: "About" },
-  ],
+  moreNav: [{ href: "/about", label: "About" }],
 };

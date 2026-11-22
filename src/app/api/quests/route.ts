@@ -4,15 +4,35 @@
 // Optional filters: ?line=Green  ?mode=report|verify
 import type { NextRequest } from "next/server";
 import { hasDb, query } from "@/lib/db";
-import { ACCESS_SOURCE_URL, VERIFY_REWARD_TOKENS, getQuests, type Quest, type QuestKind } from "@/lib/mbta";
+import { ACCESS_SOURCE_URL, VERIFY_REWARD_TOKENS, getQuests, type Quest, type QuestChecks, type QuestKind } from "@/lib/mbta";
 
 type ResolvedRow = {
   alert_id: string; facility_id: string | null; kind: string; station_id: string | null; station_name: string;
   lines: string[]; header: string; cause: string; started_at: string; resolved_at: string;
 };
 
+type CheckRow = { alert_id: string; riders: number; last_at: string | null; working: number; still_broken: number };
+
+/** Rider checks per alert: counts only, no rider id leaves the server. Empty if the tables are not set up yet. */
+async function checkCounts(): Promise<CheckRow[]> {
+  try {
+    return await query<CheckRow>(
+      `SELECT alert_id, count(DISTINCT user_id)::int AS riders, max(at) AS last_at,
+              (count(*) FILTER (WHERE verdict = 'working'))::int AS working,
+              (count(*) FILTER (WHERE verdict = 'still_broken'))::int AS still_broken
+       FROM (SELECT alert_id, user_id, completed_at AS at, NULL::text AS verdict FROM submissions WHERE status = 'completed'
+             UNION ALL
+             SELECT alert_id, user_id, created_at, verdict FROM verifications) c
+       GROUP BY alert_id`,
+    );
+  } catch (error) {
+    console.error("Could not count rider checks:", error);
+    return [];
+  }
+}
+
 async function enrich(quests: Quest[]): Promise<Quest[]> {
-  const [failures, resolved] = await Promise.all([
+  const [failures, resolved, checks] = await Promise.all([
     query<{ facility_id: string; n: string }>(
       `SELECT facility_id, count(*) n FROM outages
        WHERE facility_id IS NOT NULL AND started_at >= now() - interval '90 days' GROUP BY facility_id`,
@@ -23,10 +43,21 @@ async function enrich(quests: Quest[]): Promise<Quest[]> {
        WHERE resolved_at >= now() - interval '24 hours' AND kind IN ('elevator', 'escalator') AND station_id IS NOT NULL
        ORDER BY resolved_at DESC LIMIT 30`,
     ),
+    checkCounts(),
   ]);
+  const checksOf = new Map(
+    checks.map((c): [string, QuestChecks] => [
+      c.alert_id,
+      { riders: c.riders, lastAt: c.last_at ? new Date(c.last_at).toISOString() : null, working: c.working, stillBroken: c.still_broken },
+    ]),
+  );
+  const NO_CHECKS: QuestChecks = { riders: 0, lastAt: null, working: 0, stillBroken: 0 };
   const failuresOf = new Map(failures.map((f) => [f.facility_id, Number(f.n)]));
-  const withCount = (q: Quest): Quest =>
-    q.facilityId ? { ...q, failuresLast90Days: failuresOf.get(q.facilityId) ?? 1 } : q;
+  const withCount = (q: Quest): Quest => ({
+    ...q,
+    ...(q.facilityId ? { failuresLast90Days: failuresOf.get(q.facilityId) ?? 1 } : {}),
+    checks: checksOf.get(q.id) ?? NO_CHECKS,
+  });
 
   const openIds = new Set(quests.map((q) => q.id));
   const verify = resolved
@@ -44,6 +75,7 @@ async function enrich(quests: Quest[]): Promise<Quest[]> {
         stationIds: r.station_id ? [r.station_id] : [],
         lines: r.lines,
         header: r.header,
+        description: null,
         cause: r.cause,
         startedAt: new Date(r.started_at).toISOString(),
         expectedEnd: null,

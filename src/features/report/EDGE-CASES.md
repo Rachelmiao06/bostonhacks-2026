@@ -95,6 +95,7 @@ Handling always follows the README rules: reason plus next step, nothing uncheck
 | M-01 | Venue Wi-Fi is bad | Cache the seeded case; show a clear offline state. | Open |
 | M-02 | Camera permission prompt on stage | Do it once on the demo phone beforehand. | Open |
 | M-03 | Real case will not close on cue | Seed one case with a real-style closure note. | Open |
+| M-04 | No real street problem in front of the presenter, or indoors with weak GPS | Open `/report?demo=1`. A photo of a picture or screen is judged by what it shows (the `photoOfScreen` downgrade is off, and the AI is told it may be a picture); a missing, imprecise or non-Boston GPS reading becomes one fixed Kenmore spot (`demo-mode.ts`). A "Demo mode" note shows on screen and sending is still simulated. `?demo=0` turns it off. | Decided |
 
 ## Found while building v1
 | ID | Case | Handling | State |

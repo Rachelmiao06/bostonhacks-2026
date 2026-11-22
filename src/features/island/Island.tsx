@@ -10,10 +10,10 @@ import { Collection } from "./Collection";
 import { GiftTicket } from "./GiftTicket";
 import { HotspotLabel, type TagIcon } from "./HotspotLabel";
 import { IslandHelp } from "./IslandHelp";
-import { JournalTicket } from "./JournalTicket";
+import { JournalSheet } from "./JournalSheet";
 import { Tour } from "./Tour";
 import { WorldNotes } from "./WorldNotes";
-import { IslandScene } from "./IslandLoader";
+import { IslandLoading, IslandScene } from "./IslandLoader";
 import type { IslandHandle } from "./IslandScene";
 import { useNearbyPlaces } from "./usePlaces";
 import { readParcelOpened, readSeen, readTourDone, writeParcelOpened, writeSeen, writeTourDone } from "./seen";
@@ -63,9 +63,13 @@ export function Island() {
   const [visit, setVisit] = useState(0);
   const [sceneFailed, setSceneFailed] = useState(false);
   const mounted = useRef(true);
+  const latest = useRef(0);
 
+  // Only the newest refresh counts. In development React runs every effect twice, and Next re-runs it each time the
+  // page is shown again; without this, each run bumped `visit` and the whole 3D scene was built over and over.
   const visitAgain = useCallback(() => {
-    void refreshProgress().finally(() => mounted.current && setVisit((n) => n + 1));
+    const mine = ++latest.current;
+    void refreshProgress().finally(() => mounted.current && mine === latest.current && setVisit((n) => n + 1));
   }, []);
 
   useEffect(() => {
@@ -85,15 +89,18 @@ export function Island() {
   const plan = useMemo(() => (loading ? null : makePlan(progress, preview)), [loading, preview, visit]);
 
   if (!plan) {
+    // The same loader the scene shows while it loads, so the swap between the two is invisible.
     return (
-      <section className="fixed inset-0 z-30 grid place-items-center bg-stone font-pixel text-[0.6rem] text-graphite">
-        {content.loading}
+      <section className="fixed inset-0 z-30 grid place-items-center bg-stone">
+        <IslandLoading />
       </section>
     );
   }
   return (
     <IslandView
-      key={`${preview}-${visit}`}
+      // The scene is rebuilt only when what it shows can differ (the preview toggled, or new progress to drop in).
+      // Showing the page again with nothing new keeps the scene that is already there instead of flashing a rebuild.
+      key={`${preview}-${plan.earned}-${plan.progressKnown}`}
       plan={plan}
       progress={progress}
       preview={preview}
@@ -365,7 +372,7 @@ function IslandView({
       {/* Tapping the island outside an open ticket closes it, the same as the close button */}
       {ticket !== null && <div aria-hidden onClick={closeTicket} className="absolute inset-0 z-10" />}
 
-      {ticket === "journal" && <JournalTicket progress={progress} known={plan.progressKnown ? known : null} handle={handle} onClose={closeTicket} onRetry={onRetry} />}
+      {ticket === "journal" && <JournalSheet progress={progress} known={plan.progressKnown ? known : null} preview={preview} onClose={closeTicket} onRetry={onRetry} />}
       {ticket?.startsWith("gift-") && (
         <GiftTicket
           gift={demoGifts[Number(ticket.slice(5))]}

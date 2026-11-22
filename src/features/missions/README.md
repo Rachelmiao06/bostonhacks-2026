@@ -17,11 +17,18 @@ localStorage `tada:mission:<id>`; the photo stays in memory only).
   `/api/review` (AI safety check, report missions only) then `/api/submissions` (or `/api/verifications` for "check it's working again").
   "Done" is shown only after the server says it saved. "I haven't checked it yet" can never reach a submit.
 - `MissionFlow.tsx` + `Parts.tsx`: the screens. `PixelIcon.tsx`: 8x8 pixel badges (icons only, never scenery).
+- `depth.ts` + `DepthParts.tsx`: what makes one mission different from the next. Overview: ONE status block
+  (how long, who reported it, whether any rider has checked, plus nth time in 90 days and MBTA's planned end) and,
+  below the divider, MBTA's own directions behind a quiet "View MBTA directions" button. Done: "What your check did"
+  (real rider counts from `/api/quests`) and progress along the line. Every part hides itself when its data is missing.
+- Overview layout (in `MissionFlow.tsx`): chip and station, icon with an action title, the status block, a numbered
+  "What you'll do", where to check, then one primary button. Only two soft-filled blocks, no outlined cards.
 - `content.ts`: all the words.
 
 ## Rules that must stay true
 - It is a Tada community observation, never an official MBTA report. Nothing is sent to the MBTA.
 - The AI only checks and tidies what the rider wrote. A short answer is never a failure; at most ONE follow-up question is asked.
+- Depth parts show only MBTA's words and real counts. An unknown count is not zero: say nothing. Never estimate.
 - Progress on the done screen is the real count from `useMyProgress` (`stampCount`); nothing is invented.
 
 ## The world behind the card

@@ -90,6 +90,35 @@ export const content = {
     viewOnMap: "Continue on the map",
   },
 
+  // The journal as a planner page: a month calendar with stickers on the days the rider did something
+  sheet: {
+    label: "Your journal, a planner page",
+    title: "My journal",
+    sub: "What I have done on the map",
+    prevMonth: "Previous month",
+    nextMonth: "Next month",
+    weekdays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    summary: (reports: number, checks: number) => `${reports} ${reports === 1 ? "report" : "reports"} · ${checks} ${checks === 1 ? "fix" : "fixes"} checked`,
+    nothingMonth: "Nothing this month yet.",
+    pickDay: "Tap a day with a sticker to read it.",
+    youWrote: "What I wrote",
+    noText: "Nothing was saved with this one yet.",
+    coach: "The coach says",
+    tryAdding: "Try adding",
+    likes: (n: number) => `${n} ${n === 1 ? "rider" : "riders"} liked this`,
+    checkedFix: (station: string) => `I checked the fix at ${station}`,
+    reportAt: (station: string) => `My report at ${station}`,
+    checkTag: "CHECK",
+    brokenTag: "BROKEN",
+    dayEntries: (n: number) => `${n} ${n === 1 ? "thing" : "things"} that day`,
+    monthTabs: "Jump to a month",
+    notes: "Notes",
+    exampleEmpty: "Example page: your reports and fixes will land here as stickers.",
+    examplePreview: "Example page for the preview. Nothing here is yours.",
+    exampleTag: "Example",
+    exampleOffline: "Example page while your history cannot load. Nothing here is yours.",
+  },
+
   // The paper voucher a gift unfolds into
   voucher: {
     kicker: "A Little Gift from Boston",
