@@ -220,7 +220,7 @@ function Feed({ onDone }: { onDone: () => void }) {
 
   return (
     <>
-      <section aria-label={f.label} aria-live="polite" className="pointer-events-none fixed top-[9.5rem] right-2 z-50 flex w-[min(20rem,calc(100vw-1rem))] flex-col gap-2 sm:top-[7.75rem] sm:right-4">
+      <section aria-label={f.label} aria-live="polite" className="pointer-events-none fixed top-[11rem] right-2 z-50 flex w-[min(19rem,calc(100vw-1rem))] flex-col gap-2 sm:top-[7.75rem] sm:right-4 sm:w-80">
         {banners.map((b) => {
           const rank = banners.filter((x) => !x.hidden || x.id === TOTAL - 1).findIndex((x) => x.id === b.id);
           const isFinal = b.id === TOTAL - 1;

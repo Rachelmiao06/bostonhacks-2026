@@ -40,7 +40,8 @@ import { clusterStops, problemStops, useQuests, type Cluster, type ProblemStop }
 import { StationMarker } from "./StationMarker";
 import { TrainsLayer } from "./TrainsLayer";
 import type { LiveData, SubwayData, SubwayStation } from "./types";
-import { AtlasButton, Eyebrow } from "./ui";
+import { MapPin } from "lucide-react";
+import { AtlasButton } from "./ui";
 import { WorldQuest } from "./WorldQuest";
 import {
   overviewView,
@@ -651,10 +652,13 @@ export default function ExploreMap({ entry, onStatus, onReveal, guided = false }
           <div className="pointer-events-auto min-w-0">
             {mode === "atlas" && quests.status === "ready" && <FilterBar counts={counts} show={show} onToggle={toggleFilter} />}
             {mode === "world" && arrived && worldInfo && (
-              <div aria-live="polite" className="max-w-72 rounded-2xl border border-hairline bg-ivory/92 px-3.5 py-2 shadow-float backdrop-blur-md">
-                <Eyebrow>{worldText.near(worldInfo.station.name)}</Eyebrow>
-                <p className="font-ui text-sm font-medium text-graphite">{worldText.problems(worldProblemCount)}</p>
-                {worldInfo.note && <p className="mt-1 font-ui text-xs text-taupe">{worldInfo.note.kind === "far" ? worldText.far : worldText.quiet(worldInfo.note.from)}</p>}
+              <div aria-live="polite" className="w-fit max-w-72 rounded-2xl bg-ivory/80 px-3 py-2 shadow-float backdrop-blur-xl backdrop-saturate-150">
+                <div className="flex items-center gap-2">
+                  <MapPin className="size-4 shrink-0 text-cat-verify" aria-hidden />
+                  <p className="font-heading text-sm leading-tight font-semibold text-graphite">{worldText.near(worldInfo.station.name)}</p>
+                </div>
+                <p className="mt-0.5 pl-6 font-ui text-xs text-taupe">{worldText.problems(worldProblemCount)}</p>
+                {worldInfo.note && <p className="mt-1 pl-6 font-ui text-xs text-taupe">{worldInfo.note.kind === "far" ? worldText.far : worldText.quiet(worldInfo.note.from)}</p>}
               </div>
             )}
           </div>
