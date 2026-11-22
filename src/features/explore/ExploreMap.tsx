@@ -29,6 +29,8 @@ import { categories, content, dive, landmarks, world as worldText, type Category
 import type { LoadStatus } from "./DiveGate";
 import { MapHint } from "./Hints";
 import { LandmarkMarker } from "./LandmarkMarker";
+import { BuMarkers } from "@/features/bu-places/BuMarkers";
+import { buPlaces } from "@/features/bu-places/content";
 import { FilterBar, PinLegend, ProgressChip, StatusChip } from "./MapOverlays";
 import { subwayDownload } from "./prefetch";
 import { ClusterPin, ProblemPin } from "./ProblemMarker";
@@ -223,6 +225,10 @@ export default function ExploreMap({ entry, onStatus, onReveal, guided = false }
   // Scenery is anchored to the building, which can be a few blocks from its station.
   const districtLandmarks = useMemo(
     () => worldInfo ? landmarks.filter(l => insideWorld(worldInfo.center, [l.longitude, l.latitude], 1.05)) : [],
+    [worldInfo],
+  );
+  const districtBuPlaces = useMemo(
+    () => worldInfo ? buPlaces.filter(p => insideWorld(worldInfo.center, [p.longitude, p.latitude], 1.05)) : [],
     [worldInfo],
   );
   // The hint points at one open challenge pin near the middle of the little world. Only pins that are really
@@ -603,6 +609,8 @@ export default function ExploreMap({ entry, onStatus, onReveal, guided = false }
                   scale={landmarkScale}
                 />
               ))}
+            {data && mode === "atlas" && <BuMarkers blockers={landmarks} />}
+            {data && mode === "world" && <BuMarkers places={districtBuPlaces} />}
             {mode !== "world" &&
               clusters.map((cluster) =>
                 cluster.stops.length > 1 ? (
