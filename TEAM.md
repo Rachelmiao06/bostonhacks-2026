@@ -2,11 +2,15 @@
 
 | Page | Route | Folder | Owner |
 |---|---|---|---|
-| Home | `/` | `src/features/home/` | TBD |
-| Explore (pixel map) | `/explore` | `src/features/explore/` | TBD |
-| My World (the knitted island, whole screen) | `/world` | `src/features/island/` | Rachel |
-| Challenge details + submit | `/challenges/[id]` (not created yet) | `src/features/challenge/` | TBD |
+| Explore (the map is the home page) | `/` and `/explore` | `src/features/explore/` | Rachel |
+| Missions (guided community mission) | opens from the map card | `src/features/missions/` | Rachel |
+| Challenge page + submit form | `/challenges/[id]`, `/challenge` | `src/features/challenge/` | Rachel (live page), Louie (older hub) |
+| Report (photo to Boston 311) | `/report` | `src/features/report/` | TBD |
+| My World (the knitted island) | `/world` | `src/features/island/` | Rachel |
+| Passport | `/passport` | `src/features/passport/` | Louie |
+| Stats | `/stats` | `src/features/stats/` | TBD |
 | About | `/about` | `src/features/about/` | TBD |
+| First-visit coach, trolley chat, landmarks | on the map | `src/features/coach/`, `trolley-chat/`, `landmarks/` | see each README |
 
 Fill in owners once you decide who does what. Add a page = add a row, a route and a folder (on its own PR).
 
