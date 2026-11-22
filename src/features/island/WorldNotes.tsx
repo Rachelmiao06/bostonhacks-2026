@@ -21,7 +21,7 @@ const rank = [
  * again). Pointing at them pauses the roll. Tapping the front one flies the camera to that part. A small pill hides them
  * and brings them back. Reduced Motion: no rolling; the dots pick which banner to read.
  */
-export function WorldNotes({ onPick, hidden }: { onPick: (id: string) => void; hidden?: boolean }) {
+export function WorldNotes({ onPick, hidden, low }: { onPick: (id: string) => void; hidden?: boolean; low?: boolean }) {
   const still = useReducedMotion();
   const points = content.notes.points;
   const n = content.notes;
@@ -47,7 +47,7 @@ export function WorldNotes({ onPick, hidden }: { onPick: (id: string) => void; h
     <div
       onPointerEnter={() => setPaused(true)}
       onPointerLeave={() => setPaused(false)}
-      className={`pointer-events-none absolute top-[9rem] left-2 z-20 w-[min(20rem,calc(100%-1rem))] flex-col items-start gap-2 sm:left-4 ${hidden ? "hidden" : "flex"}`}
+      className={`pointer-events-none absolute ${low ? "top-[9.5rem]" : "top-[7.75rem]"} left-2 z-20 w-[min(20rem,calc(100%-1rem))] flex-col items-start gap-2 sm:left-4 ${hidden ? "hidden" : "flex"}`}
     >
       {/* the pill: names the banners, and hides or brings them back */}
       <button

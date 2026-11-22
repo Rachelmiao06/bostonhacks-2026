@@ -1,6 +1,5 @@
 export const content = {
   title: "Your Little World",
-  subtitle: "A little world shaped by your contributions.",
   loading: "Winding the yarn…",
 
   // One small status at a time. The scene and the rider's progress fail for different reasons.

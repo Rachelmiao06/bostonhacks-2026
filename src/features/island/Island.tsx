@@ -292,7 +292,7 @@ function IslandView({
 
       <header hidden={tourShown} className="pointer-events-none absolute top-20 left-4 max-w-[min(20rem,calc(100%-2rem))] sm:left-6">
         <h1 className="font-serif text-2xl leading-tight font-semibold tracking-tight">{content.title}</h1>
-        <p className="text-xs text-taupe sm:text-sm">{preview ? content.help.previewNote : content.subtitle}</p>
+        {preview && <p className="text-xs text-taupe sm:text-sm">{content.help.previewNote}</p>}
       </header>
 
       {/* One small status at a time, never a wall of errors */}
@@ -388,7 +388,7 @@ function IslandView({
       {collectionOpen && <Collection known={plan.progressKnown ? known : null} handle={handle} onClose={closeCollection} />}
 
       {/* Three phone-style banners at the top left say what My World is (not during the tour, a ticket or the gallery) */}
-      {phase === "idle" && <WorldNotes hidden={tourShown || ticket !== null || collectionOpen} onPick={(id) => handle.current?.focusHotspot(id)} />}
+      {phase === "idle" && <WorldNotes low={preview} hidden={tourShown || ticket !== null || collectionOpen} onPick={(id) => handle.current?.focusHotspot(id)} />}
 
       <IslandHelp preview={preview} onTogglePreview={onTogglePreview} onTour={phase === "idle" ? startTour : undefined} />
 
