@@ -50,9 +50,10 @@ export type Quest = {
   header: string;
   /**
    * MBTA's longer text, when it wrote one: often why the unit is out and step-free directions around it.
-   * Always MBTA's words, never ours. Null when MBTA wrote nothing (most escalators) and for verify quests.
+   * Always MBTA's words, never ours. Null or absent when MBTA wrote nothing (most escalators) and for verify quests.
+   * Optional so code that builds its own Quest (tests, samples) keeps compiling.
    */
-  description: string | null;
+  description?: string | null;
   /** e.g. "MAINTENANCE", "UNKNOWN_CAUSE" */
   cause: string;
   startedAt: string;

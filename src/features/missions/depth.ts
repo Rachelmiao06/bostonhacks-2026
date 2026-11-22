@@ -74,7 +74,7 @@ const DIRECTION = /\bTo (?:exit|board|travel|access|reach|transfer|enter|get)\b/
  * Splits MBTA's own description into its explanation ("closed for major equipment upgrades...") and its
  * step-free directions ("To board a train to Forest Hills: ..."). The words are MBTA's, only cut into pieces.
  */
-export function mbtaNotes(description: string | null): { about: string | null; ways: string[] } {
+export function mbtaNotes(description: string | null | undefined): { about: string | null; ways: string[] } {
   if (!description) return { about: null, ways: [] };
   // MBTA mixes real line breaks with a typed-out "\n".
   const text = description.replace(/\\n/g, "\n").replace(/\r/g, "");
