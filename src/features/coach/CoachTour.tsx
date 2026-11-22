@@ -5,7 +5,6 @@ import { Camera, MapPin, Sparkles, TrainFront, X, type LucideIcon } from "lucide
 import { cn } from "@/lib/utils";
 import { categories } from "@/features/explore/content";
 import { categoryStyle } from "@/features/explore/category";
-import { primaryClass, primaryStyle } from "@/features/explore/glass";
 import { hasSeen } from "@/features/explore/onboarding";
 import { coach } from "./content";
 import { coachMarkSeen, coachReset, coachSeen } from "./storage";
@@ -144,7 +143,11 @@ function Intro({ onStart }: { onStart: () => void }) {
         className="w-full max-w-md rounded-3xl bg-ivory/96 px-6 pt-4 pb-5 sm:bg-ivory/78 font-ui text-graphite shadow-float backdrop-blur-xl backdrop-saturate-150 motion-safe:animate-in motion-safe:zoom-in-95"
       >
         <TrolleyHero />
-        <p className="mt-3 font-mono text-[0.65rem] tracking-[0.14em] text-taupe uppercase">{t.eyebrow}</p>
+        {/* The knitted "Tada" bounces (a transparent animated WebP made from the designer GIF). Reduced Motion gets one still frame. */}
+        <picture>
+          <source media="(prefers-reduced-motion: reduce)" srcSet="/assets/coach/tada-still.webp" />
+          <img src="/assets/coach/tada-bounce.webp" alt={t.eyebrow} width={242} height={176} className="pointer-events-none mt-2 h-14 w-auto select-none" />
+        </picture>
         <h2 id="coach-intro-title" className="mt-1 font-heading text-3xl leading-[1.05] font-semibold">{t.title}</h2>
         <p className="mt-2 text-sm leading-snug text-taupe">{t.body}</p>
         <ul className="mt-6 space-y-4">
@@ -160,7 +163,13 @@ function Intro({ onStart }: { onStart: () => void }) {
             );
           })}
         </ul>
-        <button ref={primary} type="button" onClick={onStart} className={`${primaryClass} mt-7 h-11 w-full px-6 text-sm`} style={primaryStyle}>
+        {/* The button's skin is a green glass pill with a light that sweeps across it (animated WebP); Reduced Motion gets the still skin. The label is real text on top. */}
+        <button
+          ref={primary}
+          type="button"
+          onClick={onStart}
+          className="mt-7 h-12 w-full cursor-pointer rounded-full bg-[url('/assets/coach/lets-go-skin.webp')] bg-[length:100%_100%] bg-no-repeat px-6 font-heading text-base font-semibold text-ivory [text-shadow:0_1px_1px_color-mix(in_oklab,var(--graphite)_45%,transparent)] outline-none transition-[filter,transform] hover:brightness-105 focus-visible:ring-4 focus-visible:ring-graphite/25 active:scale-[0.99] motion-reduce:bg-[url('/assets/coach/lets-go-skin.png')]"
+        >
           {t.start}
         </button>
         <button
