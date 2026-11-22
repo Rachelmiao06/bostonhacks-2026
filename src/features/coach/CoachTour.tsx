@@ -124,8 +124,7 @@ function Intro({ onStart }: { onStart: () => void }) {
             );
           })}
         </ul>
-        <p className="mt-6 text-[0.7rem] leading-snug text-taupe">{t.honest}</p>
-        <button ref={primary} type="button" onClick={onStart} className={`${primaryClass} mt-4 h-11 w-full px-6 text-sm`} style={primaryStyle}>
+        <button ref={primary} type="button" onClick={onStart} className={`${primaryClass} mt-7 h-11 w-full px-6 text-sm`} style={primaryStyle}>
           {t.start}
         </button>
         <button

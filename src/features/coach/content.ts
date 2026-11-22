@@ -11,7 +11,6 @@ export const coach = {
       { id: "report", label: "Report", text: "Snap a photo of something wrong. We help you say it clearly." },
       { id: "world", label: "My World", text: "Each mission you finish grows your own knitted island." },
     ],
-    honest: "A rider project. Finishing a mission does not send anything to the MBTA.",
     start: "Let’s go",
     skip: "Skip",
   },
