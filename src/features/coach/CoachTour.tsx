@@ -212,7 +212,11 @@ function Feed({ onDone }: { onDone: () => void }) {
   // one pin while the rider moves the map; PinGuide then tracks it frame by frame.
   const [pin, setPin] = useState<HTMLElement | null>(null);
   const finalRef = useRef<HTMLDivElement>(null);
+  const kindRef = useRef<HTMLDivElement>(null);
   const finalShown = banners.length >= TOTAL;
+  // The newest banner of a problem kind points at that kind's own chip in the top row of the map.
+  const newest = banners[0];
+  const pointAtChip = !!newest && newest.id < categories.length && !newest.hidden;
 
   // Banners arrive one at a time; each kind banner slides away after a while, the last one stays.
   useEffect(() => {
@@ -256,10 +260,11 @@ function Feed({ onDone }: { onDone: () => void }) {
           const rank = banners.filter((x) => !x.hidden || x.id === TOTAL - 1).findIndex((x) => x.id === b.id);
           const isFinal = b.id === TOTAL - 1;
           return (
-            <Banner key={b.id} banner={b} rank={rank} isFinal={isFinal} hasPin={!!pin} onClose={onDone} boxRef={isFinal ? finalRef : undefined} />
+            <Banner key={b.id} banner={b} rank={rank} isFinal={isFinal} hasPin={!!pin} onClose={onDone} boxRef={isFinal ? finalRef : b.id === newest?.id ? kindRef : undefined} />
           );
         })}
       </section>
+      {pointAtChip && <ChipGuide key={newest.id} index={newest.id} boxRef={kindRef} />}
       {finalShown && pin && <PinGuide pin={pin} boxRef={finalRef} />}
     </>
   );
@@ -296,6 +301,82 @@ function Banner({ banner, rank, isFinal, hasPin, onClose, boxRef }: { banner: Ba
           <X className="size-3.5" aria-hidden />
         </button>
       )}
+    </div>
+  );
+}
+
+/** The filter chip for a kind (the top row of the map): the toolbar's buttons are All, the four kinds in order, then Near me. */
+function chipFor(i: number): HTMLElement | null {
+  const bar = document.querySelector('[role="toolbar"]');
+  const buttons = bar ? [...bar.querySelectorAll<HTMLElement>(":scope > button")] : [];
+  return buttons[i + 1] ?? null;
+}
+
+/**
+ * Points from the newest banner up to its own filter chip: a ring around the chip and a dotted line flowing to it. Like PinGuide it is
+ * placed straight on the DOM every frame, so it stays glued to the chip while the chip bar scrolls on a phone.
+ */
+function ChipGuide({ index, boxRef }: { index: number; boxRef: RefObject<HTMLDivElement | null> }) {
+  const wrap = useRef<HTMLDivElement>(null);
+  const path = useRef<SVGPathElement>(null);
+  const ring = useRef<SVGRectElement>(null);
+  const ping = useRef<SVGRectElement>(null);
+
+  useLayoutEffect(() => {
+    const chip = chipFor(index);
+    if (!chip) return;
+    // The bar scrolls sideways on a phone: bring this chip into view first.
+    chip.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
+    const place = () => {
+      const w = wrap.current;
+      const r = chip.getBoundingClientRect();
+      const box = boxRef.current?.getBoundingClientRect();
+      if (!w || !box || !chip.isConnected) return;
+      const vw = window.innerWidth;
+      const visible = r.width > 0 && r.right > 8 && r.left < vw - 8;
+      w.style.opacity = visible ? "1" : "0";
+      if (!visible) return;
+      const pad = 5;
+      for (const el of [ring.current, ping.current]) {
+        el?.setAttribute("x", String(r.left - pad));
+        el?.setAttribute("y", String(r.top - pad));
+        el?.setAttribute("width", String(r.width + pad * 2));
+        el?.setAttribute("height", String(r.height + pad * 2));
+      }
+      const from = { x: Math.min(Math.max(r.left + r.width / 2, box.left + 28), box.right - 28), y: box.top };
+      const to = { x: r.left + r.width / 2, y: r.bottom + pad + 4 };
+      path.current?.setAttribute("d", `M${from.x} ${from.y} C${from.x} ${from.y - (from.y - to.y) * 0.4} ${to.x} ${to.y + (from.y - to.y) * 0.4} ${to.x} ${to.y}`);
+    };
+    place();
+    const marker = chip.parentElement;
+    const watcher = marker ? new MutationObserver(place) : null;
+    watcher?.observe(chip, { attributes: true });
+    let raf = requestAnimationFrame(function loop() {
+      place();
+      raf = requestAnimationFrame(loop);
+    });
+    window.addEventListener("resize", place);
+    return () => {
+      watcher?.disconnect();
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", place);
+    };
+  }, [index, boxRef]);
+
+  return (
+    <div ref={wrap} aria-hidden className="pointer-events-none fixed inset-0 z-40 opacity-0 transition-opacity duration-200">
+      <style>{`
+        @keyframes coach-flow { to { stroke-dashoffset: -28; } }
+        @keyframes coach-chip-ping { 0% { transform: scale(.96); opacity: .7; } 70%, 100% { transform: scale(1.16); opacity: 0; } }
+        .coach-flow { animation: coach-flow 1.1s linear infinite; }
+        .coach-chip-ping { transform-box: fill-box; transform-origin: center; animation: coach-chip-ping 1.5s ease-out infinite; }
+        @media (prefers-reduced-motion: reduce) { .coach-flow, .coach-chip-ping { animation: none; } }
+      `}</style>
+      <svg width="100%" height="100%" className="absolute inset-0">
+        <path ref={path} fill="none" stroke="var(--cat-verify)" strokeWidth="4" strokeLinecap="round" strokeDasharray="1 13" className="coach-flow" />
+        <rect ref={ring} rx="16" fill="none" stroke="var(--cat-verify)" strokeWidth="2.5" strokeOpacity=".85" />
+        <rect ref={ping} rx="16" fill="none" stroke="var(--cat-verify)" strokeWidth="2" className="coach-chip-ping" />
+      </svg>
     </div>
   );
 }
