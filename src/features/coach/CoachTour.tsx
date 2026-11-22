@@ -31,7 +31,19 @@ export function CoachTour() {
 
   // Decide what to show, once, in the browser.
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("tour") === "1") coachReset();
+    // `/?tour=1` replays everything from the start: the coach AND Explore's welcome (where the rider picks a start).
+    // Explore reads its saved state when it loads, so clear it, drop the flag from the address and reload once.
+    if (new URLSearchParams(window.location.search).get("tour") === "1") {
+      coachReset();
+      try {
+        window.localStorage.removeItem("tparty.onboarding");
+      } catch {
+        // storage blocked: nothing to reset
+      }
+      window.history.replaceState(null, "", window.location.pathname);
+      window.location.reload();
+      return;
+    }
     const t = window.setTimeout(() => {
       if (!coachSeen("intro")) setPhase("intro");
       else if (!coachSeen("tour")) setPhase("waiting");
