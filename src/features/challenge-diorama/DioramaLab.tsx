@@ -65,6 +65,7 @@ export function DioramaLab() {
   };
 
   const sceneWhen: When | null = when === "now" || when === "earlier" ? when : null;
+  const view = phase === "saved" || step === "done" ? "final" : step === "note" ? "note" : step === "status" ? "status" : step === "when" ? "when" : "overview";
   const idx = FORM.indexOf(step);
   const canNext = step === "when" ? sceneWhen !== null : step === "status" ? status !== null : true;
 
@@ -100,7 +101,7 @@ export function DioramaLab() {
             </div>
 
             <div className="px-3">
-              <Diorama landmark={landmark} when={sceneWhen} status={status} rider={step === "note" || step === "done"} note={note.trim().length > 0} saving={phase === "saving"} failed={phase === "failed"} confirmed={phase === "saved"} reduced={reduced} slow={slow ? 3 : 1} sound={sound} />
+              <Diorama view={view} landmark={landmark} when={sceneWhen} status={status} rider={step === "note" || step === "done"} note={note.trim().length > 0} saving={phase === "saving"} failed={phase === "failed"} confirmed={phase === "saved"} reduced={reduced} slow={slow ? 3 : 1} sound={sound} />
             </div>
 
             <div ref={body} className="relative min-h-[17rem] overflow-hidden px-5 pt-4 pb-3">

@@ -13,6 +13,7 @@ const A = "/assets/challenge-diorama";
 
 export type Status = "working" | "unsure" | "out";
 export type When = "now" | "earlier";
+export type CamView = "overview" | "when" | "status" | "note" | "final";
 export type Landmark = "elevator" | "escalator" | "gate" | "bus" | "train" | "signpost";
 
 type L = { src: string; w: number; h: number; x: number; y: number; dw: number };
@@ -67,6 +68,8 @@ export type DioramaProps = {
   when: When | null;
   status: Status | null;
   landmark: Landmark;
+  /** Where the camera looks: each question zooms to its object; the end pulls back and turns. */
+  view: CamView;
   rider: boolean;
   note: boolean;
   /** Saving: the seal is a dashed outline that breathes. Failed: it shakes and stays an outline. */
@@ -105,6 +108,23 @@ const LAMP_IMG: Record<Status, { src: string; w: number; h: number }> = {
 };
 const LIGHT: Record<Status, string> = { working: "var(--leaf)", out: "var(--cherry)", unsure: "var(--sun)" };
 
+const PERSPECTIVE = 1100;
+
+type Cam = { xp: number; yp: number; s: number; rx: number; ry: number };
+/** Where the camera sits for each moment. (fx, fy) is the point of the 420 x 400 stage to bring to the middle. */
+function camTarget(view: CamView, lm: LM): Cam {
+  const at = (fx: number, fy: number, s: number, rx: number, ry: number): Cam => ({ xp: (((SW / 2 - fx) * s) / SW) * 100, yp: (((SH / 2 - fy) * s) / SH) * 100, s, rx, ry });
+  if (view === "when") return at(150, 156, 1.45, 3, 7);
+  if (view === "status") {
+    const h = (lm.base.dw * lm.base.h) / lm.base.w;
+    const s = Math.min(2, 250 / lm.base.dw, 230 / h);
+    return at(lm.base.x + lm.base.dw / 2, lm.base.y + h / 2, s, 4, -9);
+  }
+  if (view === "note") return at(193, 250, 2.1, 2, 6);
+  if (view === "final") return at(210, 214, 0.94, 15, -20);
+  return at(210, 205, 1, 0, 0);
+}
+
 export function Diorama(p: DioramaProps) {
   const lm = LANDMARKS[p.landmark];
   const el = useRef<Record<string, HTMLElement | null>>({});
@@ -113,6 +133,8 @@ export function Diorama(p: DioramaProps) {
   const prev = useRef<{ vis: Record<string, boolean>; status: Status | null; confirmed: boolean; landmark: Landmark } | null>(null);
   const loops = useRef<gsap.core.Animation[]>([]);
   const timelines = useRef<gsap.core.Timeline[]>([]);
+  const camTween = useRef<gsap.core.Animation[]>([]);
+  const camFirst = useRef(true);
 
   const killLoops = () => { loops.current.forEach((t) => t.kill()); loops.current = []; };
   const run = (tl: gsap.core.Timeline) => { tl.timeScale(1 / p.slow); timelines.current.push(tl); return tl; };
@@ -303,8 +325,34 @@ export function Diorama(p: DioramaProps) {
     return () => { rider.removeEventListener("click", hop); lamps.forEach((l) => l.removeEventListener("click", blink)); breath?.kill(); gsap.set(body, { scaleY: 1 }); };
   }, [p.reduced, p.sound, p.status, p.landmark]);
 
+  // 6. Depth: the three groups sit at different distances, so when the camera turns they slide against each other.
+  useEffect(() => {
+    const spec: [string, number][] = [["gBack", -80], ["gMid", 0], ["gFront", 40]];
+    for (const [id, z] of spec) gsap.set(e(id), { z, scale: (PERSPECTIVE - z) / PERSPECTIVE, transformOrigin: "50% 50%" });
+  }, []);
+
+  // 7. The camera. Each question moves in on its object. After the server confirms, it pulls back, tilts down and turns slowly.
+  useEffect(() => {
+    const cam = e("cam");
+    if (!cam) return;
+    camTween.current.forEach((t) => t.kill());
+    camTween.current = [];
+    const t = camTarget(p.view, lm);
+    const to = { xPercent: t.xp, yPercent: t.yp, scale: t.s, rotationX: t.rx, rotationY: t.ry };
+    if (p.reduced || camFirst.current) { camFirst.current = false; gsap.set(cam, { ...to, transformOrigin: "50% 50%" }); return; }
+    const final = p.view === "final";
+    const tw = gsap.to(cam, { ...to, duration: final ? 2 : 1.15, delay: final ? 1.5 : 0, ease: "power3.inOut", overwrite: true, onComplete: () => {
+      if (!final) return;
+      camTween.current.push(gsap.fromTo(cam, { rotationY: t.ry }, { rotationY: -t.ry, duration: 9, yoyo: true, repeat: -1, ease: "sine.inOut" }).timeScale(1 / p.slow));
+    } });
+    tw.timeScale(1 / p.slow);
+    camTween.current.push(tw);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [p.view, p.landmark, p.reduced, p.slow]);
+
   useEffect(() => () => {
     killLoops();
+    camTween.current.forEach((t) => t.kill());
     timelines.current.forEach((t) => t.kill());
     gsap.killTweensOf(Object.values(el.current).filter(Boolean));
   }, []);
@@ -333,7 +381,8 @@ export function Diorama(p: DioramaProps) {
   return (
     <div ref={reg("card")} className="relative overflow-hidden rounded-[1.6rem] border border-ivory/80 shadow-float" style={{ background: "linear-gradient(180deg, color-mix(in oklab, var(--sky) 20%, var(--ivory)) 0%, var(--ivory) 70%)" }}>
       <div aria-hidden className="absolute inset-0" style={{ background: "linear-gradient(180deg, color-mix(in oklab, var(--cherry) 20%, var(--sun) 40%) 0%, color-mix(in oklab, var(--sun) 24%, var(--ivory)) 70%)", opacity: dusk ? 1 : 0, transition: p.reduced ? "none" : "opacity 0.9s" }} />
-      <div ref={reg("root")} role="img" aria-label={label} className="relative w-full" style={{ aspectRatio: `${SW} / ${SH}` }}>
+      <div ref={reg("root")} role="img" aria-label={label} className="relative w-full" style={{ aspectRatio: `${SW} / ${SH}`, perspective: PERSPECTIVE }}>
+        <div ref={reg("cam")} className="absolute inset-0" style={{ transformStyle: "preserve-3d" }}>
         <div ref={reg("gBack")} className="absolute inset-0">
           {img(FIXED.skyDay, "sky", hidden)}
           {img(FIXED.skyDusk, "skyDusk", hidden)}
@@ -388,6 +437,7 @@ export function Diorama(p: DioramaProps) {
           {img(at(FIXED.spark2, lm.glow.x - 50, lm.glow.y - 14, 32), "spark2", hidden)}
           {img(at(FIXED.spark3, lm.glow.x + 30, lm.glow.y + 36, 24), "spark3", hidden)}
           {img(at(FIXED.spark4, lm.glow.x - 16, lm.glow.y - 36, 22), "spark4", hidden)}
+        </div>
         </div>
         <div ref={reg("frame")} aria-hidden className="pointer-events-none absolute inset-0" style={hidden}>
           <div className="size-full" style={{ borderStyle: "solid", borderWidth: 26, borderImage: `url(${A}/frame.webp) 62 / 26px stretch`, borderRadius: 0 }} />

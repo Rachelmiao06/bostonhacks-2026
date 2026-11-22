@@ -9,6 +9,9 @@ Status: rough test only. NOT in the real Challenge flow. The real flow (`feature
 - Sharing: a dashed seal outline breathes while saving. The seal, frame and finish happen ONLY after the (simulated) server says saved. A failure keeps the outline, shows the error and offers "Try again".
 - Reduced Motion: states appear in place, no travel, flicker or tilt. Light colour and the barrier still carry the meaning.
 
+## Camera (2.5D)
+Each question moves the camera in on its object (sky and station, the landmark, the rider). After the server confirms, the camera waits for the seal, then pulls back, tilts down and turns slowly around the whole scene. Layers sit at different depths (CSS 3D), so the turn shows parallax. It is not a real 3D scene: it cannot go behind objects. Reduced Motion gets the final angle as a still view.
+
 ## Files
 - `Diorama.tsx`: the scene. GSAP timelines for the beats, a pointer-depth drift. Layers are listed in `LAYERS` (positions in a 420 x 400 stage).
 - `DioramaLab.tsx`: the test page with switches (Reduced Motion, Slow-mo, server fails on next share).
