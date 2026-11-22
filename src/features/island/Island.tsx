@@ -10,7 +10,7 @@ import { Collection } from "./Collection";
 import { GiftTicket } from "./GiftTicket";
 import { HotspotLabel, type TagIcon } from "./HotspotLabel";
 import { IslandHelp } from "./IslandHelp";
-import { JournalTicket } from "./JournalTicket";
+import { JournalSheet } from "./JournalSheet";
 import { Tour } from "./Tour";
 import { WorldNotes } from "./WorldNotes";
 import { IslandScene } from "./IslandLoader";
@@ -365,7 +365,7 @@ function IslandView({
       {/* Tapping the island outside an open ticket closes it, the same as the close button */}
       {ticket !== null && <div aria-hidden onClick={closeTicket} className="absolute inset-0 z-10" />}
 
-      {ticket === "journal" && <JournalTicket progress={progress} known={plan.progressKnown ? known : null} handle={handle} onClose={closeTicket} onRetry={onRetry} />}
+      {ticket === "journal" && <JournalSheet progress={progress} known={plan.progressKnown ? known : null} preview={preview} onClose={closeTicket} onRetry={onRetry} />}
       {ticket?.startsWith("gift-") && (
         <GiftTicket
           gift={demoGifts[Number(ticket.slice(5))]}
