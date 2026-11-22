@@ -7,13 +7,10 @@ import { depth as words } from "./content";
  * Nothing is estimated: a fact with no data behind it is left out, never guessed.
  */
 
-export type Fact = { value: string; label: string };
-
 const DAY = 86_400_000;
 const BOSTON = "America/New_York";
 
 function duration(days: number): string {
-  if (days < 1) return words.today;
   if (days < 60) return words.days(days);
   if (days < 730) return words.months(Math.round(days / 30));
   return words.years((days / 365).toFixed(1).replace(/\.0$/, ""));
@@ -38,22 +35,37 @@ function serviceDay(iso: string): string {
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: BOSTON }).format(shifted);
 }
 
-/** Up to three short facts for the overview. Each one appears only when its data exists. */
-export function storyFacts(quest: Quest, now: Date): Fact[] {
-  const facts: Fact[] = [];
+export type Status = {
+  /** "Out of service for 41 days" */
+  headline: string;
+  /** Who says so, and whether any rider has checked. */
+  trust: string;
+  /** Extra facts in one line, only when their data exists: "3rd time out in 90 days · MBTA plans to finish Dec 1". */
+  extra: string | null;
+};
+
+/** The one status block of the overview. Each part appears only when its data exists. */
+export function statusOf(quest: Quest, now: Date): Status {
   const unit = quest.kind === "elevator" || quest.kind === "escalator";
-  if (quest.mode === "verify") {
-    if (quest.resolvedAt) facts.push({ value: ago(quest.resolvedAt, now), label: words.fixedLabel });
-  } else {
-    facts.push({ value: duration(quest.daysOpen), label: unit ? words.outLabel : words.ongoingLabel });
-  }
-  if (quest.failuresLast90Days !== undefined && quest.failuresLast90Days >= 2) {
-    facts.push({ value: words.nthTime(ordinal(quest.failuresLast90Days)), label: words.in90Days });
-  }
-  if (quest.mode === "report" && quest.expectedEnd && new Date(quest.expectedEnd).getTime() > now.getTime()) {
-    facts.push({ value: serviceDay(quest.expectedEnd), label: words.plannedEnd });
-  }
-  return facts;
+  const verify = quest.mode === "verify";
+  let headline: string;
+  if (verify && quest.resolvedAt) headline = words.fixedAgo(ago(quest.resolvedAt, now));
+  else if (quest.daysOpen < 1) headline = unit ? words.outToday : words.startedToday;
+  else headline = (unit ? words.outFor : words.ongoingFor)(duration(quest.daysOpen));
+
+  const source = verify ? words.officialFixed : words.official;
+  const checks = quest.checks; // absent = unknown: say only who reported it
+  const checked = !checks
+    ? null
+    : checks.riders === 0
+      ? words.noChecks
+      : words.someChecks(checks.riders, checks.lastAt ? ago(checks.lastAt, now) : null);
+
+  const extra: string[] = [];
+  if (quest.failuresLast90Days !== undefined && quest.failuresLast90Days >= 2) extra.push(words.repeat(ordinal(quest.failuresLast90Days)));
+  if (!verify && quest.expectedEnd && new Date(quest.expectedEnd).getTime() > now.getTime()) extra.push(words.plannedEnd(serviceDay(quest.expectedEnd)));
+
+  return { headline, trust: [source, checked].filter(Boolean).join(" "), extra: extra.join(" · ") || null };
 }
 
 const DIRECTION = /\bTo (?:exit|board|travel|access|reach|transfer|enter|get)\b/;

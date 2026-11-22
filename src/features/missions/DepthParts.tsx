@@ -1,66 +1,73 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Clock } from "lucide-react";
 import type { Quest, QuestChecks, QuestFeed } from "@/lib/mbta";
 import { useMyProgress } from "@/features/explore/progress";
+import { glassClass, glassStyle } from "@/features/explore/glass";
 import { cn } from "@/lib/utils";
 import { depth as words } from "./content";
-import { impactOf, mbtaNotes, storyFacts } from "./depth";
+import { impactOf, mbtaNotes, statusOf } from "./depth";
 
-const card = "rounded-2xl border border-graphite/12 bg-ivory/70 p-4";
+const card = "rounded-2xl bg-graphite/6 p-4";
 const label = "text-xs font-medium tracking-wide text-taupe uppercase";
 
-/** Overview: how long, how often, until when, and MBTA's own explanation. Only facts that exist are shown. */
-export function Story({ quest }: { quest: Quest }) {
+/** Overview: the one status block. How long, who says so, whether any rider has checked. */
+export function StatusBlock({ quest }: { quest: Quest }) {
   const [now] = useState(() => new Date());
-  const facts = storyFacts(quest, now);
-  const { about } = mbtaNotes(quest.description);
-  if (facts.length === 0 && !about) return null;
+  const status = statusOf(quest, now);
   return (
-    <section aria-label={words.storyTitle} className={cn(card, "space-y-3")}>
-      <p className={label}>{words.storyTitle}</p>
-      {facts.length > 0 && (
-        <dl className="flex gap-2">
-          {facts.map((f) => (
-            <div key={f.label} className="min-w-0 flex-1 rounded-xl bg-graphite/6 px-2.5 py-2">
-              <dd className="text-lg leading-tight font-semibold text-graphite">{f.value}</dd>
-              <dt className="mt-0.5 text-xs leading-snug text-taupe">{f.label}</dt>
-            </div>
-          ))}
-        </dl>
-      )}
-      {about && (
-        <p className="text-sm leading-relaxed text-graphite/85">
-          <span className="font-semibold">{words.fromMbta}: </span>
-          {about}
-        </p>
-      )}
+    <section className="space-y-1.5 rounded-2xl bg-graphite/6 p-4">
+      <p className="flex items-center gap-2.5 text-lg leading-snug font-semibold text-graphite">
+        <Clock className="size-5 shrink-0 text-taupe" aria-hidden />
+        {status.headline}
+      </p>
+      <p className="text-[0.95rem] leading-snug text-taupe">{status.trust}</p>
+      {status.extra && <p className="text-[0.95rem] leading-snug text-taupe">{status.extra}</p>}
     </section>
   );
 }
 
-/** Overview: MBTA's own step-free directions around the problem. Hidden when MBTA wrote none. */
-export function WayAround({ quest }: { quest: Quest }) {
-  const { ways } = mbtaNotes(quest.description);
-  if (ways.length === 0) return null;
-  const [first, ...rest] = ways;
+/**
+ * Overview, below the main action: MBTA's own explanation and step-free directions.
+ * A quiet secondary action, so it never competes with the start button. Renders nothing when MBTA wrote nothing.
+ */
+export function MbtaMore({ quest }: { quest: Quest }) {
+  const { about, ways } = mbtaNotes(quest.description);
+  const [open, setOpen] = useState(false);
+  if (!about && ways.length === 0) return null;
   return (
-    <section aria-label={words.wayTitle} className={cn(card, "space-y-2")}>
-      <p className={label}>{words.wayTitle}</p>
-      <p className="text-[0.95rem] leading-relaxed text-graphite">{first}</p>
-      {rest.length > 0 && (
-        <details className="group">
-          <summary className="flex min-h-11 cursor-pointer list-none items-center text-[0.95rem] font-semibold text-graphite underline decoration-graphite/30 underline-offset-4 outline-none hover:decoration-graphite focus-visible:ring-4 focus-visible:ring-graphite/25 group-open:hidden [&::-webkit-details-marker]:hidden">
-            {words.wayMore(rest.length)}
-          </summary>
-          <ul className="space-y-2">
-            {rest.map((way) => (
+    <section className="space-y-3">
+      {ways.length > 0 && (
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-base font-semibold text-graphite">{words.routeAsk}</p>
+          <button
+            type="button"
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+            style={glassStyle}
+            className={cn(glassClass, "h-11 shrink-0 px-4 text-sm")}
+          >
+            {open ? words.routeHide : words.routeShow}
+          </button>
+        </div>
+      )}
+      {open && (
+        <div className="space-y-2.5">
+          <ul className="space-y-2.5">
+            {ways.map((way) => (
               <li key={way} className="text-[0.95rem] leading-relaxed text-graphite">{way}</li>
             ))}
           </ul>
-        </details>
+          <p className="text-sm leading-snug text-taupe">{words.routeNote}</p>
+        </div>
       )}
-      <p className="text-xs leading-snug text-taupe">{words.wayNote}</p>
+      {about && (
+        <p className="text-[0.95rem] leading-relaxed text-graphite/85">
+          <span className="font-semibold">{words.fromMbta}: </span>
+          {about}
+        </p>
+      )}
     </section>
   );
 }

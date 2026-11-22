@@ -88,28 +88,48 @@ export const text = {
   },
 };
 
-// Words for the "depth" parts: the story of the problem, MBTA's way around it, what the rider's check did,
-// and progress along the line.
+// Words for the overview and the "depth" parts: the status of the problem, MBTA's own directions,
+// what the rider's check did, and progress along the line.
 export const depth = {
-  storyTitle: "The story so far",
-  fromMbta: "From the MBTA",
-  today: "Today",
+  chip: "Community mission",
+  helpCheck: (thing: string) => `Help check this ${thing}`,
+  helpConfirm: (thing: string) => `Help confirm this ${thing} works`,
+  reportsOut: (unit: string) => `MBTA reports ${unit} is out of service.`,
+  reportsFixed: (unit: string) => `MBTA says ${unit} is working again.`,
+
+  // Status block: one headline, one line on who has checked, one optional line of extra facts.
+  outFor: (time: string) => `Out of service for ${time}`,
+  outToday: "Out of service since today",
+  ongoingFor: (time: string) => `Ongoing for ${time}`,
+  startedToday: "Started today",
+  fixedAgo: (when: string) => `Marked fixed ${when}`,
+  official: "Reported by the MBTA.",
+  officialFixed: "The MBTA says it’s fixed.",
+  noChecks: "No Tada rider has checked it yet.",
+  someChecks: (n: number, when: string | null) =>
+    `${n === 1 ? "1 Tada rider has" : `${n} Tada riders have`} checked it${when ? `, most recently ${when}` : ""}.`,
+  repeat: (nth: string) => `${nth} time out in 90 days`,
+  plannedEnd: (date: string) => `MBTA plans to finish ${date}`,
   days: (n: number) => (n === 1 ? "1 day" : `${n} days`),
   months: (n: number) => `${n} months`,
   years: (n: string) => (n === "1" ? "1 year" : `${n} years`),
-  outLabel: "out of service",
-  ongoingLabel: "since it began",
-  fixedLabel: "marked fixed by the MBTA",
-  nthTime: (nth: string) => `${nth} time`,
-  in90Days: "out in 90 days",
-  plannedEnd: "MBTA’s planned end",
   minutesAgo: (n: number) => (n === 1 ? "1 minute ago" : `${n} minutes ago`),
   hoursAgo: (n: number) => (n === 1 ? "1 hour ago" : `${n} hours ago`),
   daysAgo: (n: number) => (n === 1 ? "1 day ago" : `${n} days ago`),
 
-  wayTitle: "A way around, from the MBTA",
-  wayMore: (n: number) => (n === 1 ? "Show 1 more direction" : `Show ${n} more directions`),
-  wayNote: "These directions are the MBTA’s own words. Check signs at the station too.",
+  todoTitle: "What you’ll do",
+  goToUnit: (unit: string, station: string) => `Go to ${unit} at ${station}.`,
+  goTo: (station: string) => `Go to ${station}.`,
+  checkUnit: "Check whether it’s working, if it’s safe and easy for you to get to.",
+  shareStep: "Share what you found to help other riders.",
+  startUnit: (thing: string) => `Check this ${thing}`,
+  reassure: "No repair needed · Just report what you see",
+
+  routeAsk: "Need another accessible route?",
+  routeShow: "View MBTA directions",
+  routeHide: "Hide directions",
+  routeNote: "These directions are the MBTA’s own words. Check signs at the station too.",
+  fromMbta: "From the MBTA",
 
   impactTitle: "What your check did",
   first: "You’re the first Tada rider to check this.",
