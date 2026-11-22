@@ -113,6 +113,7 @@ export function setupUnravel({ root, sheep, groundAt, walkable, colliders, mat, 
 	})();
 
 	const anchor = new THREE.Vector3();
+	const anchorM = new THREE.Matrix4();
 	const tip = new THREE.Vector3();
 	const pull = new THREE.Vector3(1, 0, 0);
 	const head = new THREE.Vector3();
@@ -264,8 +265,14 @@ export function setupUnravel({ root, sheep, groundAt, walkable, colliders, mat, 
 				tip.set(rear.mesh.position.x + REAR_DIR.x * r, rear.mesh.position.y + REAR_DIR.y * r, wz);
 			}
 		}
-		s.body.updateWorldMatrix(true, false);
-		return out.copy(tip).applyMatrix4(s.body.matrixWorld);
+		// T Party: the body's place in the island, left out the group the weave module wraps around every sheep. That wrapper
+		// is scaled to nothing while the island is not knitted in (and while a sheep has not joined yet), and going through it
+		// used to collapse all three threads onto the island's centre, where they twitched in the river.
+		s.g.updateMatrix();
+		s.react.updateMatrix();
+		s.body.updateMatrix();
+		anchorM.multiplyMatrices(s.g.matrix, s.react.matrix).multiply(s.body.matrix);
+		return out.copy(tip).applyMatrix4(anchorM);
 	}
 
 	const freeRope = (u) => u.ropes.find((r) => r !== u.rope && !(u.loose && u.loose.rope === r));
@@ -859,10 +866,25 @@ export function setupUnravel({ root, sheep, groundAt, walkable, colliders, mat, 
 
 	// ---- per frame ------------------------------------------------------------------------
 
+	// T Party: a sheep that is not on the island (the weave module keeps its wrapper hidden until it has been earned or
+	// has dropped in) has no thread lying about either. When it appears, its thread is laid again at its real place.
+	function syncPresence(u) {
+		const there = u.s.g.parent ? u.s.g.parent.visible : true;
+		if (!there) {
+			for (const r of u.ropes) if (r.mesh.visible) r.mesh.visible = false;
+		} else if (u.there === false && u.state === 'idle' && !u.loose) {
+			if (u.rope) retireRope(u.rope);
+			u.rope = null;
+			spawnThread(u, true);
+		}
+		u.there = there;
+	}
+
 	function update(t, dt) {
 		dt = Math.min(dt, MAX_DT);
 		if (dt <= 0) return;
 		for (const u of units) {
+			syncPresence(u);
 			updateUnit(u, dt);
 			updateLoose(u, dt);
 		}
