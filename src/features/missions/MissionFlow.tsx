@@ -1,19 +1,25 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Dialog } from "@base-ui/react/dialog";
-import { ArrowLeft, ExternalLink, Loader2, MapPin, Sparkles, TriangleAlert, X } from "lucide-react";
+import { useReducedMotion } from "motion/react";
+import { ArrowLeft, ExternalLink, Loader2, MapPin, ShieldCheck, Sparkles, TriangleAlert, X } from "lucide-react";
 import type { Quest } from "@/lib/mbta";
 import { stampCount, useMyProgress } from "@/features/explore/progress";
 import { cn } from "@/lib/utils";
 import { EARLIER_LABELS, partsOf, type Answers } from "./compose";
-import { text } from "./content";
+import { depth, text } from "./content";
 import { NudgeTrack, WorldPreview } from "./Collectibles";
+import { LineProgress, MbtaMore, StatusBlock, YourImpact } from "./DepthParts";
 import { Choice, PhotoField, Primary, primaryClass, primaryStyle, Secondary, SummaryCard } from "./Parts";
 import { PixelIcon } from "./PixelIcon";
 import { locationOf } from "./templates";
 import { FORM_STEPS, useMission, type Step } from "./useMission";
+
+// The mission's little world behind the card. Loaded only when a mission opens (it brings GSAP and its pictures).
+const MissionWorld = dynamic(() => import("@/features/challenge-diorama/MissionWorld"), { ssr: false });
 
 const PREVIOUS: Record<Step, Step | null> = { overview: null, when: "overview", status: "when", note: "status", review: "note", done: null };
 const thingOf = (quest: Quest) => (quest.kind === "elevator" || quest.kind === "escalator" ? `the ${quest.kind}` : "it");
@@ -30,6 +36,19 @@ export function MissionFlow({ quest, onClose }: { quest: Quest; onClose: () => v
   const stepIndex = FORM_STEPS.indexOf(m.step);
   const previous = PREVIOUS[m.step];
 
+  // The world behind the card. It only draws the rider's answers and the server's result.
+  const reduced = useReducedMotion() ?? false;
+  const card = useRef<HTMLDivElement>(null);
+  const [cardHeight, setCardHeight] = useState(300);
+  useEffect(() => {
+    const el = card.current;
+    if (!el) return;
+    const watch = new ResizeObserver(() => setCardHeight(el.offsetHeight + 12));
+    watch.observe(el);
+    return () => watch.disconnect();
+  }, []);
+  const tone = m.template.options.find((o) => o.id === m.answers.status)?.tone ?? null;
+
   // A new screen starts at the top, and a screen reader hears its heading first.
   useEffect(() => {
     body.current?.scrollTo({ top: 0 });
@@ -38,6 +57,22 @@ export function MissionFlow({ quest, onClose }: { quest: Quest; onClose: () => v
 
   return (
     <>
+      <MissionWorld
+        kind={quest.kind}
+        step={m.step}
+        when={m.answers.when}
+        tone={tone}
+        hasNote={m.answers.note.trim().length > 0}
+        saving={m.sharing}
+        failed={m.shareError !== null}
+        confirmed={m.done !== null}
+        reduced={reduced}
+        bottomInset={cardHeight}
+      />
+      <div
+        ref={card}
+        className="flex max-h-[58dvh] min-h-0 flex-col overflow-hidden rounded-[1.75rem] border border-ivory/80 bg-ivory/60 text-graphite shadow-ticket backdrop-blur-2xl backdrop-saturate-150 sm:h-full sm:max-h-none"
+      >
       <div className="flex shrink-0 items-center justify-between gap-2 px-2 pt-2 font-ui">
         {previous ? (
           <IconButton label={text.back} onClick={() => m.go(previous)}>
@@ -48,12 +83,12 @@ export function MissionFlow({ quest, onClose }: { quest: Quest; onClose: () => v
         )}
         {stepIndex >= 0 && (
           <div className="min-w-0 flex-1 px-2">
-            <div role="progressbar" aria-label={text.steps} aria-valuemin={1} aria-valuemax={3} aria-valuenow={stepIndex + 1} aria-valuetext={text.stepOf(stepIndex + 1, 3)} className="flex gap-1.5">
+            <div role="progressbar" aria-label={text.steps} aria-valuemin={1} aria-valuemax={3} aria-valuenow={stepIndex + 1} aria-valuetext={text.stepOf(stepIndex + 1, 3)} className="sr-only">
               {FORM_STEPS.map((s, i) => (
                 <span key={s} className={cn("h-1.5 flex-1 rounded-full transition-colors", i <= stepIndex ? "bg-cat-verify" : "bg-graphite/12")} />
               ))}
             </div>
-            <p className="mt-1.5 text-sm text-taupe">{text.stepOf(stepIndex + 1, 3)}</p>
+            <p className="text-center text-sm font-medium text-taupe" aria-hidden>{text.stepOf(stepIndex + 1, 3)}</p>
           </div>
         )}
         <Dialog.Close
@@ -76,10 +111,10 @@ export function MissionFlow({ quest, onClose }: { quest: Quest; onClose: () => v
       <footer className="shrink-0 space-y-2 border-t border-graphite/10 bg-ivory/60 px-5 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-xl">
         {m.step === "overview" && (
           <>
-            <Primary onClick={() => m.go("when")}>{text.start} <span aria-hidden>→</span></Primary>
-            <a href={quest.sourceUrl} target="_blank" rel="noreferrer" className="flex h-11 items-center justify-center gap-1.5 rounded-full text-[0.95rem] font-semibold text-graphite underline decoration-graphite/30 underline-offset-4 outline-none hover:decoration-graphite focus-visible:ring-4 focus-visible:ring-graphite/25">
-              {text.officialAlert} <ExternalLink className="size-4" aria-hidden />
-            </a>
+            <Primary onClick={() => m.go("when")}>{overviewWords(quest, m.template).start} <span aria-hidden>→</span></Primary>
+            <p className="flex items-center justify-center gap-1.5 pt-0.5 text-sm text-taupe">
+              <ShieldCheck className="size-4 shrink-0" aria-hidden /> {depth.reassure}
+            </p>
           </>
         )}
         {m.step === "when" &&
@@ -100,6 +135,7 @@ export function MissionFlow({ quest, onClose }: { quest: Quest; onClose: () => v
           </>
         )}
       </footer>
+      </div>
     </>
   );
 }
@@ -120,33 +156,76 @@ function Heading({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Overview({ quest, template }: { quest: Quest; template: ReturnType<typeof useMission>["template"] }) {
+/** Elevators and escalators get an action title and a named unit; other kinds keep their template wording. */
+function overviewWords(quest: Quest, template: ReturnType<typeof useMission>["template"]) {
   const where = locationOf(quest);
+  const isUnit = quest.kind === "elevator" || quest.kind === "escalator";
+  const unit = isUnit ? (where.primary.split(" · ")[1] ?? `this ${quest.kind}`) : null;
+  const verify = quest.mode === "verify";
+  return {
+    where,
+    title: unit ? (verify ? depth.helpConfirm : depth.helpCheck)(quest.kind) : template.title,
+    subtitle: unit ? (verify ? depth.reportsFixed : depth.reportsOut)(unit) : template.description,
+    steps: [
+      unit ? depth.goToUnit(unit, quest.stationName) : depth.goTo(quest.stationName),
+      unit ? depth.checkUnit : template.task,
+      depth.shareStep,
+    ],
+    start: unit ? depth.startUnit(quest.kind) : text.start,
+  };
+}
+
+function Overview({ quest, template }: { quest: Quest; template: ReturnType<typeof useMission>["template"] }) {
+  const o = overviewWords(quest, template);
   return (
-    <div className="space-y-5">
-      <div className="flex items-center gap-3">
-        <span className="grid size-14 place-items-center rounded-2xl border border-ivory/90 bg-ivory/80 text-cat-verify shadow-float">
-          <PixelIcon name={template.icon} className="size-8" />
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-3">
+        <p className="rounded-full bg-graphite/8 px-3 py-1 text-xs font-semibold tracking-wide text-graphite uppercase">{depth.chip}</p>
+        <p className="flex min-w-0 items-center gap-1.5 text-sm text-taupe">
+          <MapPin className="size-4 shrink-0" aria-hidden />
+          <span className="truncate">{quest.stationName}</span>
+        </p>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <span className="grid size-16 shrink-0 place-items-center rounded-2xl border border-ivory/90 bg-ivory/80 text-cat-verify shadow-float">
+          <PixelIcon name={template.icon} className="size-9" />
         </span>
-        <p className="inline-flex items-center rounded-full bg-cat-verify/12 px-3 py-1 text-sm font-semibold text-cat-verify">{template.chip}</p>
-      </div>
-      <div className="space-y-2">
-        <Heading>{template.title}</Heading>
-        <p className="text-base leading-relaxed text-graphite/85">{template.description}</p>
-      </div>
-      <div className="flex gap-3 rounded-2xl border border-graphite/12 bg-ivory/70 p-4">
-        <MapPin className="mt-0.5 size-5 shrink-0 text-cat-verify" aria-hidden />
-        <div className="min-w-0">
-          <p className="text-xs font-medium tracking-wide text-taupe uppercase">{text.whereToCheck}</p>
-          <p className="mt-0.5 text-base font-semibold text-graphite">{where.primary}</p>
-          {where.secondary && <p className="text-sm text-taupe">{where.secondary}</p>}
+        <div className="min-w-0 space-y-1">
+          <Heading>{o.title}</Heading>
+          <p className="text-base leading-snug text-taupe">{o.subtitle}</p>
         </div>
       </div>
-      <p className="text-base text-graphite">
-        <span className="font-semibold">{text.task}: </span>
-        {template.task}
-      </p>
-      <p className="text-sm leading-snug text-taupe">{text.notOfficial}</p>
+
+      <StatusBlock quest={quest} />
+
+      <section className="space-y-3">
+        <h3 className="font-serif text-xl font-semibold tracking-tight text-graphite">{depth.todoTitle}</h3>
+        <ol className="space-y-2.5">
+          {o.steps.map((step, i) => (
+            <li key={step} className="flex gap-3 text-base leading-snug text-graphite">
+              <span aria-hidden className="w-5 shrink-0 font-semibold">{i + 1}.</span>
+              <span>{step}</span>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <div className="flex items-center gap-3 rounded-2xl bg-graphite/6 p-4">
+        <MapPin className="size-5 shrink-0 text-cat-verify" aria-hidden />
+        <div className="min-w-0">
+          <p className="text-base font-semibold text-graphite">{o.where.secondary ?? o.where.primary}</p>
+          {o.where.secondary && <p className="text-sm text-taupe">{o.where.primary}</p>}
+        </div>
+      </div>
+
+      <div className="space-y-4 border-t border-graphite/10 pt-5">
+        <MbtaMore quest={quest} />
+        <a href={quest.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center gap-1.5 text-[0.95rem] font-semibold text-graphite underline decoration-graphite/30 underline-offset-4 outline-none hover:decoration-graphite focus-visible:ring-4 focus-visible:ring-graphite/25">
+          {text.officialAlert} <ExternalLink className="size-4" aria-hidden />
+        </a>
+        <p className="text-sm leading-snug text-taupe">{text.notOfficial}</p>
+      </div>
     </div>
   );
 }
@@ -316,6 +395,8 @@ function DoneStep({ m, stampsBefore }: { m: M; stampsBefore: number | null }) {
   const already = m.done?.already ?? false;
   const stamps = progress.status === "ready" ? stampCount(progress.data) : null;
   const added = !already && stamps !== null && stampsBefore !== null && stamps > stampsBefore;
+  // The count from when this screen opened: a later refresh of the map would already include this rider.
+  const [checksAtOpen] = useState(m.quest.checks);
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-3">
@@ -330,6 +411,8 @@ function DoneStep({ m, stampsBefore }: { m: M; stampsBefore: number | null }) {
         <Heading>{already ? text.alreadyTitle : text.doneTitle}</Heading>
         <p className="text-base text-graphite/85">{already ? text.alreadyBody : text.doneBody}</p>
       </div>
+      <YourImpact checks={checksAtOpen} already={already} verify={m.verify} />
+      <LineProgress quest={m.quest} />
       {stamps !== null && <WorldPreview known={stamps} justUnlocked={added} />}
       <div className="space-y-2 rounded-2xl border border-graphite/12 bg-ivory/70 p-4">
         <p className="text-xs font-medium tracking-wide text-taupe uppercase">{text.mission}</p>

@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { KnittedControl, KnittedIcon } from "./Knitted";
 import { Disclosure, Panel, PrimaryButton, SecondaryButton } from "./ui";
 import { content, OFFICIAL_311 } from "./content";
+import { demoFix, demoOn } from "./demo-mode";
 import { markPrimerSeen, primerSeen } from "./store";
 
 export type Shot = { image: string; thumb: string; dataUrl: string; lat: number; lng: number; accuracy: number };
@@ -88,11 +89,11 @@ export function Camera({ onShot, onClose }: { onShot: (s: Shot) => void; onClose
           setFixAcc(p.coords.accuracy);
         },
         (e) => {
-          if (e.code === e.PERMISSION_DENIED) setProblem(PROBLEMS.locationDenied);
+          if (e.code === e.PERMISSION_DENIED && !demoOn()) setProblem(PROBLEMS.locationDenied);
         },
         { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 },
       );
-    } else {
+    } else if (!demoOn()) {
       setProblem(PROBLEMS.locationFailed);
     }
 
@@ -121,7 +122,7 @@ export function Camera({ onShot, onClose }: { onShot: (s: Shot) => void; onClose
     setBusy(true);
     // Prefer the freshest reading; if none has arrived yet, ask once.
     let at = fix.current;
-    if (!at) {
+    if (!at && navigator.geolocation) {
       at = await new Promise<Fix | null>((resolve) =>
         navigator.geolocation.getCurrentPosition(
           (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy }),
@@ -130,6 +131,7 @@ export function Camera({ onShot, onClose }: { onShot: (s: Shot) => void; onClose
         ),
       );
     }
+    if (demoOn()) at = demoFix(at);
     if (!at) {
       setBusy(false);
       setProblem(PROBLEMS.locationFailed);

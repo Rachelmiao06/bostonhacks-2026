@@ -1,0 +1,29 @@
+# Challenge diorama
+
+What: a living miniature station that reacts to the rider's answers in the mission, behind the mission card.
+Status: IN the real flow via `MissionWorld.tsx`, mounted from `features/missions/MissionFlow.tsx` (lazy-loaded). Test page with fake saving and switches: `/lab/diorama` (not linked, not indexed).
+
+## What it shows
+- The questions are the real mission wording and the real `Choice` / `Primary` buttons. The scene only reacts.
+- Step 1 answer: sky (day or dusk) and the station appear. Step 2 answer: elevator light and movement (works / out / couldn't tell). Step 3: rider, and a note bubble as soon as there is text.
+- Sharing: a dashed seal outline breathes while saving. The seal, frame and finish happen ONLY after the (simulated) server says saved. A failure keeps the outline, shows the error and offers "Try again".
+- Reduced Motion: states appear in place, no travel, flicker or tilt. Light colour and the barrier still carry the meaning.
+
+## Layout
+The whole screen is the world: no box, no card around the scene. The question is a glass card floating at the bottom, and the camera works behind it. Test switches live behind the sliders button at the top right. The finished-card rope frame is not shown in this layout.
+
+## Camera (2.5D)
+Each question moves the camera in on its object (sky and station, the landmark, the rider). After the server confirms, the camera waits for the seal, then pulls back, tilts down and turns slowly around the whole scene. Layers sit at different depths (CSS 3D), so the turn shows parallax. It is not a real 3D scene: it cannot go behind objects. Reduced Motion gets the final angle as a still view.
+
+## Files
+- `Diorama.tsx`: the scene. GSAP timelines for the beats, a pointer-depth drift. Layers are listed in `LAYERS` (positions in a 420 x 400 stage).
+- `DioramaLab.tsx`: the test page with switches (Reduced Motion, Slow-mo, server fails on next share).
+- `ASSET-PROMPTS.md`: prompts for the art still missing.
+- Art: `public/assets/challenge-diorama/*.webp`, all generated crochet pieces cut out from white backgrounds: `base-tile`, `tower`, `door-a`, `lamp-*`, `rider`, `rider-walk`, `building`, `sky-day`, `sky-dusk`, `bubble-note`, `bubble-question`, `sign`, `seal`, `escalator`, `gate-open`, `gate-closed`, `bus`, `train`, `signpost`.
+  - Still from the first sheet (softer look): `puff-*`, `spark-*`, `frame` (the frame is not shown in the full-screen layout).
+  - Unused: `lamp-off`.
+  - `style-reference.jpg`: one image to upload to the generator as the style reference. Prompts: `ASSET-PROMPTS.md`.
+- The lab has a Category switch (elevator, escalator, gate, shuttle bus, train, sign): one `LANDMARKS` entry per category in `Diorama.tsx`.
+
+## In the real flow
+`MissionWorld.tsx` maps the real mission state onto `<Diorama />`: kind -> landmark, answers -> sky, light and movement, `done` -> seal. `confirmed` is only true after the server saved. No rule lives in this folder.
