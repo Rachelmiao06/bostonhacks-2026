@@ -108,15 +108,26 @@ const greenTone: Tone = { top: "var(--hero-green-top)", long: "var(--hero-green)
 const roofTone: Tone = { top: "var(--hero-roof-top)", long: "var(--hero-roof-long)", end: "var(--hero-roof-end)" };
 const darkTone: Tone = { top: "var(--hero-dark)", long: "var(--hero-dark)", end: "color-mix(in oklab, var(--graphite) 96%, var(--ivory))" };
 
-export function TrolleyHero() {
+/**
+ * "knitted" (default): the knitted trolley (animated WebP), bouncing gently over the drawn line.
+ * "pixel": the SVG voxel trolley below, kept for a quieter look. Both share the same line and stations.
+ */
+export function TrolleyHero({ variant = "knitted" }: { variant?: "knitted" | "pixel" }) {
+  const pixel = variant === "pixel";
   return (
-    <svg
-      viewBox="0 0 320 96"
+    <div
       role="img"
-      aria-label="A small pixel trolley floating above a transit line"
-      shapeRendering="crispEdges"
-      className="coach-hero h-24 w-full"
+      aria-label={pixel ? "A small pixel trolley floating above a transit line" : "A small knitted trolley bouncing above a transit line"}
+      className={`coach-hero relative w-full ${pixel ? "h-24" : "h-[6.75rem]"}`}
     >
+      {!pixel && (
+        // A transparent animated WebP (the original GIF had a baked-in light background). Reduced Motion gets one still frame.
+        <picture>
+          <source media="(prefers-reduced-motion: reduce)" srcSet="/assets/coach/trolley-still.png" />
+          <img src="/assets/coach/trolley-bounce.webp" alt="" width={357} height={267} className="pointer-events-none absolute top-0 left-1/2 h-[4.9rem] w-auto -translate-x-1/2 select-none" />
+        </picture>
+      )}
+      <svg viewBox="0 0 320 96" aria-hidden shapeRendering={pixel ? "crispEdges" : "auto"} className="absolute inset-x-0 bottom-0 h-24 w-full">
       <style>{css}</style>
 
       {/* the line: a faint track, the green line that draws itself, and a soft light that passes along it */}
@@ -132,6 +143,7 @@ export function TrolleyHero() {
         </g>
       ))}
 
+      {pixel && (<>
       {/* soft contact shadow on the line, breathing against the bob */}
       <ellipse className="shadow" cx="160" cy="79" rx="29" ry="3.2" fill="var(--graphite)" />
 
@@ -163,6 +175,8 @@ export function TrolleyHero() {
         <polyline points={`${p(5, W / 2, ROOF_Z + 0.8)} ${p(6.6, W / 2, ROOF_Z + 2.8)} ${p(8.2, W / 2, ROOF_Z + 0.8)}`} fill="none" stroke="var(--hero-dark)" strokeWidth="1.1" strokeLinejoin="round" />
         <line x1={p(5.9, W / 2 - 1.4, ROOF_Z + 2.8).split(",")[0]} y1={p(5.9, W / 2 - 1.4, ROOF_Z + 2.8).split(",")[1]} x2={p(7.5, W / 2 + 1.4, ROOF_Z + 2.8).split(",")[0]} y2={p(7.5, W / 2 + 1.4, ROOF_Z + 2.8).split(",")[1]} stroke="var(--hero-dark)" strokeWidth="1.3" strokeLinecap="round" />
       </g>
-    </svg>
+      </>)}
+      </svg>
+    </div>
   );
 }
