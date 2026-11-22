@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { CircleHelp } from "lucide-react";
+import { CircleHelp, LocateFixed, LoaderCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PixelTrain } from "@/components/shared/pixel-train";
 import { categoryStyle } from "./category";
@@ -13,10 +13,12 @@ type FilterProps = {
   counts: Record<CategoryId, number>;
   show: ReadonlySet<CategoryId>;
   onToggle: (id: CategoryId | "all") => void;
+  /** The last chip (first on phones, where the bar scrolls): go to my block. `count` is the problems near the rider once known; `busy` while asking for a location. */
+  nearMe?: { count: number | null; busy: boolean; onClick: () => void };
 };
 
 /** Category chips with live counts. Tapping one shows only that kind; tapping it again shows everything. */
-export function FilterBar({ counts, show, onToggle }: FilterProps) {
+export function FilterBar({ counts, show, onToggle, nearMe }: FilterProps) {
   const all = show.size === categories.length;
   return (
     <div
@@ -40,6 +42,21 @@ export function FilterBar({ counts, show, onToggle }: FilterProps) {
           </Chip>
         );
       })}
+      {nearMe && (
+        <>
+          <span aria-hidden className="my-1.5 w-px shrink-0 bg-hairline max-sm:order-[-9998]" />
+          <button
+            type="button"
+            onClick={nearMe.onClick}
+            disabled={nearMe.busy}
+            className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-medium whitespace-nowrap text-cat-verify max-sm:order-first outline-none transition-colors hover:bg-cat-verify/10 focus-visible:ring-2 focus-visible:ring-graphite/30 disabled:cursor-wait disabled:opacity-70"
+          >
+            {nearMe.busy ? <LoaderCircle className="size-3.5 animate-spin" aria-hidden /> : <LocateFixed className="size-3.5" aria-hidden />}
+            {nearMe.busy ? content.filters.nearMeBusy : content.filters.nearMe}
+            {!nearMe.busy && nearMe.count !== null && <Count>{nearMe.count}</Count>}
+          </button>
+        </>
+      )}
     </div>
   );
 }
