@@ -105,7 +105,7 @@ function Intro({ onStart }: { onStart: () => void }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="coach-intro-title"
-        className="w-full max-w-md rounded-3xl bg-ivory/97 px-6 pt-4 pb-5 font-ui text-graphite shadow-float backdrop-blur-xl motion-safe:animate-in motion-safe:zoom-in-95"
+        className="w-full max-w-md rounded-3xl bg-ivory/78 px-6 pt-4 pb-5 font-ui text-graphite shadow-float backdrop-blur-xl backdrop-saturate-150 motion-safe:animate-in motion-safe:zoom-in-95"
       >
         <TrolleyHero />
         <p className="mt-3 font-mono text-[0.65rem] tracking-[0.14em] text-taupe uppercase">{t.eyebrow}</p>
