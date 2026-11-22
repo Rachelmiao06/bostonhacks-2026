@@ -15,13 +15,22 @@ export const coach = {
     skip: "Skip",
   },
 
-  /** One card at the top left, after the map has zoomed to the rider's start. */
-  guide: {
-    label: "Tada guide",
-    title: "Every pin is a challenge",
-    text: "Tap one and tell us what you see there. It takes about a minute.",
-    kindsTitle: "Four kinds of problems",
-    done: "Got it",
+  /** Notification-style banners at the top right, after the map has zoomed to the rider's start. */
+  feed: {
+    label: "Tada tips",
+    app: "Tada",
+    now: "now",
+    firstDelayMs: 900,
+    gapMs: 3400, // between banners
+    lingerMs: 7500, // how long a kind banner stays before it slides away
+    close: "Close",
+    /** The last banner: it stays, and points at the nearest problem pin. */
+    pin: {
+      title: "Every pin is a challenge",
+      text: "Tap the glowing pin to try one. It takes about a minute.",
+      textNoPin: "Tap any pin on the map to try one. It takes about a minute.",
+      tag: "Tap this pin",
+    },
   },
 
   /** One line per problem kind, shown in the "Four kinds" tip. */
