@@ -90,6 +90,25 @@ export const content = {
     viewOnMap: "Continue on the map",
   },
 
+  // The journal as an open book you page through
+  book: {
+    label: "Your journal, an open book",
+    prev: "Previous page",
+    next: "Next page",
+    pages: (from: number, to: number, total: number) => (from === to ? `Page ${from} of ${total}` : `Pages ${from}-${to} of ${total}`),
+    toc: "Contents",
+    reportOf: (n: number, total: number) => `Report ${n} of ${total}`,
+    youWrote: "What you wrote",
+    noText: "Nothing was saved with this one yet.",
+    coach: "Coach feedback",
+    tryAdding: "Try adding",
+    likes: (n: number) => `${n} ${n === 1 ? "rider" : "riders"} liked this`,
+    checksTitle: "Fixes you checked",
+    endTitle: "More pages to fill",
+    endBody: "Every report you send and every fix you check adds a page to your journal.",
+    turnTo: (what: string) => `Turn to ${what}`,
+  },
+
   // The paper voucher a gift unfolds into
   voucher: {
     kicker: "A Little Gift from Boston",
