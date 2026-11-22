@@ -4,8 +4,9 @@ import { useRef, useState } from "react";
 import { Check, ChevronRight, MapPin } from "lucide-react";
 import { sendReport } from "./api";
 import type { Shot } from "./Camera";
-import { CATEGORIES } from "./categories";
+import { bostonFormUrl, CATEGORIES } from "./categories";
 import { content, OFFICIAL_311 } from "./content";
+import { demoOn } from "./demo-mode";
 import { KnittedControl } from "./Knitted";
 import { nowMs, saveCase } from "./store";
 import { Disclosure, field, PrimaryButton, SecondaryButton } from "./ui";
@@ -16,8 +17,9 @@ const PERSONAL = /(\+?\d[\d\s().-]{8,}\d)|([\w.+-]+@[\w-]+\.[\w.-]+)/;
 type Where = { lat: number; lng: number; accuracy: number };
 
 /**
- * Guided preparation. Nothing is filed from here: the main action copies the text and opens Boston 311, where the person
- * submits it themselves. "Save demo report" is a separate, clearly labelled local save.
+ * Guided preparation. Nothing is filed from here: the main action opens Boston 311 on this category with the description filled in
+ * (the person adds the photo and the place, and submits it themselves). "Save demo report" is the simulated track and is only
+ * the main action in demo mode (?demo=1); everyone else gets the one real route.
  */
 export function Prepare({ shot, result, service: first, onBack, onSaved, onRetake, onHome }: { shot: Shot; result: CheckResult; service: string; onBack: () => void; onSaved: (caseId: string) => void; onRetake: () => void; onHome: () => void }) {
   const [service, setService] = useState(first);
@@ -27,10 +29,14 @@ export function Prepare({ shot, result, service: first, onBack, onSaved, onRetak
   const [locBusy, setLocBusy] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [handed, setHanded] = useState<null | "ok" | "blocked" | "copyfail">(null);
+  const [handed, setHanded] = useState<null | { kind: "ok" | "blocked" | "copyfail"; url: string; filled: boolean }>(null);
+  const [demo] = useState(demoOn); // client only: this screen is never rendered on the server
   const key = useRef(crypto.randomUUID()); // one key per draft: a double tap never makes two cases
 
   const tooShort = text.trim().length < 10;
+  const route = bostonFormUrl(service, text, OFFICIAL_311);
+  const hasForm = route.url !== OFFICIAL_311;
+  const note = route.filled ? content.prepare.handoffNote : hasForm ? content.prepare.handoffNoteNoBox : content.prepare.handoffNoteHome;
 
   function refreshLocation() {
     if (!navigator.geolocation) return setLocMsg(content.prepare.locationBlocked);
@@ -59,9 +65,10 @@ export function Prepare({ shot, result, service: first, onBack, onSaved, onRetak
     } catch {
       copied = false;
     }
-    const w = window.open(OFFICIAL_311, "_blank");
+    const { url, filled } = bostonFormUrl(service, text, OFFICIAL_311);
+    const w = window.open(url, "_blank");
     if (w) w.opener = null;
-    setHanded(!copied ? "copyfail" : w ? "ok" : "blocked");
+    setHanded({ kind: !copied && !filled ? "copyfail" : w ? "ok" : "blocked", url, filled });
   }
 
   async function save() {
@@ -82,10 +89,17 @@ export function Prepare({ shot, result, service: first, onBack, onSaved, onRetak
     return (
       <section className="mx-auto grid w-full max-w-xl gap-4 rounded-3xl border border-hairline bg-ivory p-5 shadow-float motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200" aria-live="polite">
         <h1 className="flex items-center gap-2 font-serif text-3xl leading-tight font-semibold">
-          {handed !== "copyfail" && <Check className="size-6 text-cat-verify" aria-hidden />}
-          {handed === "copyfail" ? content.prepare.copyFailedTitle : content.prepare.handedTitle}
+          {handed.kind !== "copyfail" && <Check className="size-6 text-cat-verify" aria-hidden />}
+          {handed.kind === "copyfail" ? content.prepare.copyFailedTitle : content.prepare.handedTitle}
         </h1>
-        <p>{handed === "ok" ? content.prepare.handedBody : handed === "blocked" ? content.prepare.handedBlocked : content.prepare.copyFailed}</p>
+        <p>
+          {handed.kind === "ok" ? (handed.filled ? content.prepare.handedBody : content.prepare.handedBodyCopy) : handed.kind === "blocked" ? content.prepare.handedBlocked : content.prepare.copyFailed}
+        </p>
+        {handed.kind === "blocked" && (
+          <a href={handed.url} target="_blank" rel="noopener noreferrer" className="w-fit text-graphite underline underline-offset-4">
+            {content.prepare.handoff}
+          </a>
+        )}
         <blockquote className="rounded-xl bg-stone-deep/40 p-3 text-sm">{`${service}: ${text.trim()}`}</blockquote>
         <PrimaryButton onClick={onHome}>{content.prepare.done}</PrimaryButton>
       </section>
@@ -157,18 +171,31 @@ export function Prepare({ shot, result, service: first, onBack, onSaved, onRetak
         </p>
       )}
 
-      <div className="grid gap-2">
-        <PrimaryButton className="h-12 w-full" onClick={handoff} disabled={tooShort}>
-          {content.prepare.handoff}
-        </PrimaryButton>
-        <p className="text-xs text-taupe">{content.prepare.handoffNote}</p>
-      </div>
-      <div className="grid gap-1 border-t border-hairline pt-4">
-        <SecondaryButton className="w-full" onClick={save} disabled={tooShort || saving}>
-          {saving ? content.prepare.saving : content.prepare.save}
-        </SecondaryButton>
-        <p className="text-center text-xs text-taupe">{content.prepare.saveNote}</p>
-      </div>
+      {demo ? (
+        <>
+          <div className="grid gap-1">
+            <PrimaryButton className="h-12 w-full" onClick={save} disabled={tooShort || saving}>
+              {saving ? content.prepare.saving : content.prepare.save}
+            </PrimaryButton>
+            <p className="text-center text-xs text-taupe">{content.prepare.saveNote}</p>
+          </div>
+          <button
+            type="button"
+            onClick={handoff}
+            disabled={tooShort}
+            className="mx-auto w-fit rounded-lg px-2 py-1 text-sm text-taupe underline underline-offset-4 outline-none hover:text-graphite focus-visible:ring-2 focus-visible:ring-graphite/50 disabled:opacity-50"
+          >
+            {content.prepare.demoHandoff}
+          </button>
+        </>
+      ) : (
+        <div className="grid gap-2">
+          <PrimaryButton className="h-12 w-full" onClick={handoff} disabled={tooShort}>
+            {content.prepare.handoff}
+          </PrimaryButton>
+          <p className="text-xs text-taupe">{note}</p>
+        </div>
+      )}
     </section>
   );
 }

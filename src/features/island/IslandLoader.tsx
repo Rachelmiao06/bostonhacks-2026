@@ -33,3 +33,13 @@ export const IslandScene = dynamic(() => import("./IslandScene"), {
     </div>
   ),
 });
+
+/**
+ * Start downloading the 3D island's code now. The page first waits for the server's stamp count, and the scene's code
+ * used to start downloading only after that came back (one request after the other). Call this as soon as the page
+ * mounts so both run at the same time; calling it again is free, the browser keeps the module.
+ */
+export function preloadIsland() {
+  void import("./IslandScene");
+  void import("./yarn-world/mount.js");
+}

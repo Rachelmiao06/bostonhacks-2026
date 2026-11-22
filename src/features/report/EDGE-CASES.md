@@ -9,7 +9,7 @@ Handling always follows the README rules: reason plus next step, nothing uncheck
 | C-01 | Camera permission denied | Explain why we need it and how to turn it on. No gallery fallback. | Decided |
 | C-02 | No camera (desktop) or insecure page | "Open Tada on your phone." Camera only works on https. | Decided |
 | C-03 | Camera busy or fails to start | Retry button, then a plain error. | Decided |
-| C-04 | Photo of a screen or of another photo | AI flags it as `unclear` ("Take a photo of the place itself"). | Decided |
+| C-04 | Photo of a screen or of another photo | Judged by what it shows. The AI is told it may be a picture of a street problem and is not allowed to say `unclear` only because it is a picture; the old "photo of a screen" downgrade is removed for everyone (it blocked demos). | Decided |
 | C-05 | Too dark, blurry, far away, blank | `unclear`, with a tip to move closer or find light. | Decided |
 | C-06 | Selfie, pet, indoor, food, unrelated | `unclear` or `not an issue`, with a reason. Nothing sent. | Decided |
 | C-07 | User leaves the app mid-capture | Camera stops; return to the viewfinder. No draft kept. | Open |
@@ -95,7 +95,7 @@ Handling always follows the README rules: reason plus next step, nothing uncheck
 | M-01 | Venue Wi-Fi is bad | Cache the seeded case; show a clear offline state. | Open |
 | M-02 | Camera permission prompt on stage | Do it once on the demo phone beforehand. | Open |
 | M-03 | Real case will not close on cue | Seed one case with a real-style closure note. | Open |
-| M-04 | No real street problem in front of the presenter, or indoors with weak GPS | Open `/report?demo=1`. A photo of a picture or screen is judged by what it shows (the `photoOfScreen` downgrade is off, and the AI is told it may be a picture); a missing, imprecise or non-Boston GPS reading becomes one fixed Kenmore spot (`demo-mode.ts`). A "Demo mode" note shows on screen and sending is still simulated. `?demo=0` turns it off. | Decided |
+| M-04 | No real street problem in front of the presenter, or indoors with weak GPS | Open `/report?demo=1`. A photo of a picture or screen is judged by what it shows for everyone now (no `?demo=1` needed); a missing, imprecise or non-Boston GPS reading becomes one fixed Kenmore spot (`demo-mode.ts`). A "Demo mode" note shows on screen and sending is still simulated. `?demo=0` turns it off. | Decided |
 
 ## Found while building v1
 | ID | Case | Handling | State |
@@ -135,3 +135,7 @@ Handling always follows the README rules: reason plus next step, nothing uncheck
 | Y-07 | Ask Tada rate limit | 20 questions per 10 minutes per client, in memory (resets on restart). | Open |
 | Y-08 | Floating trolley chat covers the corner on phones | Result photos are shorter on phones so main actions stay clear; Report leaves bottom padding. | Decided |
 | Y-09 | Other authorities beyond the MBTA | No verified channels yet. Future scope: a verified mapping (for example MassDOT, Massport). | Open |
+
+| H-01 | The category has no form code (Overgrown Weeds, Other) or 311 changes a code | Open the 311 home page and keep the description copied to the clipboard. | Decided |
+| H-02 | The category's first step has no description box (Rat Activity) | Open the category form without the text; the description is on the clipboard. | Decided |
+| H-03 | The person expects the photo to be there | It is not: Tada does not keep photos and a link cannot fill a file box. The screen says so before and after. | Decided |

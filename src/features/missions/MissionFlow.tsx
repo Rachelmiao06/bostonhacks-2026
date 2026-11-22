@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Dialog } from "@base-ui/react/dialog";
+import { useReducedMotion } from "motion/react";
 import { ArrowLeft, ExternalLink, Loader2, MapPin, ShieldCheck, Sparkles, TriangleAlert, X } from "lucide-react";
 import type { Quest } from "@/lib/mbta";
 import { stampCount, useMyProgress } from "@/features/explore/progress";
@@ -15,6 +17,9 @@ import { Choice, PhotoField, Primary, primaryClass, primaryStyle, Secondary, Sum
 import { PixelIcon } from "./PixelIcon";
 import { locationOf } from "./templates";
 import { FORM_STEPS, useMission, type Step } from "./useMission";
+
+// The mission's little world behind the card. Loaded only when a mission opens (it brings GSAP and its pictures).
+const MissionWorld = dynamic(() => import("@/features/challenge-diorama/MissionWorld"), { ssr: false });
 
 const PREVIOUS: Record<Step, Step | null> = { overview: null, when: "overview", status: "when", note: "status", review: "note", done: null };
 const thingOf = (quest: Quest) => (quest.kind === "elevator" || quest.kind === "escalator" ? `the ${quest.kind}` : "it");
@@ -31,6 +36,19 @@ export function MissionFlow({ quest, onClose }: { quest: Quest; onClose: () => v
   const stepIndex = FORM_STEPS.indexOf(m.step);
   const previous = PREVIOUS[m.step];
 
+  // The world behind the card. It only draws the rider's answers and the server's result.
+  const reduced = useReducedMotion() ?? false;
+  const card = useRef<HTMLDivElement>(null);
+  const [cardHeight, setCardHeight] = useState(300);
+  useEffect(() => {
+    const el = card.current;
+    if (!el) return;
+    const watch = new ResizeObserver(() => setCardHeight(el.offsetHeight + 12));
+    watch.observe(el);
+    return () => watch.disconnect();
+  }, []);
+  const tone = m.template.options.find((o) => o.id === m.answers.status)?.tone ?? null;
+
   // A new screen starts at the top, and a screen reader hears its heading first.
   useEffect(() => {
     body.current?.scrollTo({ top: 0 });
@@ -39,6 +57,22 @@ export function MissionFlow({ quest, onClose }: { quest: Quest; onClose: () => v
 
   return (
     <>
+      <MissionWorld
+        kind={quest.kind}
+        step={m.step}
+        when={m.answers.when}
+        tone={tone}
+        hasNote={m.answers.note.trim().length > 0}
+        saving={m.sharing}
+        failed={m.shareError !== null}
+        confirmed={m.done !== null}
+        reduced={reduced}
+        bottomInset={cardHeight}
+      />
+      <div
+        ref={card}
+        className="flex max-h-[58dvh] min-h-0 flex-col overflow-hidden rounded-[1.75rem] border border-ivory/80 bg-ivory/60 text-graphite shadow-ticket backdrop-blur-2xl backdrop-saturate-150 sm:h-full sm:max-h-none"
+      >
       <div className="flex shrink-0 items-center justify-between gap-2 px-2 pt-2 font-ui">
         {previous ? (
           <IconButton label={text.back} onClick={() => m.go(previous)}>
@@ -49,12 +83,12 @@ export function MissionFlow({ quest, onClose }: { quest: Quest; onClose: () => v
         )}
         {stepIndex >= 0 && (
           <div className="min-w-0 flex-1 px-2">
-            <div role="progressbar" aria-label={text.steps} aria-valuemin={1} aria-valuemax={3} aria-valuenow={stepIndex + 1} aria-valuetext={text.stepOf(stepIndex + 1, 3)} className="flex gap-1.5">
+            <div role="progressbar" aria-label={text.steps} aria-valuemin={1} aria-valuemax={3} aria-valuenow={stepIndex + 1} aria-valuetext={text.stepOf(stepIndex + 1, 3)} className="sr-only">
               {FORM_STEPS.map((s, i) => (
                 <span key={s} className={cn("h-1.5 flex-1 rounded-full transition-colors", i <= stepIndex ? "bg-cat-verify" : "bg-graphite/12")} />
               ))}
             </div>
-            <p className="mt-1.5 text-sm text-taupe">{text.stepOf(stepIndex + 1, 3)}</p>
+            <p className="text-center text-sm font-medium text-taupe" aria-hidden>{text.stepOf(stepIndex + 1, 3)}</p>
           </div>
         )}
         <Dialog.Close
@@ -101,6 +135,7 @@ export function MissionFlow({ quest, onClose }: { quest: Quest; onClose: () => v
           </>
         )}
       </footer>
+      </div>
     </>
   );
 }

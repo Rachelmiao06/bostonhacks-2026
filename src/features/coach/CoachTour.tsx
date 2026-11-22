@@ -5,7 +5,6 @@ import { Camera, MapPin, Sparkles, TrainFront, X, type LucideIcon } from "lucide
 import { cn } from "@/lib/utils";
 import { categories } from "@/features/explore/content";
 import { categoryStyle } from "@/features/explore/category";
-import { primaryClass, primaryStyle } from "@/features/explore/glass";
 import { hasSeen } from "@/features/explore/onboarding";
 import { coach } from "./content";
 import { coachMarkSeen, coachReset, coachSeen } from "./storage";
@@ -15,6 +14,14 @@ type Phase = "idle" | "intro" | "waiting" | "live";
 
 /** Fired by anything (a button, Trolley) to replay the coach: `window.dispatchEvent(new Event("tada:coach:start"))`. */
 export const COACH_START_EVENT = "tada:coach:start";
+
+/**
+ * Demo mode: every NEW visit (a new tab or window, or the browser reopened) starts like a first visit, from the
+ * "Tiny missions for a better T" card. A reload inside the same visit does not start over. Set to false to show
+ * the coach only once per browser, as before.
+ */
+const FRESH_EACH_VISIT = true;
+const VISIT_KEY = "tada:visit";
 
 /** Text on screen while the map is still zooming to the rider's start; the live guide waits until none of it is showing. */
 const BUSY_TEXT = ["Where should we start?", "Finding problems near you", "Almost there", "Finding the nearest stop"];
@@ -44,6 +51,22 @@ export function CoachTour() {
       window.history.replaceState(null, "", window.location.pathname);
       window.location.reload();
       return;
+    }
+    if (FRESH_EACH_VISIT) {
+      try {
+        if (!window.sessionStorage.getItem(VISIT_KEY)) {
+          window.sessionStorage.setItem(VISIT_KEY, "1");
+          // Only a browser that has seen it before needs the reset (and the one reload Explore needs to read it).
+          if (coachSeen("intro") || coachSeen("tour") || hasSeen("welcomed")) {
+            coachReset();
+            window.localStorage.removeItem("tparty.onboarding");
+            window.location.reload();
+            return;
+          }
+        }
+      } catch {
+        // storage blocked: fall back to the normal once-per-browser behaviour
+      }
     }
     const t = window.setTimeout(() => {
       if (!coachSeen("intro")) setPhase("intro");
@@ -120,7 +143,11 @@ function Intro({ onStart }: { onStart: () => void }) {
         className="w-full max-w-md rounded-3xl bg-ivory/96 px-6 pt-4 pb-5 sm:bg-ivory/78 font-ui text-graphite shadow-float backdrop-blur-xl backdrop-saturate-150 motion-safe:animate-in motion-safe:zoom-in-95"
       >
         <TrolleyHero />
-        <p className="mt-3 font-mono text-[0.65rem] tracking-[0.14em] text-taupe uppercase">{t.eyebrow}</p>
+        {/* The knitted "Tada" bounces (a transparent animated WebP made from the designer GIF). Reduced Motion gets one still frame. */}
+        <picture>
+          <source media="(prefers-reduced-motion: reduce)" srcSet="/assets/coach/tada-still.webp" />
+          <img src="/assets/coach/tada-bounce.webp" alt={t.eyebrow} width={242} height={176} className="pointer-events-none mt-2 h-14 w-auto select-none" />
+        </picture>
         <h2 id="coach-intro-title" className="mt-1 font-heading text-3xl leading-[1.05] font-semibold">{t.title}</h2>
         <p className="mt-2 text-sm leading-snug text-taupe">{t.body}</p>
         <ul className="mt-6 space-y-4">
@@ -136,7 +163,13 @@ function Intro({ onStart }: { onStart: () => void }) {
             );
           })}
         </ul>
-        <button ref={primary} type="button" onClick={onStart} className={`${primaryClass} mt-7 h-11 w-full px-6 text-sm`} style={primaryStyle}>
+        {/* The button's skin is a green glass pill with a light that sweeps across it (animated WebP); Reduced Motion gets the still skin. The label is real text on top. */}
+        <button
+          ref={primary}
+          type="button"
+          onClick={onStart}
+          className="mt-7 h-12 w-full cursor-pointer rounded-full bg-[url('/assets/coach/lets-go-skin.webp')] bg-[length:100%_100%] bg-no-repeat px-6 font-heading text-base font-semibold text-ivory [text-shadow:0_1px_1px_color-mix(in_oklab,var(--graphite)_45%,transparent)] outline-none transition-[filter,transform] hover:brightness-105 focus-visible:ring-4 focus-visible:ring-graphite/25 active:scale-[0.99] motion-reduce:bg-[url('/assets/coach/lets-go-skin.png')]"
+        >
           {t.start}
         </button>
         <button
@@ -180,6 +213,9 @@ function Feed({ onDone }: { onDone: () => void }) {
   const [pin, setPin] = useState<HTMLElement | null>(null);
   const finalRef = useRef<HTMLDivElement>(null);
   const finalShown = banners.length >= TOTAL;
+  // The newest banner of a problem kind points at that kind's own chip in the top row of the map.
+  const newest = banners[0];
+  const pointAtChip = !!newest && newest.id < categories.length && !newest.hidden;
 
   // Banners arrive one at a time; each kind banner slides away after a while, the last one stays.
   useEffect(() => {
@@ -219,14 +255,13 @@ function Feed({ onDone }: { onDone: () => void }) {
   return (
     <>
       <section aria-label={f.label} aria-live="polite" className="pointer-events-none fixed top-[8.5rem] right-2 z-50 flex w-[min(19rem,calc(100vw-1rem))] flex-col gap-2 sm:top-[7.75rem] sm:right-4 sm:w-80">
-        {banners.map((b) => {
-          const rank = banners.filter((x) => !x.hidden || x.id === TOTAL - 1).findIndex((x) => x.id === b.id);
-          const isFinal = b.id === TOTAL - 1;
-          return (
-            <Banner key={b.id} banner={b} rank={rank} isFinal={isFinal} hasPin={!!pin} onClose={onDone} boxRef={isFinal ? finalRef : undefined} />
-          );
-        })}
+        {banners
+          .filter((b) => b.id === TOTAL - 1)
+          .map((b) => (
+            <Banner key={b.id} banner={b} rank={0} isFinal hasPin={!!pin} onClose={onDone} boxRef={finalRef} />
+          ))}
       </section>
+      {pointAtChip && <KindBanner key={newest.id} banner={newest} />}
       {finalShown && pin && <PinGuide pin={pin} boxRef={finalRef} />}
     </>
   );
@@ -264,6 +299,85 @@ function Banner({ banner, rank, isFinal, hasPin, onClose, boxRef }: { banner: Ba
         </button>
       )}
     </div>
+  );
+}
+
+/** The filter chip for a kind (the top row of the map): the toolbar's buttons are All, the four kinds in order, then Near me. */
+function chipFor(i: number): HTMLElement | null {
+  const bar = document.querySelector('[role="toolbar"]');
+  const buttons = bar ? [...bar.querySelectorAll<HTMLElement>(":scope > button")] : [];
+  return buttons[i + 1] ?? null;
+}
+
+/**
+ * A problem-kind banner drawn right under its own filter chip: a ring around the chip, a small arrow, and the banner
+ * just below it, so it is obvious which button it is about (no long line across the map). Placed straight on the DOM
+ * every frame, so it stays glued to the chip while the chip bar scrolls sideways on a phone.
+ */
+function KindBanner({ banner }: { banner: Banner }) {
+  const box = useRef<HTMLDivElement>(null);
+  const arrow = useRef<HTMLSpanElement>(null);
+  const ring = useRef<SVGRectElement>(null);
+  const ping = useRef<SVGRectElement>(null);
+  const index = categories.findIndex((c) => c.id === banner.kind);
+
+  useLayoutEffect(() => {
+    const chip = chipFor(index);
+    if (!chip) return;
+    // The bar scrolls sideways on a phone: bring this chip into view first.
+    chip.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
+    const place = () => {
+      const el = box.current;
+      if (!el || !chip.isConnected) return;
+      const r = chip.getBoundingClientRect();
+      const vw = window.innerWidth;
+      const visible = r.width > 0 && r.right > 8 && r.left < vw - 8;
+      el.style.visibility = visible ? "visible" : "hidden";
+      if (!visible) return;
+      const pad = 5;
+      for (const e of [ring.current, ping.current]) {
+        e?.setAttribute("x", String(r.left - pad));
+        e?.setAttribute("y", String(r.top - pad));
+        e?.setAttribute("width", String(r.width + pad * 2));
+        e?.setAttribute("height", String(r.height + pad * 2));
+      }
+      const w = el.offsetWidth;
+      const cx = r.left + r.width / 2;
+      const left = Math.min(Math.max(cx - w / 2, 8), vw - w - 8);
+      el.style.left = `${left}px`;
+      el.style.top = `${r.bottom + pad + 10}px`;
+      if (arrow.current) arrow.current.style.left = `${Math.min(Math.max(cx - left - 6, 18), w - 30)}px`;
+    };
+    place();
+    let raf = requestAnimationFrame(function loop() {
+      place();
+      raf = requestAnimationFrame(loop);
+    });
+    window.addEventListener("resize", place);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", place);
+    };
+  }, [index]);
+
+  return (
+    <>
+      <div aria-hidden className="pointer-events-none fixed inset-0 z-40">
+        <style>{`
+          @keyframes coach-chip-ping { 0% { transform: scale(.96); opacity: .7; } 70%, 100% { transform: scale(1.16); opacity: 0; } }
+          .coach-chip-ping { transform-box: fill-box; transform-origin: center; animation: coach-chip-ping 1.5s ease-out infinite; }
+          @media (prefers-reduced-motion: reduce) { .coach-chip-ping { animation: none; } }
+        `}</style>
+        <svg width="100%" height="100%" className="absolute inset-0">
+          <rect ref={ring} rx="16" fill="none" stroke="var(--cat-verify)" strokeWidth="2.5" strokeOpacity=".85" />
+          <rect ref={ping} rx="16" fill="none" stroke="var(--cat-verify)" strokeWidth="2" className="coach-chip-ping" />
+        </svg>
+      </div>
+      <div ref={box} role="status" className="pointer-events-none fixed z-50 w-[min(19rem,calc(100vw-1rem))]" style={{ visibility: "hidden" }}>
+        <span ref={arrow} aria-hidden className="absolute -top-1.5 size-3 rotate-45 rounded-[3px] bg-ivory/90" />
+        <Banner banner={banner} rank={0} isFinal={false} hasPin={false} onClose={() => {}} />
+      </div>
+    </>
   );
 }
 

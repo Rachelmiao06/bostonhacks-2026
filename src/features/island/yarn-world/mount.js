@@ -12,7 +12,7 @@ import { buildWorld } from './world.js';
 import { DofPass, makeDepthTarget } from './dof.js';
 import { setupPoke } from './poke.js';
 import { setupGuide } from './guide.js';
-import { setMuted, isMuted, unlockAudio, suspendAudio } from './sound.js';
+import { setMuted, isMuted, unlockAudio, suspendAudio, prefetchSamplesWhenIdle } from './sound.js';
 import { setupAmbience } from './ambience.js';
 import { S } from './layout.js';
 
@@ -264,6 +264,7 @@ export function mountIsland(container, { isUnlocked, onPhase, onHotspot, onHover
 	const anchorPoint = new THREE.Vector3();
 	const hotspot = (id) => world.hotspots.find((h) => h.id === id);
 	let lastPhase = '';
+	prefetchSamplesWhenIdle(); // sounds download after the island is up, not while it loads
 	renderer.setAnimationLoop(() => {
 		timer.update();
 		const rawDt = timer.getDelta();
