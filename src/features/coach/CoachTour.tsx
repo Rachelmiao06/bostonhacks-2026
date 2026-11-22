@@ -212,7 +212,6 @@ function Feed({ onDone }: { onDone: () => void }) {
   // one pin while the rider moves the map; PinGuide then tracks it frame by frame.
   const [pin, setPin] = useState<HTMLElement | null>(null);
   const finalRef = useRef<HTMLDivElement>(null);
-  const kindRef = useRef<HTMLDivElement>(null);
   const finalShown = banners.length >= TOTAL;
   // The newest banner of a problem kind points at that kind's own chip in the top row of the map.
   const newest = banners[0];
@@ -256,15 +255,13 @@ function Feed({ onDone }: { onDone: () => void }) {
   return (
     <>
       <section aria-label={f.label} aria-live="polite" className="pointer-events-none fixed top-[8.5rem] right-2 z-50 flex w-[min(19rem,calc(100vw-1rem))] flex-col gap-2 sm:top-[7.75rem] sm:right-4 sm:w-80">
-        {banners.map((b) => {
-          const rank = banners.filter((x) => !x.hidden || x.id === TOTAL - 1).findIndex((x) => x.id === b.id);
-          const isFinal = b.id === TOTAL - 1;
-          return (
-            <Banner key={b.id} banner={b} rank={rank} isFinal={isFinal} hasPin={!!pin} onClose={onDone} boxRef={isFinal ? finalRef : b.id === newest?.id ? kindRef : undefined} />
-          );
-        })}
+        {banners
+          .filter((b) => b.id === TOTAL - 1)
+          .map((b) => (
+            <Banner key={b.id} banner={b} rank={0} isFinal hasPin={!!pin} onClose={onDone} boxRef={finalRef} />
+          ))}
       </section>
-      {pointAtChip && <ChipGuide key={newest.id} index={newest.id} boxRef={kindRef} />}
+      {pointAtChip && <KindBanner key={newest.id} banner={newest} />}
       {finalShown && pin && <PinGuide pin={pin} boxRef={finalRef} />}
     </>
   );
@@ -313,14 +310,16 @@ function chipFor(i: number): HTMLElement | null {
 }
 
 /**
- * Points from the newest banner up to its own filter chip: a ring around the chip and a dotted line flowing to it. Like PinGuide it is
- * placed straight on the DOM every frame, so it stays glued to the chip while the chip bar scrolls on a phone.
+ * A problem-kind banner drawn right under its own filter chip: a ring around the chip, a small arrow, and the banner
+ * just below it, so it is obvious which button it is about (no long line across the map). Placed straight on the DOM
+ * every frame, so it stays glued to the chip while the chip bar scrolls sideways on a phone.
  */
-function ChipGuide({ index, boxRef }: { index: number; boxRef: RefObject<HTMLDivElement | null> }) {
-  const wrap = useRef<HTMLDivElement>(null);
-  const path = useRef<SVGPathElement>(null);
+function KindBanner({ banner }: { banner: Banner }) {
+  const box = useRef<HTMLDivElement>(null);
+  const arrow = useRef<HTMLSpanElement>(null);
   const ring = useRef<SVGRectElement>(null);
   const ping = useRef<SVGRectElement>(null);
+  const index = categories.findIndex((c) => c.id === banner.kind);
 
   useLayoutEffect(() => {
     const chip = chipFor(index);
@@ -328,56 +327,57 @@ function ChipGuide({ index, boxRef }: { index: number; boxRef: RefObject<HTMLDiv
     // The bar scrolls sideways on a phone: bring this chip into view first.
     chip.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
     const place = () => {
-      const w = wrap.current;
+      const el = box.current;
+      if (!el || !chip.isConnected) return;
       const r = chip.getBoundingClientRect();
-      const box = boxRef.current?.getBoundingClientRect();
-      if (!w || !box || !chip.isConnected) return;
       const vw = window.innerWidth;
       const visible = r.width > 0 && r.right > 8 && r.left < vw - 8;
-      w.style.opacity = visible ? "1" : "0";
+      el.style.visibility = visible ? "visible" : "hidden";
       if (!visible) return;
       const pad = 5;
-      for (const el of [ring.current, ping.current]) {
-        el?.setAttribute("x", String(r.left - pad));
-        el?.setAttribute("y", String(r.top - pad));
-        el?.setAttribute("width", String(r.width + pad * 2));
-        el?.setAttribute("height", String(r.height + pad * 2));
+      for (const e of [ring.current, ping.current]) {
+        e?.setAttribute("x", String(r.left - pad));
+        e?.setAttribute("y", String(r.top - pad));
+        e?.setAttribute("width", String(r.width + pad * 2));
+        e?.setAttribute("height", String(r.height + pad * 2));
       }
-      const from = { x: Math.min(Math.max(r.left + r.width / 2, box.left + 28), box.right - 28), y: box.top };
-      const to = { x: r.left + r.width / 2, y: r.bottom + pad + 4 };
-      path.current?.setAttribute("d", `M${from.x} ${from.y} C${from.x} ${from.y - (from.y - to.y) * 0.4} ${to.x} ${to.y + (from.y - to.y) * 0.4} ${to.x} ${to.y}`);
+      const w = el.offsetWidth;
+      const cx = r.left + r.width / 2;
+      const left = Math.min(Math.max(cx - w / 2, 8), vw - w - 8);
+      el.style.left = `${left}px`;
+      el.style.top = `${r.bottom + pad + 10}px`;
+      if (arrow.current) arrow.current.style.left = `${Math.min(Math.max(cx - left - 6, 18), w - 30)}px`;
     };
     place();
-    const marker = chip.parentElement;
-    const watcher = marker ? new MutationObserver(place) : null;
-    watcher?.observe(chip, { attributes: true });
     let raf = requestAnimationFrame(function loop() {
       place();
       raf = requestAnimationFrame(loop);
     });
     window.addEventListener("resize", place);
     return () => {
-      watcher?.disconnect();
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", place);
     };
-  }, [index, boxRef]);
+  }, [index]);
 
   return (
-    <div ref={wrap} aria-hidden className="pointer-events-none fixed inset-0 z-40 opacity-0 transition-opacity duration-200">
-      <style>{`
-        @keyframes coach-flow { to { stroke-dashoffset: -28; } }
-        @keyframes coach-chip-ping { 0% { transform: scale(.96); opacity: .7; } 70%, 100% { transform: scale(1.16); opacity: 0; } }
-        .coach-flow { animation: coach-flow 1.1s linear infinite; }
-        .coach-chip-ping { transform-box: fill-box; transform-origin: center; animation: coach-chip-ping 1.5s ease-out infinite; }
-        @media (prefers-reduced-motion: reduce) { .coach-flow, .coach-chip-ping { animation: none; } }
-      `}</style>
-      <svg width="100%" height="100%" className="absolute inset-0">
-        <path ref={path} fill="none" stroke="var(--cat-verify)" strokeWidth="4" strokeLinecap="round" strokeDasharray="1 13" className="coach-flow" />
-        <rect ref={ring} rx="16" fill="none" stroke="var(--cat-verify)" strokeWidth="2.5" strokeOpacity=".85" />
-        <rect ref={ping} rx="16" fill="none" stroke="var(--cat-verify)" strokeWidth="2" className="coach-chip-ping" />
-      </svg>
-    </div>
+    <>
+      <div aria-hidden className="pointer-events-none fixed inset-0 z-40">
+        <style>{`
+          @keyframes coach-chip-ping { 0% { transform: scale(.96); opacity: .7; } 70%, 100% { transform: scale(1.16); opacity: 0; } }
+          .coach-chip-ping { transform-box: fill-box; transform-origin: center; animation: coach-chip-ping 1.5s ease-out infinite; }
+          @media (prefers-reduced-motion: reduce) { .coach-chip-ping { animation: none; } }
+        `}</style>
+        <svg width="100%" height="100%" className="absolute inset-0">
+          <rect ref={ring} rx="16" fill="none" stroke="var(--cat-verify)" strokeWidth="2.5" strokeOpacity=".85" />
+          <rect ref={ping} rx="16" fill="none" stroke="var(--cat-verify)" strokeWidth="2" className="coach-chip-ping" />
+        </svg>
+      </div>
+      <div ref={box} role="status" className="pointer-events-none fixed z-50 w-[min(19rem,calc(100vw-1rem))]" style={{ visibility: "hidden" }}>
+        <span ref={arrow} aria-hidden className="absolute -top-1.5 size-3 rotate-45 rounded-[3px] bg-ivory/90" />
+        <Banner banner={banner} rank={0} isFinal={false} hasPin={false} onClose={() => {}} />
+      </div>
+    </>
   );
 }
 
