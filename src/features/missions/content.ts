@@ -87,3 +87,39 @@ export const text = {
     save: "That didn’t save. Your answers are still here, so you can try again.",
   },
 };
+
+// Words for the "depth" parts: the story of the problem, MBTA's way around it, what the rider's check did,
+// and progress along the line.
+export const depth = {
+  storyTitle: "The story so far",
+  fromMbta: "From the MBTA",
+  today: "Today",
+  days: (n: number) => (n === 1 ? "1 day" : `${n} days`),
+  months: (n: number) => `${n} months`,
+  years: (n: string) => (n === "1" ? "1 year" : `${n} years`),
+  outLabel: "out of service",
+  ongoingLabel: "since it began",
+  fixedLabel: "marked fixed by the MBTA",
+  nthTime: (nth: string) => `${nth} time`,
+  in90Days: "out in 90 days",
+  plannedEnd: "MBTA’s planned end",
+  minutesAgo: (n: number) => (n === 1 ? "1 minute ago" : `${n} minutes ago`),
+  hoursAgo: (n: number) => (n === 1 ? "1 hour ago" : `${n} hours ago`),
+  daysAgo: (n: number) => (n === 1 ? "1 day ago" : `${n} days ago`),
+
+  wayTitle: "A way around, from the MBTA",
+  wayMore: (n: number) => (n === 1 ? "Show 1 more direction" : `Show ${n} more directions`),
+  wayNote: "These directions are the MBTA’s own words. Check signs at the station too.",
+
+  impactTitle: "What your check did",
+  first: "You’re the first Tada rider to check this.",
+  firstDetail: "Your check is now the latest one for this problem.",
+  joined: (n: number) => (n === 1 ? "You and 1 other rider have checked this." : `You and ${n} other riders have checked this.`),
+  lastCheck: (when: string) => `The last check before yours was ${when}.`,
+  verdicts: (working: number, broken: number) => `${working} said it works, ${broken} said it’s still broken.`,
+
+  lineTitle: (line: string, done: number, total: number) => `${line} Line · ${done} of ${total} checked`,
+  lineProgress: (line: string, done: number, total: number) => `${done} of ${total} missions checked on the ${line} Line`,
+  lineMore: (n: number) => (n === 1 ? "1 more to check on this line today." : `${n} more to check on this line today.`),
+  lineDone: (line: string) => `You’ve checked every mission on the ${line} Line today.`,
+};

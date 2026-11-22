@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Dialog } from "@base-ui/react/dialog";
 import { ArrowLeft, ExternalLink, Loader2, MapPin, Sparkles, TriangleAlert, X } from "lucide-react";
@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { EARLIER_LABELS, partsOf, type Answers } from "./compose";
 import { text } from "./content";
 import { NudgeTrack, WorldPreview } from "./Collectibles";
+import { LineProgress, Story, WayAround, YourImpact } from "./DepthParts";
 import { Choice, PhotoField, Primary, primaryClass, primaryStyle, Secondary, SummaryCard } from "./Parts";
 import { PixelIcon } from "./PixelIcon";
 import { locationOf } from "./templates";
@@ -134,6 +135,7 @@ function Overview({ quest, template }: { quest: Quest; template: ReturnType<type
         <Heading>{template.title}</Heading>
         <p className="text-base leading-relaxed text-graphite/85">{template.description}</p>
       </div>
+      <Story quest={quest} />
       <div className="flex gap-3 rounded-2xl border border-graphite/12 bg-ivory/70 p-4">
         <MapPin className="mt-0.5 size-5 shrink-0 text-cat-verify" aria-hidden />
         <div className="min-w-0">
@@ -142,6 +144,7 @@ function Overview({ quest, template }: { quest: Quest; template: ReturnType<type
           {where.secondary && <p className="text-sm text-taupe">{where.secondary}</p>}
         </div>
       </div>
+      <WayAround quest={quest} />
       <p className="text-base text-graphite">
         <span className="font-semibold">{text.task}: </span>
         {template.task}
@@ -316,6 +319,8 @@ function DoneStep({ m, stampsBefore }: { m: M; stampsBefore: number | null }) {
   const already = m.done?.already ?? false;
   const stamps = progress.status === "ready" ? stampCount(progress.data) : null;
   const added = !already && stamps !== null && stampsBefore !== null && stamps > stampsBefore;
+  // The count from when this screen opened: a later refresh of the map would already include this rider.
+  const [checksAtOpen] = useState(m.quest.checks);
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-3">
@@ -330,6 +335,8 @@ function DoneStep({ m, stampsBefore }: { m: M; stampsBefore: number | null }) {
         <Heading>{already ? text.alreadyTitle : text.doneTitle}</Heading>
         <p className="text-base text-graphite/85">{already ? text.alreadyBody : text.doneBody}</p>
       </div>
+      <YourImpact checks={checksAtOpen} already={already} verify={m.verify} />
+      <LineProgress quest={m.quest} />
       {stamps !== null && <WorldPreview known={stamps} justUnlocked={added} />}
       <div className="space-y-2 rounded-2xl border border-graphite/12 bg-ivory/70 p-4">
         <p className="text-xs font-medium tracking-wide text-taupe uppercase">{text.mission}</p>
