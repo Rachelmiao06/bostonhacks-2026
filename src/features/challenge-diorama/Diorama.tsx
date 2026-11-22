@@ -87,7 +87,7 @@ export type DioramaProps = {
 
 const FIXED = {
   skyDay: L("sky-day", 1200, 782, 40, 0, 340),
-  skyDusk: L("sky-dusk", 1200, 747, 40, 6, 340),
+  skyDusk: L("sky-dusk", 1200, 777, 40, 0, 340),
   tile: L("base-tile", 900, 681, 20, 110, 380),
   building: L("building", 900, 703, 6, 96, 205),
   sign: L("sign", 520, 544, 0, 0, 40),
