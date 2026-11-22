@@ -1,7 +1,7 @@
-# Challenge diorama (isolated test)
+# Challenge diorama
 
-What: a living miniature station that reacts to the rider's answers in the mission. Test page: `/lab/diorama` (not linked, not indexed).
-Status: rough test only. NOT in the real Challenge flow. The real flow (`features/missions/`) is untouched.
+What: a living miniature station that reacts to the rider's answers in the mission, behind the mission card.
+Status: IN the real flow via `MissionWorld.tsx`, mounted from `features/missions/MissionFlow.tsx` (lazy-loaded). Test page with fake saving and switches: `/lab/diorama` (not linked, not indexed).
 
 ## What it shows
 - The questions are the real mission wording and the real `Choice` / `Primary` buttons. The scene only reacts.
@@ -25,5 +25,5 @@ Each question moves the camera in on its object (sky and station, the landmark, 
   - `style-reference.jpg`: one image to upload to the generator as the style reference. Prompts: `ASSET-PROMPTS.md`.
 - The lab has a Category switch (elevator, escalator, gate, shuttle bus, train, sign): one `LANDMARKS` entry per category in `Diorama.tsx`.
 
-## To go into the real flow
-Pass `when`, `status`, `rider`, `note` and the real save state into `<Diorama />` from `useMission`. The saved state must come only from the server's success. No rule moves into this folder.
+## In the real flow
+`MissionWorld.tsx` maps the real mission state onto `<Diorama />`: kind -> landmark, answers -> sky, light and movement, `done` -> seal. `confirmed` is only true after the server saved. No rule lives in this folder.

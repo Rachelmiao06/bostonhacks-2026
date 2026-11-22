@@ -23,3 +23,12 @@ localStorage `tada:mission:<id>`; the photo stays in memory only).
 - It is a Tada community observation, never an official MBTA report. Nothing is sent to the MBTA.
 - The AI only checks and tidies what the rider wrote. A short answer is never a failure; at most ONE follow-up question is asked.
 - Progress on the done screen is the real count from `useMyProgress` (`stampCount`); nothing is invented.
+
+## The world behind the card
+Each mission now sits over a little miniature station that fills the screen (`features/challenge-diorama/`, loaded only when a
+mission opens). `MissionFlow.tsx` passes it the rider's answers and nothing else: kind -> landmark, "when" -> day or dusk,
+status tone -> light and movement, a note -> a speech bubble, and `done` -> the seal. It only DRAWS. It decides, saves and
+rewards nothing: `confirmed` is true only when `useMission` says the server saved (or it was saved on an earlier visit), so
+a failed save never shows a seal. The question card is glass over the world. `ContributePanel.tsx` (explore) was made
+transparent for this and no longer closes when you tap outside it (the screen behind is now the main picture).
+

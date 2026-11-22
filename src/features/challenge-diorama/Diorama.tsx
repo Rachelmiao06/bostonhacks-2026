@@ -137,6 +137,7 @@ export function Diorama(p: DioramaProps) {
   const timelines = useRef<gsap.core.Timeline[]>([]);
   const camTween = useRef<gsap.core.Animation[]>([]);
   const camFirst = useRef(true);
+  const sealFirst = useRef(true);
 
   const killLoops = () => { loops.current.forEach((t) => t.kill()); loops.current = []; };
   const run = (tl: gsap.core.Timeline) => { tl.timeScale(1 / p.slow); timelines.current.push(tl); return tl; };
@@ -255,6 +256,7 @@ export function Diorama(p: DioramaProps) {
     const ringOn = (p.saving || p.failed) && !p.confirmed;
     gsap.killTweensOf([seal, frame, ring, root, shadow]);
     if (!p.confirmed) {
+      sealFirst.current = false;
       gsap.set([seal, frame], { autoAlpha: 0 });
       gsap.set(root, { y: 0 });
       gsap.set(shadow, { scale: 1, opacity: 0.22 });
@@ -265,7 +267,9 @@ export function Diorama(p: DioramaProps) {
       return;
     }
     gsap.set(ring, { autoAlpha: 0 });
-    if (p.reduced || was) { gsap.set([seal, frame], { autoAlpha: 1, scale: 1, rotation: 0 }); gsap.set(seal, { rotation: -6 }); return; }
+    const instant = sealFirst.current;
+    sealFirst.current = false;
+    if (p.reduced || was || instant) { gsap.set([seal, frame], { autoAlpha: 1, scale: 1, rotation: 0 }); gsap.set(seal, { rotation: -6 }); return; }
     const sparks = ["spark1", "spark2", "spark3", "spark4"].map(e).filter(Boolean) as HTMLElement[];
     const tl = run(gsap.timeline());
     tl.call(() => { if (p.sound) play("stamp"); }, [], 0.3)
