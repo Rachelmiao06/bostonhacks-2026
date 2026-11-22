@@ -101,4 +101,6 @@ One line each: date · what · why.
 
 - 2026-11-22 · The coach intro and the welcome now start over on every NEW visit (a new tab or window, or the browser reopened), not once per browser (`FRESH_EACH_VISIT` in `features/coach/CoachTour.tsx`) · for demos: every time the site is opened it begins at "Tiny missions for a better T"; a reload inside the same visit does not repeat it. Set the flag to false to go back to once per browser.
 
+- 2026-11-22 · On wide screens the mission world is shown whole beside the side card and the camera zooms about 40% as much; phones keep the large world and the full zoom · at desktop width the world filled the screen and only a few stitches were visible, so nobody could see the whole station.
+
 - 2026-11-22 · Each coach banner for a kind of problem sits right under its own filter chip (ring plus a small arrow), and the filter chips now stay on screen in the zoomed-in world view (they used to show only in the whole-city view) · the guide needs something to point at, and filtering pins near you is as useful as filtering the whole city. The one-by-one banners at the top right are unchanged.
