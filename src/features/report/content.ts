@@ -177,4 +177,15 @@ export const content = {
     suggestions: ["What happens after I report this?", "Why this category?"],
     suggestionsMbta: ["Is there another accessible entrance?", "Where do I report this?"],
   },
+  /** Shown under the MBTA result. The MBTA link above it stays the main way to report; missions are an extra option. */
+  missions: {
+    title: "Or join a community mission",
+    intro: "Missions are Tada's own, built from live MBTA alerts. They aren't sent to the MBTA. You answer a few quick questions, and a photo is optional.",
+    matchesTitle: "These may match your photo",
+    matchesNote: "Based on where you are and what we saw. We can't be sure it's the same problem.",
+    othersTitle: "Other nearby community missions",
+    at: (name: string) => `Near ${name}`,
+    open: "Open",
+    unofficial: "Community mission · unofficial",
+  },
 } as const;

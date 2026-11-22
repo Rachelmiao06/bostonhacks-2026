@@ -6,6 +6,7 @@ import { AskTada } from "./AskTada";
 import type { Shot } from "./Camera";
 import { content, MBTA_REPORT, OFFICIAL_311 } from "./content";
 import { KnittedBuilding, KnittedIcon } from "./Knitted";
+import { NearbyMissions } from "./NearbyMissions";
 import { Disclosure, PrimaryButton, SecondaryButton } from "./ui";
 import type { CheckResult } from "./types";
 
@@ -73,6 +74,9 @@ export function Verdict({ shot, result, onRetake, onCancel }: { shot: Shot; resu
             </a>
             <p className="text-xs text-taupe">{mbta ? content.verdict.mbta.note : content.verdict.other.note}</p>
           </section>
+
+          {/* An extra option, never a replacement for the MBTA link above. */}
+          {mbta && <NearbyMissions lat={shot.lat} lng={shot.lng} result={result} />}
 
           <ul className="grid divide-y divide-hairline border-y border-hairline">
             <li>
