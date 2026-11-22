@@ -115,7 +115,7 @@ export function TrolleyHero() {
       role="img"
       aria-label="A small pixel trolley floating above a transit line"
       shapeRendering="crispEdges"
-      className="coach-hero h-24 w-full rounded-2xl bg-stone"
+      className="coach-hero h-24 w-full"
     >
       <style>{css}</style>
 

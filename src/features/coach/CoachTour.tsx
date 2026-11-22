@@ -5,7 +5,7 @@ import { Camera, MapPin, Sparkles, TrainFront, type LucideIcon } from "lucide-re
 import { cn } from "@/lib/utils";
 import { categories } from "@/features/explore/content";
 import { categoryStyle } from "@/features/explore/category";
-import { glassClass, glassStyle, primaryClass, primaryStyle } from "@/features/explore/glass";
+import { primaryClass, primaryStyle } from "@/features/explore/glass";
 import { hasSeen } from "@/features/explore/onboarding";
 import { coach } from "./content";
 import { coachMarkSeen, coachReset, coachSeen } from "./storage";
@@ -105,20 +105,18 @@ function Intro({ onStart }: { onStart: () => void }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="coach-intro-title"
-        className="w-full max-w-md rounded-3xl border border-ivory/80 bg-ivory/95 p-5 font-ui text-graphite shadow-float backdrop-blur-xl motion-safe:animate-in motion-safe:zoom-in-95"
+        className="w-full max-w-md rounded-3xl bg-ivory/97 px-6 pt-4 pb-5 font-ui text-graphite shadow-float backdrop-blur-xl motion-safe:animate-in motion-safe:zoom-in-95"
       >
         <TrolleyHero />
-        <p className="mt-4 font-mono text-[0.65rem] tracking-[0.14em] text-taupe uppercase">{t.eyebrow}</p>
+        <p className="mt-3 font-mono text-[0.65rem] tracking-[0.14em] text-taupe uppercase">{t.eyebrow}</p>
         <h2 id="coach-intro-title" className="mt-1 font-heading text-3xl leading-[1.05] font-semibold">{t.title}</h2>
-        <p className="mt-2 text-sm leading-snug text-graphite/90">{t.body}</p>
-        <ul className="mt-3 space-y-2">
+        <p className="mt-2 text-sm leading-snug text-taupe">{t.body}</p>
+        <ul className="mt-6 space-y-4">
           {t.features.map((f) => {
             const Icon = featureIcon[f.id];
             return (
-              <li key={f.id} className="flex items-start gap-3 rounded-2xl border border-hairline bg-ivory/80 p-2.5">
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-cat-verify/15">
-                  <Icon className="size-4 text-cat-verify" aria-hidden />
-                </span>
+              <li key={f.id} className="flex items-start gap-3.5">
+                <Icon className="mt-0.5 size-5 shrink-0 text-cat-verify" aria-hidden />
                 <span className="text-sm leading-snug">
                   <span className="font-heading font-semibold">{f.label}.</span> <span className="text-taupe">{f.text}</span>
                 </span>
@@ -126,15 +124,17 @@ function Intro({ onStart }: { onStart: () => void }) {
             );
           })}
         </ul>
-        <p className="mt-3 text-[0.7rem] leading-snug text-taupe">{t.honest}</p>
-        <div className="mt-4 flex flex-col gap-2 sm:flex-row-reverse">
-          <button ref={primary} type="button" onClick={onStart} className={`${primaryClass} h-11 px-6 text-sm sm:flex-1`} style={primaryStyle}>
-            {t.start}
-          </button>
-          <button type="button" onClick={onStart} className={`${glassClass} h-11 px-5 text-sm`} style={glassStyle}>
-            {t.skip}
-          </button>
-        </div>
+        <p className="mt-6 text-[0.7rem] leading-snug text-taupe">{t.honest}</p>
+        <button ref={primary} type="button" onClick={onStart} className={`${primaryClass} mt-4 h-11 w-full px-6 text-sm`} style={primaryStyle}>
+          {t.start}
+        </button>
+        <button
+          type="button"
+          onClick={onStart}
+          className="mx-auto mt-3 block cursor-pointer text-xs text-taupe underline underline-offset-4 outline-none hover:text-graphite focus-visible:ring-2 focus-visible:ring-graphite/30"
+        >
+          {t.skip}
+        </button>
       </div>
     </div>
   );
