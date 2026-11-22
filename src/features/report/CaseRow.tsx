@@ -12,6 +12,8 @@ import type { CityStatus, SavedCase, Stage } from "./types";
 
 const ORDER: Stage[] = ["sent", "in_progress", "closed"];
 
+const stageLabel = (c: SavedCase, s: Stage) => (c.kind === "demo" && s === "sent" ? content.stageSavedDemo : content.stages[s]);
+
 /** Boston statuses other than In progress / Closed (Submit, Create, Needs Reallocation, Error) are shown as In progress. */
 export const stageOfCity = (s: CityStatus | undefined): Stage => (s?.status === "Closed" ? "closed" : "in_progress");
 
@@ -63,7 +65,7 @@ export function CaseRow({ c, stage, city, fresh, unread, onOpen }: { c: SavedCas
           {latest && <span className="block text-xs text-taupe">Updated {latest}</span>}
         </span>
         {unread && <Chip tone="go">{content.activity.update}</Chip>}
-        <Chip tone={stage === "closed" ? "go" : "quiet"}>{content.stages[stage]}</Chip>
+        <Chip tone={stage === "closed" ? "go" : "quiet"}>{stageLabel(c, stage)}</Chip>
         <ChevronDown className={cn("size-4 shrink-0 text-taupe transition-transform motion-reduce:transition-none", open && "rotate-180")} aria-hidden />
       </button>
 
@@ -74,7 +76,7 @@ export function CaseRow({ c, stage, city, fresh, unread, onOpen }: { c: SavedCas
             {ORDER.map((s, i) => (
               <li key={s} aria-current={i === at ? "step" : undefined} className="flex items-center gap-2">
                 <KnittedMarker state={stage === "closed" || i < at ? "done" : i === at ? "half" : "empty"} className="size-7 shrink-0" />
-                <span className={cn(i <= at ? "font-medium" : "text-taupe")}>{content.stages[s]}</span>
+                <span className={cn(i <= at ? "font-medium" : "text-taupe")}>{stageLabel(c, s)}</span>
                 {when_[s] && i <= at && <span className="ml-auto text-xs text-taupe">{when_[s]}</span>}
               </li>
             ))}

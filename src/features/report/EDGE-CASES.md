@@ -135,3 +135,7 @@ Handling always follows the README rules: reason plus next step, nothing uncheck
 | Y-07 | Ask Tada rate limit | 20 questions per 10 minutes per client, in memory (resets on restart). | Open |
 | Y-08 | Floating trolley chat covers the corner on phones | Result photos are shorter on phones so main actions stay clear; Report leaves bottom padding. | Decided |
 | Y-09 | Other authorities beyond the MBTA | No verified channels yet. Future scope: a verified mapping (for example MassDOT, Massport). | Open |
+
+| H-01 | The category has no form code (Overgrown Weeds, Other) or 311 changes a code | Open the 311 home page and keep the description copied to the clipboard. | Decided |
+| H-02 | The category's first step has no description box (Rat Activity) | Open the category form without the text; the description is on the clipboard. | Decided |
+| H-03 | The person expects the photo to be there | It is not: Tada does not keep photos and a link cannot fill a file box. The screen says so before and after. | Decided |

@@ -19,7 +19,7 @@ photo → AI check → editable draft → send → status
 3. **Judge**: Claude returns one of `fixable`, `private`, `unclear`, `emergency`, with a plain-language reason. Never sends anything itself.
 4. **Draft**: map to Boston 311 service names (`service_name` in the data). The user edits category and description. The pin stays where the photo was taken.
 5. **Duplicate check**: open case (`case_status` not Closed) of the same `service_name` within about 50 m. Follow it instead of filing. The user may say "not the same" and file anyway.
-6. **Send**: anonymous (photo, location, description). Shows which team it goes to. Real submission is unverified, so see Open decisions.
+6. **Send**: Tada cannot submit for the person. The main action opens Boston 311 on the matching category with the description filled in by the link (`bostonFormUrl` in `categories.ts`); the person adds the photo and the place and submits. In demo mode (`?demo=1`) the main action is the simulated "Save demo report" instead.
 7. **Track**: from Boston's real 311 data. Three stages only: Sent, In progress, Closed.
 8. **Notify**: in-app badge and a closure card with the team (`assigned_team`) and the city's own words (`closure_comments`). Say "Fixed by" only when the note says it was fixed.
 9. **Reward**: leaves only for an accepted report, a followed duplicate, or a fix. Once per case id.

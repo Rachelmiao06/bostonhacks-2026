@@ -117,15 +117,19 @@ export const content = {
     locating: "Finding you…",
     locationTooFuzzy: "Location is still too imprecise. Move to open sky and try again.",
     locationBlocked: "Couldn't read your location. Check your browser settings.",
-    handoff: "Copy & open Boston 311",
-    handoffNote: "Tada can't submit this for you. Boston 311 opens in a new tab with your description copied. Finish the report there.",
-    handedTitle: "Description copied",
-    handedBody: "Finish your report on Boston 311. It will appear in the city's public data later; Tada can't see it until then.",
+    handoff: "Open Boston 311 with this filled in",
+    handoffNote: "Your category and description will already be filled in. You add your photo and the place, then submit. Tada can't submit for you, and doesn't keep your photo, so take or choose one there.",
+    handoffNoteHome: "Boston 311 opens in a new tab and your description is copied. Paste it, add your photo and the place, then submit. Tada can't submit for you.",
+    handoffNoteNoBox: "Boston 311 opens on this category. Your description is copied: paste it where it asks, add your photo and the place, then submit. Tada can't submit for you.",
+    handedTitle: "Boston 311 is open",
+    handedBody: "Add your photo and the place there, then submit. It will appear in the city's public data later; Tada can't see it until then.",
+    handedBodyCopy: "Your description is copied. Paste it there, add your photo and the place, then submit. It will appear in the city's public data later; Tada can't see it until then.",
     handedBlocked: "Your browser blocked the new tab. Open Boston 311 yourself; your description is copied.",
+    demoHandoff: "Or open the real Boston 311 form",
     copyFailedTitle: "Copy your description",
     copyFailed: "We couldn't copy it automatically. Select the text below and copy it, then finish the report on Boston 311.",
     save: "Save demo report",
-    saveNote: "Saved only on this device. Not sent to anyone.",
+    saveNote: "Demo only: saved on this device. Nothing is sent to Boston 311.",
     saving: "Saving…",
     saveFailed: "Couldn't save it. Your draft is still here.",
     done: "Back to start",
@@ -157,6 +161,8 @@ export const content = {
   },
 
   stages: { sent: "Submitted", in_progress: "In progress", closed: "Closed" },
+  /** A saved demo case has not been submitted to anyone, so its first stage says so. */
+  stageSavedDemo: "Saved (demo)",
 
   nearby: {
     title: "Nearby reports",
