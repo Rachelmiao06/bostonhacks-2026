@@ -70,10 +70,12 @@ const BuMarker = memo(function BuMarker({ place, scale }: { place: BuPlace; scal
   );
 });
 
-/** All BU-area sprites. Render inside the map; each kind appears from its own zoom. */
-export function BuMarkers({ zoom }: { zoom: number }) {
+/**
+ * The BU-area sprites. Render inside the map.
+ * Flat map: each kind appears from its own zoom. 3D world: pass the places inside that world and all of them show.
+ */
+export function BuMarkers({ zoom, places }: { zoom: number; places?: BuPlace[] }) {
   const scale = Math.min(1.2, Math.max(0.6, 0.55 + (zoom - 12) * 0.22));
-  return buPlaces
-    .filter((place) => zoom >= text.minZoom[place.kind])
-    .map((place) => <BuMarker key={place.id} place={place} scale={scale} />);
+  const shown = places ?? buPlaces.filter((place) => zoom >= text.minZoom[place.kind]);
+  return shown.map((place) => <BuMarker key={place.id} place={place} scale={places ? 1 : scale} />);
 }

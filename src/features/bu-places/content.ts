@@ -23,7 +23,7 @@ export const text = {
   /** Sprite width in px at map scale 1, by kind. */
   width: { history: 64, food: 42 },
   /** The map zoom from which each kind appears (food spots sit a few metres apart). */
-  minZoom: { history: 12, food: 15.5 },
+  minZoom: { history: 11, food: 15.5 },
 };
 
 export const buPlaces: BuPlace[] = [
