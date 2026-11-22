@@ -30,7 +30,6 @@ import type { LoadStatus } from "./DiveGate";
 import { MapHint } from "./Hints";
 import { LandmarkMarker } from "./LandmarkMarker";
 import { FilterBar, PinLegend, ProgressChip, StatusChip } from "./MapOverlays";
-import { hasSeen } from "./onboarding";
 import { subwayDownload } from "./prefetch";
 import { ClusterPin, ProblemPin } from "./ProblemMarker";
 import { verifiedOf } from "./verified";
@@ -138,7 +137,8 @@ export default function ExploreMap({ entry, onStatus, onReveal, guided = false }
   const [arrived, setArrived] = useState(false);
   // The one-time map hint: decided when the rider arrives, put away on their first interaction.
   const [hintGone, setHintGone] = useState(false);
-  const [hintAllowed] = useState(() => typeof window !== "undefined" && !hasSeen("mapHint"));
+  // The first-visit coach (features/coach) now says "every pin is a challenge", so this one-time hint stays off.
+  const hintAllowed = false;
   const fogRef = useRef<HTMLDivElement>(null);
   const flight = useRef<gsap.core.Timeline | null>(null);
   const unleash = useRef<(() => void) | null>(null);

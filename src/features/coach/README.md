@@ -11,4 +11,4 @@ Explains Tada to a new rider in three beats instead of one long tour.
 - The intro hero is `TrolleyHero.tsx`: the knitted trolley (a transparent animated WebP made from the designer GIF, `public/assets/coach/trolley-bounce.webp`, still frame `trolley-still.png` under Reduced Motion) bouncing over a hand-drawn wavy line that draws itself, with four station dots lighting in turn. `variant="pixel"` switches to the SVG voxel trolley.
 - Mounted from `src/app/page.tsx`. It only reads from `features/explore` (`category`, `content`, `glass`, `onboarding`); it edits nothing there.
 - Escape or "Got it" ends it for good. The card never blocks the map.
-- Known overlap: Explore's own one-time "Every pin is a challenge. Tap one to explore." hint (in `features/explore`) still shows mid-map and repeats the guide card's title.
+- Explore's own one-time "Every pin is a challenge" map hint is switched off (`hintAllowed` in `ExploreMap.tsx`) because the guide card says the same thing.
