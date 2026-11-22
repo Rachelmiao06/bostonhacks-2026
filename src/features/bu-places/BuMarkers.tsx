@@ -3,7 +3,7 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import gsap from "gsap";
 import { Popover } from "@base-ui/react/popover";
-import { ExternalLink, X } from "lucide-react";
+import { ExternalLink, Landmark, Utensils, X } from "lucide-react";
 import { Marker, useMap } from "@/lib/map";
 import { buPlaces, text, type BuPlace } from "./content";
 
@@ -45,9 +45,16 @@ const BuMarker = memo(function BuMarker({ place, scale }: { place: BuPlace; scal
           <span aria-hidden ref={shadow} style={{ width: width * 0.8, height: 7 * scale }}
             className="absolute bottom-0 left-1/2 -translate-x-1/2 rounded-[50%] bg-graphite/45 blur-[3px]" />
           <span ref={body} className="relative block drop-shadow-[0_3px_2px_rgba(0,0,0,0.25)]">
-            {/* eslint-disable-next-line @next/next/no-img-element -- small static sprite, sized by CSS */}
-            <img src={`/assets/bu/${place.id}.webp`} alt="" width={width} draggable={false}
-              style={{ width, height: "auto" }} className="block max-w-none select-none" />
+            {place.art === false ? (
+              <span style={{ width: width * 0.6, height: width * 0.6 }}
+                className={`flex items-center justify-center rounded-sm border-2 border-graphite text-ivory shadow-[2px_2px_0_0_var(--graphite)] ${place.kind === "food" ? "bg-cat-service" : "bg-cat-station"}`}>
+                {place.kind === "food" ? <Utensils size={width * 0.34} aria-hidden /> : <Landmark size={width * 0.34} aria-hidden />}
+              </span>
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element -- small static sprite, sized by CSS
+              <img src={`/assets/bu/${place.id}.webp`} alt="" width={width} draggable={false}
+                style={{ width, height: "auto" }} className="block max-w-none select-none" />
+            )}
           </span>
         </Popover.Trigger>
         <Popover.Portal>
@@ -84,7 +91,7 @@ export type Blocker = { longitude: number; latitude: number };
  * The BU-area sprites. Render inside the map.
  * Flat map: sprites are placed in the order of `buPlaces` (most important first). A sprite is drawn only if it
  * would not overlap one already drawn, so the map thins out when zoomed out and fills in as you zoom in.
- * 3D world: pass the places inside that world; they are far enough apart there, so all of them show.
+ * 3D world: pass the places inside that world; the same rule applies, so a crowded street shows one sprite per spot.
  */
 export function BuMarkers({ places, blockers = [] }: { places?: BuPlace[]; blockers?: Blocker[] }) {
   const { current: map } = useMap();
@@ -100,15 +107,14 @@ export function BuMarkers({ places, blockers = [] }: { places?: BuPlace[]; block
   const scale = Math.min(1.15, Math.max(0.55, 0.45 + (zoom - 12) * 0.22));
 
   const shown = useMemo(() => {
-    if (places) return places;
-    if (zoom < text.minZoom) return [];
+    if (!places && zoom < text.minZoom) return [];
     const mpp = metresPerPixel(zoom, 42.35);
     const gap = (box: number) => box * mpp * text.spacing;
     // Older landmarks come first and are never moved; ours fit around them.
     const placed: { longitude: number; latitude: number; box: number }[] =
       blockers.map((b) => ({ ...b, box: text.blockerWidth * Math.min(1.4, Math.max(0.5, 0.55 + (zoom - 12) * 0.22)) }));
     const out: BuPlace[] = [];
-    for (const place of buPlaces) {
+    for (const place of places ?? buPlaces) {
       const box = text.width[place.kind] * scale;
       const clear = placed.every((other) => metres(place, other) >= gap((box + other.box) / 2));
       if (!clear) continue;

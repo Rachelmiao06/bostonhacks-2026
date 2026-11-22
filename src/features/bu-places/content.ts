@@ -12,6 +12,8 @@ export type BuPlace = {
   url: string;
   /** Text on the link button. */
   linkLabel: string;
+  /** false = no sprite file yet, a simple pixel badge is drawn instead. Remove it once /assets/bu/<id>.webp exists. */
+  art?: false;
 };
 
 const maps = (query: string) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
@@ -88,5 +90,61 @@ export const buPlaces: BuPlace[] = [
     id: "sausage-guy", name: "The Sausage Guy", kind: "food", longitude: -71.097357, latitude: 42.347243,
     intro: "A game-day sausage stand on Lansdowne Street, steps from Fenway Park.",
     url: maps("The Sausage Guy 49 Lansdowne St Boston"), linkLabel: "Open in Maps",
+  },
+  // More places, no pixel art yet: they show a simple badge until a sprite is dropped into public/assets/bu/.
+  {
+    id: "warren-towers", name: "Warren Towers", kind: "history", art: false, longitude: -71.1040199, latitude: 42.3493333,
+    intro: "BU's biggest residence hall at 700 Commonwealth Ave, home to thousands of first-years. Its dining hall is one of the busiest spots on campus.",
+    url: maps("Warren Towers 700 Commonwealth Ave Boston"), linkLabel: "Open in Maps",
+  },
+  {
+    id: "agganis-arena", name: "Agganis Arena", kind: "history", art: false, longitude: -71.11773, latitude: 42.3522233,
+    intro: "BU's arena at 925 Commonwealth Ave. It hosts Terrier hockey and concerts.",
+    url: "https://www.agganisarena.com/", linkLabel: "Visit the arena",
+  },
+  {
+    id: "paradise-rock-club", name: "Paradise Rock Club", kind: "history", art: false, longitude: -71.1194989, latitude: 42.35183,
+    intro: "A live-music club at 967 Commonwealth Ave that has hosted bands since 1978.",
+    url: "https://www.crossroadspresents.com/pages/paradise-rock-club", linkLabel: "See shows",
+  },
+  {
+    id: "noodle-street", name: "Noodle Street", kind: "food", art: false, longitude: -71.101612, latitude: 42.34978,
+    intro: "A Thai restaurant at 627 Commonwealth Ave, a short walk east of the GSU.",
+    url: maps("Noodle Street 627 Commonwealth Ave Boston"), linkLabel: "Open in Maps",
+  },
+  {
+    id: "bread-winners", name: "Bread Winners", kind: "food", art: false, longitude: -71.099768, latitude: 42.349503,
+    intro: "A café on Commonwealth Ave near Kenmore, handy for coffee and a pastry.",
+    url: maps("Bread Winners Commonwealth Ave Boston"), linkLabel: "Open in Maps",
+  },
+  {
+    id: "cafe-472", name: "Cafe 472", kind: "food", art: false, longitude: -71.093677, latitude: 42.348573,
+    intro: "A restaurant at 472 Commonwealth Ave, just past Kenmore Square.",
+    url: maps("Cafe 472 472 Commonwealth Ave Boston"), linkLabel: "Open in Maps",
+  },
+  {
+    id: "max-and-leos", name: "Max and Leo's", kind: "food", art: false, longitude: -71.098267, latitude: 42.347071,
+    intro: "A pizza place by Fenway Park on Brookline Ave.",
+    url: maps("Max and Leo's Pizza Brookline Ave Boston"), linkLabel: "Open in Maps",
+  },
+  {
+    id: "mighty-squirrel", name: "Mighty Squirrel Taproom & Kitchen", kind: "food", art: false, longitude: -71.101186, latitude: 42.347061,
+    intro: "A taproom and kitchen at 1 David Ortiz Drive, close to Fenway Park.",
+    url: maps("Mighty Squirrel Taproom Kitchen 1 David Ortiz Drive Boston"), linkLabel: "Open in Maps",
+  },
+  {
+    id: "cafe-landwer", name: "Cafe Landwer", kind: "food", art: false, longitude: -71.105719, latitude: 42.346764,
+    intro: "Israeli café food at 900 Beacon St, on the south side of campus.",
+    url: maps("Cafe Landwer 900 Beacon St Boston"), linkLabel: "Open in Maps",
+  },
+  {
+    id: "sol-azteca", name: "Sol Azteca", kind: "food", art: false, longitude: -71.106233, latitude: 42.346589,
+    intro: "Mexican food at 914 Beacon St, near Cafe Landwer.",
+    url: maps("Sol Azteca 914 Beacon St Boston"), linkLabel: "Open in Maps",
+  },
+  {
+    id: "audubon", name: "Audubon", kind: "food", art: false, longitude: -71.103147, latitude: 42.347314,
+    intro: "An American restaurant at 838 Beacon St, by Audubon Circle.",
+    url: maps("Audubon 838 Beacon St Boston"), linkLabel: "Open in Maps",
   },
 ];
