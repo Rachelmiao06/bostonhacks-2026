@@ -4,7 +4,7 @@ Pixel sprites for historic spots and local food around Boston University, floati
 Tap one: a card shows its name, a short intro and a link.
 
 - `content.ts`: every name, intro, link, position and sprite size. Edit text and links here only. The order of `buPlaces` is the priority order.
-- `BuMarkers.tsx`: the markers and the card. `ExploreMap.tsx` renders `<BuMarkers zoom={zoom} />` in atlas mode.
+- `BuMarkers.tsx`: the markers and the card. `ExploreMap.tsx` renders `<BuMarkers />` in the flat map and in the 3D view.
 - Sprites: `public/assets/bu/<id>.webp`, one per place, transparent background. Replace a file to change its art.
 - Research and sources: `docs/BU-PLACES.md`. Art prompt: `docs/bu-pixel-reference/PROMPT.md`.
 
