@@ -87,3 +87,59 @@ export const text = {
     save: "That didn’t save. Your answers are still here, so you can try again.",
   },
 };
+
+// Words for the overview and the "depth" parts: the status of the problem, MBTA's own directions,
+// what the rider's check did, and progress along the line.
+export const depth = {
+  chip: "Community mission",
+  helpCheck: (thing: string) => `Help check this ${thing}`,
+  helpConfirm: (thing: string) => `Help confirm this ${thing} works`,
+  reportsOut: (unit: string) => `MBTA reports ${unit} is out of service.`,
+  reportsFixed: (unit: string) => `MBTA says ${unit} is working again.`,
+
+  // Status block: one headline, one line on who has checked, one optional line of extra facts.
+  outFor: (time: string) => `Out of service for ${time}`,
+  outToday: "Out of service since today",
+  ongoingFor: (time: string) => `Ongoing for ${time}`,
+  startedToday: "Started today",
+  fixedAgo: (when: string) => `Marked fixed ${when}`,
+  official: "Reported by the MBTA.",
+  officialFixed: "The MBTA says it’s fixed.",
+  noChecks: "No Tada rider has checked it yet.",
+  someChecks: (n: number, when: string | null) =>
+    `${n === 1 ? "1 Tada rider has" : `${n} Tada riders have`} checked it${when ? `, most recently ${when}` : ""}.`,
+  repeat: (nth: string) => `${nth} time out in 90 days`,
+  plannedEnd: (date: string) => `MBTA plans to finish ${date}`,
+  days: (n: number) => (n === 1 ? "1 day" : `${n} days`),
+  months: (n: number) => `${n} months`,
+  years: (n: string) => (n === "1" ? "1 year" : `${n} years`),
+  minutesAgo: (n: number) => (n === 1 ? "1 minute ago" : `${n} minutes ago`),
+  hoursAgo: (n: number) => (n === 1 ? "1 hour ago" : `${n} hours ago`),
+  daysAgo: (n: number) => (n === 1 ? "1 day ago" : `${n} days ago`),
+
+  todoTitle: "What you’ll do",
+  goToUnit: (unit: string, station: string) => `Go to ${unit} at ${station}.`,
+  goTo: (station: string) => `Go to ${station}.`,
+  checkUnit: "Check whether it’s working, if it’s safe and easy for you to get to.",
+  shareStep: "Share what you found to help other riders.",
+  startUnit: (thing: string) => `Check this ${thing}`,
+  reassure: "No repair needed · Just report what you see",
+
+  routeAsk: "Need another accessible route?",
+  routeShow: "View MBTA directions",
+  routeHide: "Hide directions",
+  routeNote: "These directions are the MBTA’s own words. Check signs at the station too.",
+  fromMbta: "From the MBTA",
+
+  impactTitle: "What your check did",
+  first: "You’re the first Tada rider to check this.",
+  firstDetail: "Your check is now the latest one for this problem.",
+  joined: (n: number) => (n === 1 ? "You and 1 other rider have checked this." : `You and ${n} other riders have checked this.`),
+  lastCheck: (when: string) => `The last check before yours was ${when}.`,
+  verdicts: (working: number, broken: number) => `${working} said it works, ${broken} said it’s still broken.`,
+
+  lineTitle: (line: string, done: number, total: number) => `${line} Line · ${done} of ${total} checked`,
+  lineProgress: (line: string, done: number, total: number) => `${done} of ${total} missions checked on the ${line} Line`,
+  lineMore: (n: number) => (n === 1 ? "1 more to check on this line today." : `${n} more to check on this line today.`),
+  lineDone: (line: string) => `You’ve checked every mission on the ${line} Line today.`,
+};
