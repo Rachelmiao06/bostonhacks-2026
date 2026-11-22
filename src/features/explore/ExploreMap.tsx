@@ -588,8 +588,8 @@ export default function ExploreMap({ entry, onStatus, onReveal, guided = false }
                   scale={landmarkScale}
                 />
               ))}
-            {data && mode === "atlas" && <BuMarkers zoom={zoom} />}
-            {data && mode === "world" && <BuMarkers zoom={zoom} places={districtBuPlaces} />}
+            {data && mode === "atlas" && <BuMarkers blockers={landmarks} />}
+            {data && mode === "world" && <BuMarkers places={districtBuPlaces} />}
             {mode !== "world" &&
               clusters.map((cluster) =>
                 cluster.stops.length > 1 ? (

@@ -1,10 +1,10 @@
 "use client";
 
-import { memo, useEffect, useRef } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import gsap from "gsap";
 import { Popover } from "@base-ui/react/popover";
 import { ExternalLink, X } from "lucide-react";
-import { Marker } from "@/lib/map";
+import { Marker, useMap } from "@/lib/map";
 import { buPlaces, text, type BuPlace } from "./content";
 
 /** How high a sprite floats above its spot, in px at scale 1. */
@@ -70,12 +70,53 @@ const BuMarker = memo(function BuMarker({ place, scale }: { place: BuPlace; scal
   );
 });
 
+/** Metres on the ground that one screen pixel covers, at this zoom and latitude. */
+const metresPerPixel = (zoom: number, latitude: number) => 156543.03392 * Math.cos((latitude * Math.PI) / 180) / 2 ** zoom;
+
+/** Rough ground distance in metres between two points (fine at city scale). */
+const metres = (a: { longitude: number; latitude: number }, b: { longitude: number; latitude: number }) =>
+  Math.hypot((a.latitude - b.latitude) * 111_000, (a.longitude - b.longitude) * 111_000 * Math.cos((a.latitude * Math.PI) / 180));
+
+/** Something already drawn on the map that our sprites must not cover (the older landmarks). */
+export type Blocker = { longitude: number; latitude: number };
+
 /**
  * The BU-area sprites. Render inside the map.
- * Flat map: each kind appears from its own zoom. 3D world: pass the places inside that world and all of them show.
+ * Flat map: sprites are placed in the order of `buPlaces` (most important first). A sprite is drawn only if it
+ * would not overlap one already drawn, so the map thins out when zoomed out and fills in as you zoom in.
+ * 3D world: pass the places inside that world; they are far enough apart there, so all of them show.
  */
-export function BuMarkers({ zoom, places }: { zoom: number; places?: BuPlace[] }) {
-  const scale = Math.min(1.2, Math.max(0.6, 0.55 + (zoom - 12) * 0.22));
-  const shown = places ?? buPlaces.filter((place) => zoom >= text.minZoom[place.kind]);
-  return shown.map((place) => <BuMarker key={place.id} place={place} scale={places ? 1 : scale} />);
+export function BuMarkers({ places, blockers = [] }: { places?: BuPlace[]; blockers?: Blocker[] }) {
+  const { current: map } = useMap();
+  const [zoom, setZoom] = useState(() => map?.getZoom() ?? 12);
+  useEffect(() => {
+    if (!map) return;
+    const read = () => setZoom(Math.round(map.getZoom() * 4) / 4);
+    read();
+    map.on("zoom", read);
+    return () => { map.off("zoom", read); };
+  }, [map]);
+
+  const scale = Math.min(1.15, Math.max(0.55, 0.45 + (zoom - 12) * 0.22));
+
+  const shown = useMemo(() => {
+    if (places) return places;
+    if (zoom < text.minZoom) return [];
+    const mpp = metresPerPixel(zoom, 42.35);
+    const gap = (box: number) => box * mpp * text.spacing;
+    // Older landmarks come first and are never moved; ours fit around them.
+    const placed: { longitude: number; latitude: number; box: number }[] =
+      blockers.map((b) => ({ ...b, box: text.blockerWidth * Math.min(1.4, Math.max(0.5, 0.55 + (zoom - 12) * 0.22)) }));
+    const out: BuPlace[] = [];
+    for (const place of buPlaces) {
+      const box = text.width[place.kind] * scale;
+      const clear = placed.every((other) => metres(place, other) >= gap((box + other.box) / 2));
+      if (!clear) continue;
+      placed.push({ longitude: place.longitude, latitude: place.latitude, box });
+      out.push(place);
+    }
+    return out;
+  }, [places, zoom, scale, blockers]);
+
+  return shown.map((place) => <BuMarker key={place.id} place={place} scale={scale} />);
 }
