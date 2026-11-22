@@ -20,6 +20,10 @@ export const content = {
   filters: {
     label: "Show problems",
     all: "All",
+    /** The last chip: fly to the rider's own block, asking for their location once if we do not know it yet. */
+    nearMe: "Near me",
+    nearMeBusy: "Finding you…",
+    nearMeFailed: "We could not find you. Allow location in your browser, or pick a start on the welcome.",
   },
 
   progress: {
