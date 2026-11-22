@@ -494,6 +494,27 @@ export default function ExploreMap({ entry, onStatus, onReveal, guided = false }
     const map = mapRef.current?.getMap();
     if (map && worldInfo) playWorld(map, worldInfo);
   }, [playWorld, worldInfo]);
+  // "Near me": fly to the rider's own block. If we do not know where that is yet, ask for the location once (it stays in the browser).
+  const [nearState, setNearState] = useState<"idle" | "locating" | "failed">("idle");
+  const nearMe = useCallback(() => {
+    const map = mapRef.current?.getMap();
+    if (!map || !data) return;
+    if (worldInfo) {
+      setNearState("idle");
+      playWorld(map, worldInfo);
+      return;
+    }
+    if (!("geolocation" in navigator)) return setNearState("failed");
+    setNearState("locating");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setNearState("idle");
+        playWorld(map, chooseWorld({ kind: "geo", lat: pos.coords.latitude, lng: pos.coords.longitude }, data.stations, allStops));
+      },
+      () => setNearState("failed"),
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 10 * 60 * 1000 },
+    );
+  }, [data, worldInfo, allStops, playWorld]);
   const seeCity = useCallback(() => {
     const map = mapRef.current?.getMap();
     if (map) playAtlas(map);
@@ -661,9 +682,9 @@ export default function ExploreMap({ entry, onStatus, onReveal, guided = false }
         />
 
         {/* Overlays under the nav: the filters (city) or the name tag (world) on the left; the way out and progress on the right. */}
-        <div className="pointer-events-none absolute inset-x-0 top-[3.75rem] flex flex-col gap-2 px-2 sm:top-[4.75rem] sm:flex-row sm:items-start sm:justify-between sm:px-4">
+        <div className="pointer-events-none absolute inset-x-0 top-[3.75rem] z-20 flex flex-col gap-2 px-2 sm:top-[4.75rem] sm:flex-row sm:items-start sm:justify-between sm:px-4">
           <div className="pointer-events-auto min-w-0">
-            {mode === "atlas" && quests.status === "ready" && <FilterBar counts={counts} show={show} onToggle={toggleFilter} />}
+            {mode === "atlas" && quests.status === "ready" && <FilterBar counts={counts} show={show} onToggle={toggleFilter} nearMe={{ count: worldInfo ? worldProblemCount : null, busy: nearState === "locating", onClick: nearMe }} />}
             {mode === "world" && arrived && worldInfo?.note && (
               <p aria-live="polite" className="w-fit max-w-72 rounded-2xl bg-ivory/80 px-3 py-2 font-ui text-xs text-taupe shadow-float backdrop-blur-xl backdrop-saturate-150">
                 {worldInfo.note.kind === "far" ? worldText.far : worldText.quiet(worldInfo.note.from)}
@@ -695,6 +716,7 @@ export default function ExploreMap({ entry, onStatus, onReveal, guided = false }
           {mode !== "intro" && arrived && !selected && !panelQuest && !showHint && quests.status === "ready" && <PinLegend />}
           {quests.status === "ready" && quests.source === "snapshot" && <StatusChip live={false}>{content.questsSnapshot}</StatusChip>}
           {quests.status === "failed" && <StatusChip live={false}>{content.questsFailed}</StatusChip>}
+          {mode === "atlas" && nearState === "failed" && <StatusChip live={false}>{content.filters.nearMeFailed}</StatusChip>}
         </div>
 
         {!data && mode !== "intro" && (
