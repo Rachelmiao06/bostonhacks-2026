@@ -77,6 +77,7 @@ export const text = {
   progressAdded: (n: number) => `+1 contribution · ${n} so far`,
   progressTotal: (n: number) => `${n} contribution${n === 1 ? "" : "s"} so far`,
   newPiece: (name: string) => `Next time you visit, your island gets ${name}.`,
+  keepGoing: "Your little world is waiting. There are more problems to check on the map too.",
   exploreWorld: "Visit My Little World",
   another: "Explore another mission",
 

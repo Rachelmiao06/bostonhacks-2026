@@ -1,3 +1,5 @@
+import { motion, useReducedMotion } from "motion/react";
+import { PixelTrain } from "@/components/shared/pixel-train";
 import { cn } from "@/lib/utils";
 import { unlockSteps } from "@/features/island/content";
 import { PixelIcon } from "./PixelIcon";
@@ -99,6 +101,30 @@ export function WorldPreview({ known, justUnlocked }: { known: number; justUnloc
           {count} of {PIECES} pieces
           {next ? ` · Next: ${next.label}, after 1 more mission` : " · Your little world is complete for now"}
         </p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * A small pixel train that rolls along a dashed track toward a spark, under the world preview: a gentle nudge to go on
+ * (visit the world, or check another problem). Decoration only; it says nothing about numbers. Still under Reduced Motion.
+ */
+export function NudgeTrack() {
+  const reduce = useReducedMotion() ?? false;
+  return (
+    <div className="space-y-1.5" aria-hidden>
+      <div className="relative h-10 overflow-hidden rounded-xl bg-sun/10">
+        <span className="absolute inset-x-3 bottom-2.5 border-t-2 border-dashed border-graphite/25" />
+        <motion.div
+          className="absolute bottom-2.5"
+          initial={{ left: reduce ? "55%" : "-14%" }}
+          animate={reduce ? undefined : { left: ["-14%", "62%"] }}
+          transition={{ duration: 2.6, ease: "easeOut", repeat: Infinity, repeatDelay: 1.4 }}
+        >
+          <PixelTrain size={56} body="fill-cat-verify" />
+        </motion.div>
+        <PixelIcon name="spark" className="absolute right-4 bottom-2 size-5 text-sun motion-safe:animate-float" />
       </div>
     </div>
   );

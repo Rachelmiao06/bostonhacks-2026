@@ -9,7 +9,7 @@ import { stampCount, useMyProgress } from "@/features/explore/progress";
 import { cn } from "@/lib/utils";
 import { EARLIER_LABELS, partsOf, type Answers } from "./compose";
 import { text } from "./content";
-import { WorldPreview } from "./Collectibles";
+import { NudgeTrack, WorldPreview } from "./Collectibles";
 import { Choice, PhotoField, Primary, primaryClass, primaryStyle, Secondary, SummaryCard } from "./Parts";
 import { PixelIcon } from "./PixelIcon";
 import { locationOf } from "./templates";
@@ -350,6 +350,8 @@ function DoneStep({ m, stampsBefore }: { m: M; stampsBefore: number | null }) {
           <PixelIcon name="check" className="size-4" /> {text.status}: {m.verify ? text.statusSaved : text.statusShared}
         </p>
       </div>
+      <NudgeTrack />
+      <p className="text-center text-sm text-taupe">{text.keepGoing}</p>
     </div>
   );
 }
