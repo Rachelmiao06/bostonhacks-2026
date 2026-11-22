@@ -11,3 +11,5 @@ Tap one: a card shows its name, a short intro and a link.
 No overlap: on the flat map a sprite is drawn only if it would not cover one already drawn (or an older landmark like Fenway), so the map thins out when zoomed out and fills in as you zoom in. In the 3D view all places inside the little world show.
 
 Rules: food spots are real businesses, so never add an offer or discount to them. Food sprites on Commonwealth Ave sit at nudged positions so they do not overlap.
+
+Places without art: a place marked `art: false` in `content.ts` shows a simple pixel badge. To give it real art, save `public/assets/bu/<id>.webp` and delete its `art: false` line.
