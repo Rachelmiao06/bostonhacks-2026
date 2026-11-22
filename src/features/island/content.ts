@@ -90,19 +90,17 @@ export const content = {
     viewOnMap: "Continue on the map",
   },
 
-  // The journal as one handwritten sheet of paper, unfolded over the island
+  // The journal as a planner page: a month calendar with stickers on the days the rider did something
   sheet: {
-    label: "Your journal, an unfolded sheet of paper",
+    label: "Your journal, a planner page",
     title: "My journal",
     sub: "What I have done on the map",
-    search: "Search my journal",
-    all: "All",
-    reports: "Reports",
-    checks: "Fixes I checked",
-    entries: (n: number) => `${n} ${n === 1 ? "entry" : "entries"}`,
-    noMatch: "Nothing matches that.",
-    open: "Open this entry",
-    close: "Close this entry",
+    prevMonth: "Previous month",
+    nextMonth: "Next month",
+    weekdays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    summary: (reports: number, checks: number) => `${reports} ${reports === 1 ? "report" : "reports"} · ${checks} ${checks === 1 ? "fix" : "fixes"} checked`,
+    nothingMonth: "Nothing this month yet.",
+    pickDay: "Tap a day with a sticker to read it.",
     youWrote: "What I wrote",
     noText: "Nothing was saved with this one yet.",
     coach: "The coach says",
@@ -110,6 +108,10 @@ export const content = {
     likes: (n: number) => `${n} ${n === 1 ? "rider" : "riders"} liked this`,
     checkedFix: (station: string) => `I checked the fix at ${station}`,
     reportAt: (station: string) => `My report at ${station}`,
+    checkTag: "CHECK",
+    brokenTag: "BROKEN",
+    dayEntries: (n: number) => `${n} ${n === 1 ? "thing" : "things"} that day`,
+    monthTabs: "Jump to a month",
   },
 
   // The paper voucher a gift unfolds into
