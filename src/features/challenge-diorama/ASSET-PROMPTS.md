@@ -65,3 +65,51 @@ Render each on its own, then I place it on the tile.
 - No text anywhere. I draw all words in code.
 - One variant per file name. Keep the names above.
 - Drop them in `public/assets/challenge-diorama/` or tell me the folder on the desktop and I will copy and compress them.
+
+---
+
+# Round 2: redo the old pieces in the NEW look
+
+The first sheet's pieces (building, sky, bubbles, barrier sign, seal, frame, puffs, sparks) are softer and fuzzier than
+the new generated batch (tower, lamps, rider, bus, train, signpost). Redo them so everything matches.
+
+Attach as style references: `Isometric Knitted Glass Elevator Tower.png`, `Cozy Knitted Signpost with Dome Light.png`,
+`Knitted Boy Walking with Backpack.png` and `Knitted Dome Indicator Lamp.png`.
+
+## Master block 2 (paste first, every time)
+
+```text
+Use the attached images as the strict style reference: chunky crochet / knitted wool with clearly visible, evenly
+sized yarn stitches (crisp stitch definition, not fuzzy felt), rounded plump shapes, slightly glossy-matte yarn
+sheen, soft warm studio lighting from the upper left, a small soft contact shadow only directly under the object.
+Palette (no other colors): cream/ivory, warm beige, sky blue, deep navy blue, mustard yellow, cherry red,
+leaf green, olive green, steel gray, brick brown.
+Same isometric 3/4 camera as the attached elevator tower (about 35 degrees down, rotated 45 degrees, orthographic).
+Same scale family as the attached pieces (the boy is about 40% as tall as the elevator tower).
+One object per image, centered, on a plain pure-white background, generous empty space around it, nothing cropped,
+no text, no letters, no numbers, no logos, no real MBTA branding. At least 2048 px on the long side.
+```
+
+## Pieces
+
+| File | Prompt (after master block 2) |
+|---|---|
+| `building` | "A small knitted transit station building, deep-navy knitted walls, a cream knitted roof overhang with a dark navy roof slab on top, five small warmly lit mustard-yellow windows, a cream arched entrance canopy and a dark wood doorway. Same navy, cream and wood tones as the elevator tower so they look like the same station. Sits on a thin cream plinth. About 1.6 times as wide as the elevator tower." |
+| `sky-day` | "A soft knitted cloud-shaped backdrop patch (a flat rounded cloud silhouette, like a stitched patch): pale sky blue gradient, a small round mustard-yellow sun with a crochet texture, two tiny fluffy cream cloud puffs. Flat, front view, no ground." |
+| `sky-dusk` | "The same knitted cloud-shaped backdrop patch, same silhouette and size, but at dusk: dusty lavender at the top fading to peach and pale gold, a low half-sun on the bottom edge, three tiny star shapes in mustard yellow, one cream cloud puff. Flat, front view." |
+| `bubble-note` | "A small chunky knitted speech bubble, cream yarn with a thin deep-navy knitted outline, a little pointed tail at the bottom left, inside it two short gray knitted lines and one olive-green knitted check mark. No letters." |
+| `bubble-question` | "The same chunky knitted speech bubble (same size, outline and tail), but inside it one large olive-green knitted question mark. No other marks." |
+| `sign` (barrier) | "A small standing A-frame barrier sign, knitted: brick-brown wooden-looking frame legs, a cherry-red knitted panel with a cream knitted X. Chunky crochet look matching the signpost. Free-standing, facing the same direction as the elevator tower doorway." |
+| `seal` | "A round knitted wax-seal-style badge: olive-green crochet disc with a scalloped edge, a cream knitted check mark in the center, a slightly raised rim. Viewed straight on, slightly tilted." |
+| `frame` | "A rectangular knitted rope frame for a card, 4:3.8 landscape ratio, flat straight view, rounded corners, a cream plump rope border of uniform thickness (about 6 percent of the width), a mustard-yellow knitted button in each corner, a thin olive-green leaf wrap around each corner stud. The inside is completely EMPTY and transparent-ready. Straight, symmetrical, with plain uniform edges (so it can be stretched along the sides)." |
+| `puffs` | "Three separate small cream knitted pom-pom smoke puffs of different sizes, each a clump of loops, soft and round, light gray-cream. Three separate objects on one image." |
+| `sparks` | "Four separate small knitted four-point star sparkles in mustard yellow, different sizes, crochet texture, flat front view. Four separate objects on one image." |
+
+## Export checklist (same as before, plus)
+
+- Transparent background if you can; otherwise pure white, I cut them out.
+- Keep every piece centered with plenty of empty margin, and keep each file separate (no sheet), so the camera and scale
+  stay consistent.
+- The two sky patches must have the SAME silhouette and size, so I can swap them without the shape jumping.
+- The two bubbles must have the SAME size, outline and tail.
+- The frame must be symmetrical with a plain uniform border (I stretch its sides).
