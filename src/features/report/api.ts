@@ -21,7 +21,7 @@ async function call<T>(url: string, init?: RequestInit): Promise<T> {
 
 const post = (url: string, data: unknown) => call<never>(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(data) });
 
-export const checkPhoto = (d: { image: string; lat: number; lng: number; accuracy: number; note?: string }) => post("/api/report/check", d) as Promise<CheckResult>;
+export const checkPhoto = (d: { image: string; lat: number; lng: number; accuracy: number; note?: string; demo?: boolean }) => post("/api/report/check", d) as Promise<CheckResult>;
 
 export const findNearby = async (lat: number, lng: number, service: string) =>
   (await call<{ cases: NearbyCase[] }>(`/api/report/nearby?${new URLSearchParams({ lat: String(lat), lng: String(lng), service })}`)).cases;
