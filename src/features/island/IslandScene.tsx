@@ -28,6 +28,8 @@ export type IslandHandle = {
   focusHotspot: (id: string) => void;
   /** Fly the camera back to the overview it started with. */
   resetCamera: () => void;
+  /** Fly the camera in a little closer on the whole island. */
+  zoomIn: () => void;
   /** Hold the gentle camera sway while a ticket is open, so the camera stays where it is. */
   holdCamera: (hold: boolean) => void;
 };

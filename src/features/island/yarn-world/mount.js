@@ -318,6 +318,8 @@ export function mountIsland(container, { isUnlocked, onPhase, onHotspot, onHover
 		focusHotspot: (id) => focusOn(id),
 		/** Fly the camera back to the overview it started with. */
 		resetCamera: () => flyTo(home.pos, home.target),
+		/** Fly the camera in a little closer on the whole island (the welcome step of the tour). */
+		zoomIn: () => flyTo(home.target.clone().lerp(home.pos, 0.8), home.target),
 		/** Hold the gentle camera sway while a ticket is open, so the camera stays where it is. */
 		holdCamera: (hold) => {
 			swayHeld = hold;
