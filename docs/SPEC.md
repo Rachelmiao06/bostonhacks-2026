@@ -1,3 +1,5 @@
+> **Note:** this is the original day-one spec. The product has changed since (a real map instead of a pixel-art one, My World, Report, Tiger Data). Where they differ, the [README](../README.md) and [DECISIONS.md](DECISIONS.md) are current.
+
 # Spec: Tada ("Make every ride count")
 
 Tada turns feedback on Boston's public transit into a game. College students and everyday MBTA riders explore a pixel-art map of the T, find challenges (real transit issues), write feedback with text, a photo, or both, get coaching from an AI reviewer, and earn tokens.
