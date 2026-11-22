@@ -117,7 +117,7 @@ function Intro({ onStart }: { onStart: () => void }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="coach-intro-title"
-        className="w-full max-w-md rounded-3xl bg-ivory/78 px-6 pt-4 pb-5 font-ui text-graphite shadow-float backdrop-blur-xl backdrop-saturate-150 motion-safe:animate-in motion-safe:zoom-in-95"
+        className="w-full max-w-md rounded-3xl bg-ivory/96 px-6 pt-4 pb-5 sm:bg-ivory/78 font-ui text-graphite shadow-float backdrop-blur-xl backdrop-saturate-150 motion-safe:animate-in motion-safe:zoom-in-95"
       >
         <TrolleyHero />
         <p className="mt-3 font-mono text-[0.65rem] tracking-[0.14em] text-taupe uppercase">{t.eyebrow}</p>
@@ -220,7 +220,7 @@ function Feed({ onDone }: { onDone: () => void }) {
 
   return (
     <>
-      <section aria-label={f.label} aria-live="polite" className="pointer-events-none fixed top-[11rem] right-2 z-50 flex w-[min(19rem,calc(100vw-1rem))] flex-col gap-2 sm:top-[7.75rem] sm:right-4 sm:w-80">
+      <section aria-label={f.label} aria-live="polite" className="pointer-events-none fixed top-[8.5rem] right-2 z-50 flex w-[min(19rem,calc(100vw-1rem))] flex-col gap-2 sm:top-[7.75rem] sm:right-4 sm:w-80">
         {banners.map((b) => {
           const rank = banners.filter((x) => !x.hidden || x.id === TOTAL - 1).findIndex((x) => x.id === b.id);
           const isFinal = b.id === TOTAL - 1;
