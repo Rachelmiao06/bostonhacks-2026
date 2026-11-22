@@ -47,21 +47,20 @@ export function writeParcelOpened(giftId: string) {
   }
 }
 
-/** How many first-visit tips this browser has finished (0 to 3). Display memory only. */
-export function readOnboard(): number {
+/** Whether this browser has finished (or skipped) the first-visit tour of My World. Display memory only. */
+export function readTourDone(): boolean {
   try {
-    const n = Number(window.localStorage.getItem(`tparty.island.onboard:${getRiderId()}`));
-    return Number.isInteger(n) && n >= 0 && n <= 3 ? n : 0;
+    return window.localStorage.getItem(`tparty.island.tour:${getRiderId()}`) === "1";
   } catch {
-    return 0;
+    return false;
   }
 }
 
-export function writeOnboard(step: number) {
+export function writeTourDone() {
   try {
-    window.localStorage.setItem(`tparty.island.onboard:${getRiderId()}`, String(Math.min(3, Math.max(0, Math.floor(step)))));
+    window.localStorage.setItem(`tparty.island.tour:${getRiderId()}`, "1");
   } catch {
-    // storage blocked: the tips simply show again next time
+    // storage blocked: the tour simply shows again next time
   }
 }
 

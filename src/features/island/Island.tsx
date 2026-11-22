@@ -6,16 +6,17 @@ import { refreshProgress, stampCount, useMyProgress, type ProgressState } from "
 import { allowedFor, content, giftMilestones, giftStatesFor, isIn, unlockSteps, type GiftState } from "./content";
 import { attributions } from "@/lib/places";
 import { demoGifts } from "./gifts";
-import { CoachMark } from "./CoachMark";
 import { Collection } from "./Collection";
 import { GiftTicket } from "./GiftTicket";
 import { HotspotLabel, type TagIcon } from "./HotspotLabel";
 import { IslandHelp } from "./IslandHelp";
 import { JournalTicket } from "./JournalTicket";
+import { Tour } from "./Tour";
+import { WorldNotes } from "./WorldNotes";
 import { IslandScene } from "./IslandLoader";
 import type { IslandHandle } from "./IslandScene";
 import { useNearbyPlaces } from "./usePlaces";
-import { readOnboard, readParcelOpened, readSeen, writeOnboard, writeParcelOpened, writeSeen } from "./seen";
+import { readParcelOpened, readSeen, readTourDone, writeParcelOpened, writeSeen, writeTourDone } from "./seen";
 
 const total = unlockSteps.length;
 
@@ -137,10 +138,8 @@ function IslandView({
   }, [opened]);
   const places = useNearbyPlaces(true);
   const [collectionOpen, setCollectionOpen] = useState(false);
-  // First-visit tips, one at a time: 0 the gift, 1 the journal, 2 how the world grows, 3 done. Not shown in the preview.
-  const [coach, setCoach] = useState(() => (preview ? 3 : readOnboard()));
-  const [readyStep, setReadyStep] = useState<number | null>(null); // the tip that has finished its camera move and may show
-  const prevCoach = useRef(coach);
+  // The first-visit tour: the step the rider is on (0 is the welcome), or null when there is no tour. Not shown in the preview.
+  const [tour, setTour] = useState<number | null>(() => (preview || readTourDone() ? null : 0));
   const handle = useRef<IslandHandle | null>(null);
   const dropRef = useRef<(h: IslandHandle, index: number) => void>(() => {});
 
@@ -216,7 +215,6 @@ function IslandView({
       setOpened((o) => o.map((v, i) => v || i === index));
     }
     setHover(null);
-    setCoach((c) => ((c === 0 && id === "gift-0") || (c === 1 && id === "journal") || (c === 2 && id === "unlock") ? c + 1 : c));
     // The unlock box is not a ticket: its lid lifts, then the collection gallery floats up over the island.
     if (id === "unlock") {
       handle.current?.holdCamera(true);
@@ -249,36 +247,37 @@ function IslandView({
     handle.current?.setGiftStates(giftStatesFor(known, openedRef.current));
   }, [known]);
 
-  // The tour: for each tip the camera first flies to its object (or back to the overview for the last one), and only then
-  // does the tip show. A tip is remembered once done (display memory only). Opening a ticket pauses the tour.
+  // The tour: whenever its step changes (or a ticket or the gallery closes) the camera flies to that step's part.
+  // The card shows straight away so the rider can read while the camera moves; opening a ticket pauses the tour.
+  const tourShown = tour !== null && phase === "idle" && ticket === null && !collectionOpen;
+  const tourTarget = tourShown ? content.tour.steps[tour].target : null;
   useEffect(() => {
-    if (phase !== "idle" || preview || ticket !== null || collectionOpen || coach >= 3) return;
-    const first = prevCoach.current === coach && readyStep === null;
-    const t0 = window.setTimeout(() => {
+    if (!tourShown) return;
+    const first = tour === 0;
+    const id = window.setTimeout(() => {
       const h = handle.current;
-      if (coach === 0) h?.focusHotspot("gift-0");
-      else if (coach === 1) h?.focusHotspot("journal");
-      else h?.focusHotspot("unlock");
-    }, first ? 1800 : 600);
-    const t1 = window.setTimeout(() => setReadyStep(coach), (first ? 1800 : 600) + 1900);
-    return () => {
-      window.clearTimeout(t0);
-      window.clearTimeout(t1);
-    };
-  }, [phase, preview, ticket, collectionOpen, coach, readyStep]);
+      if (tourTarget === "overview") h?.zoomIn();
+      else if (tourTarget) h?.focusHotspot(tourTarget);
+      else h?.resetCamera();
+    }, first ? 900 : 150);
+    return () => window.clearTimeout(id);
+  }, [tourShown, tour, tourTarget]);
+  const endTour = useCallback(() => {
+    if (!preview) writeTourDone();
+    setTour(null);
+    handle.current?.resetCamera();
+  }, [preview]);
+  const startTour = useCallback(() => {
+    handle.current?.holdCamera(false);
+    setTour(0);
+  }, []);
+  const glowId = tourTarget && tourTarget !== "overview" ? tourTarget : null;
   useEffect(() => {
-    if (!preview) writeOnboard(coach);
-    // the tour is over (finished or skipped): back to the overview
-    if (prevCoach.current < 3 && coach >= 3 && !preview) handle.current?.resetCamera();
-    prevCoach.current = coach;
-  }, [coach, preview]);
-  const coachTarget = readyStep === coach && phase === "idle" && ticket === null && !collectionOpen ? (coach === 0 ? "gift-0" : coach === 1 ? "journal" : "unlock") : null;
-  useEffect(() => {
-    if (!coachTarget) return;
+    if (!glowId) return;
     const h = handle.current;
-    h?.highlightHotspot(coachTarget, true);
-    return () => h?.highlightHotspot(coachTarget, false);
-  }, [coachTarget]);
+    h?.highlightHotspot(glowId, true);
+    return () => h?.highlightHotspot(glowId, false);
+  }, [glowId]);
 
   const unlocked = useMemo(() => isIn(allowedFor(known)), [known]);
   const canKnit = phase === "ball" && plan.mode === "first";
@@ -291,16 +290,16 @@ function IslandView({
     <section className="fixed inset-0 z-30 bg-stone font-ui text-graphite">
       <IslandScene unlocked={unlocked} instant={plan.mode === "return"} onReady={onReady} onPhase={onPhase} onHotspot={onHotspot} onHover={onHover} onFail={onSceneFailed} />
 
-      <header className="pointer-events-none absolute top-20 left-4 max-w-[min(20rem,calc(100%-2rem))] sm:left-6">
+      <header hidden={tourShown} className="pointer-events-none absolute top-20 left-4 max-w-[min(20rem,calc(100%-2rem))] sm:left-6">
         <h1 className="font-serif text-2xl leading-tight font-semibold tracking-tight">{content.title}</h1>
-        <p className="text-xs text-taupe sm:text-sm">{preview ? content.help.previewNote : content.subtitle}</p>
+        {preview && <p className="text-xs text-taupe sm:text-sm">{content.help.previewNote}</p>}
       </header>
 
       {/* One small status at a time, never a wall of errors */}
       {status && (
         <p
           role="status"
-          className="absolute top-32 left-4 z-10 flex items-center gap-2 rounded-full border border-hairline bg-ivory/90 py-1.5 pr-1.5 pl-3 text-xs text-taupe shadow-float backdrop-blur-md sm:top-20 sm:right-6 sm:left-auto"
+          className="absolute bottom-16 left-4 z-10 flex items-center gap-2 rounded-full border border-hairline bg-ivory/90 py-1.5 pr-1.5 pl-3 text-xs text-taupe shadow-float backdrop-blur-md sm:top-20 sm:right-6 sm:bottom-auto sm:left-auto"
         >
           {status.text}
           {"retry" in status && (
@@ -327,8 +326,8 @@ function IslandView({
         )}
       </div>
 
-      {/* First-visit tips: point at the gift, then the journal, then say how the world grows */}
-      {coachTarget && <CoachMark key={coachTarget} id={coachTarget} text={coach === 0 ? content.coach.gift : coach === 1 ? content.coach.journal : content.coach.unlock} skipLabel={content.coach.skip} onSkip={() => setCoach(3)} handle={handle} />}
+      {/* The first-visit tour: welcome, My Journey, gifts, still to explore, then how it grows */}
+      {tourShown && <Tour step={tour} onStep={setTour} onSkip={endTour} onFinish={endTour} />}
       {/* Keyboard and screen-reader way to each object; they show when focused, and focusing one highlights it */}
       {phase === "idle" && ticket === null && (
         <div className="pointer-events-none absolute inset-x-0 bottom-16 z-10 flex flex-col items-center gap-1 not-focus-within:sr-only">
@@ -355,13 +354,16 @@ function IslandView({
       )}
 
       {/* Every object wears a small glass tag that follows it, so you can tell what it is; hover or focus grows it */}
-      {phase === "idle" && ticket === null && !collectionOpen && (
+      {phase === "idle" && ticket === null && !collectionOpen && !tourShown && (
         <div className="pointer-events-none absolute inset-0 z-10">
-          {hotspotIds.filter((id) => id !== coachTarget).map((id) => (
+          {hotspotIds.map((id) => (
             <HotspotLabel key={id} id={id} expanded={(hover ?? focused) === id} handle={handle} {...labelFor(id, giftStates, plan.progressKnown ? known : null, hasPlace)} />
           ))}
         </div>
       )}
+
+      {/* Tapping the island outside an open ticket closes it, the same as the close button */}
+      {ticket !== null && <div aria-hidden onClick={closeTicket} className="absolute inset-0 z-10" />}
 
       {ticket === "journal" && <JournalTicket progress={progress} known={plan.progressKnown ? known : null} handle={handle} onClose={closeTicket} onRetry={onRetry} />}
       {ticket?.startsWith("gift-") && (
@@ -385,7 +387,10 @@ function IslandView({
 
       {collectionOpen && <Collection known={plan.progressKnown ? known : null} handle={handle} onClose={closeCollection} />}
 
-      <IslandHelp preview={preview} onTogglePreview={onTogglePreview} />
+      {/* Three phone-style banners at the top left say what My World is (not during the tour, a ticket or the gallery) */}
+      {phase === "idle" && <WorldNotes low={preview} hidden={tourShown || ticket !== null || collectionOpen} onPick={(id) => handle.current?.focusHotspot(id)} />}
+
+      <IslandHelp preview={preview} onTogglePreview={onTogglePreview} onTour={phase === "idle" ? startTour : undefined} />
 
       <p role="status" aria-live="polite" className="sr-only">
         {note || (phase === "ball" ? content.waiting : phase === "intro" ? content.knitting : phase === "idle" ? content.knitted : "")}

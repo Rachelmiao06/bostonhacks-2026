@@ -1,6 +1,5 @@
 export const content = {
   title: "Your Little World",
-  subtitle: "A little world shaped by your contributions.",
   loading: "Winding the yarn…",
 
   // One small status at a time. The scene and the rider's progress fail for different reasons.
@@ -51,6 +50,7 @@ export const content = {
     codeNote: "Example only. This code works nowhere.",
     locked: (need: number) => `Locked. ${need} more ${need === 1 ? "contribution" : "contributions"} on the map opens it.`,
     close: "Close and go back to the island",
+    back: "Back to my world",
   },
 
   // The compact glass label that appears when you hover, focus or select an object on the island
@@ -118,14 +118,37 @@ export const content = {
     looking: "Looking for places near your stop…",
   },
 
-  // First-visit tips, one at a time: the gift, the journal, then how the world grows
-  coach: {
-    gift: "A little gift is waiting. Tap it to open.",
-    journal: "This is your journal. Tap it to see what you have done.",
-    unlock: "Tap this box to see what else you can unlock. Contribute on the map and your island grows.",
+  // The first-visit tour: one step at a time, paced by the rider (scroll, swipe, arrow keys or the buttons).
+  // `target` is the island object the camera flies to ("overview" zooms in on the whole island, null stays put).
+  tour: {
+    label: "Tour of your world",
+    steps: [
+      { id: "welcome", kicker: "Welcome", title: "This is your little world", body: "It is all yours, and it grows with every problem you report or check on the map. Scroll down for a quick look at its three parts.", target: "overview" },
+      { id: "journey", kicker: "Part 1 of 3", title: "My Journey", body: "The journal is your story so far: every report and check you have made, and where each one stands.", target: "journal" },
+      { id: "gifts", kicker: "Part 2 of 3", title: "Your gifts", body: "Little gifts wait on the island. The first is ready to open, and more open as you contribute.", target: "gift-0" },
+      { id: "explore", kicker: "Part 3 of 3", title: "Still to explore", body: "This box shows every piece your island can still unlock, and how far away the next one is.", target: "unlock" },
+      { id: "grow", kicker: "Your turn", title: "Make it grow", body: "Report or check a problem on the map, and something new drops onto your island.", target: null },
+    ],
+    hint: "Scroll, swipe or use the arrow keys",
+    next: "Next",
+    back: "Back",
+    skip: "Skip tour",
+    stepOf: (n: number, total: number) => `Step ${n} of ${total}`,
     openMap: "Open the map",
-    gotIt: "Got it",
-    skip: "Skip tips",
+    finish: "Look around my world",
+    replay: "Take the tour again",
+  },
+
+  // What My World is, as three phone-style notification banners at the top left, popping in one after another.
+  notes: {
+    now: "now",
+    pill: "What is My World?",
+    hide: "Hide",
+    points: [
+      { id: "unlock", title: "It keeps growing", body: "Every report or check you make on the map drops something new onto your island." },
+      { id: "gift-0", title: "Gifts and promo codes", body: "Little treats open as it grows. They are examples for now." },
+      { id: "journal", title: "Your journey", body: "Every report and check you have made is kept in your journal, so you can track what you did." },
+    ],
   },
 
   // The collection gallery: a row of floating knitted pieces and one progress line
