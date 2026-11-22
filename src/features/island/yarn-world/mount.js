@@ -30,6 +30,7 @@ export function mountIsland(container, { isUnlocked, onPhase, onHotspot, onHover
 	let { w, h } = size();
 
 	const renderer = new THREE.WebGLRenderer({ antialias: false });
+	renderer.setClearColor(BACKGROUND); // the same warm stone as the page behind it, so a frame drawn before the scene is ready never flashes
 	renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 	renderer.setSize(w, h);
 	renderer.shadowMap.enabled = true;
