@@ -9,6 +9,7 @@ import { glassClass, glassStyle, primaryClass, primaryStyle } from "@/features/e
 import { hasSeen } from "@/features/explore/onboarding";
 import { coach } from "./content";
 import { coachMarkSeen, coachReset, coachSeen } from "./storage";
+import { TrolleyHero } from "./TrolleyHero";
 
 type Phase = "idle" | "intro" | "waiting" | "live";
 
@@ -106,7 +107,7 @@ function Intro({ onStart }: { onStart: () => void }) {
         aria-labelledby="coach-intro-title"
         className="w-full max-w-md rounded-3xl border border-ivory/80 bg-ivory/95 p-5 font-ui text-graphite shadow-float backdrop-blur-xl motion-safe:animate-in motion-safe:zoom-in-95"
       >
-        <MiniMap />
+        <TrolleyHero />
         <p className="mt-4 font-mono text-[0.65rem] tracking-[0.14em] text-taupe uppercase">{t.eyebrow}</p>
         <h2 id="coach-intro-title" className="mt-1 font-heading text-3xl leading-[1.05] font-semibold">{t.title}</h2>
         <p className="mt-2 text-sm leading-snug text-graphite/90">{t.body}</p>
@@ -127,7 +128,7 @@ function Intro({ onStart }: { onStart: () => void }) {
         </ul>
         <p className="mt-3 text-[0.7rem] leading-snug text-taupe">{t.honest}</p>
         <div className="mt-4 flex flex-col gap-2 sm:flex-row-reverse">
-          <button ref={primary} type="button" onClick={onStart} className={`${primaryClass} h-11 flex-1 px-6 text-sm`} style={primaryStyle}>
+          <button ref={primary} type="button" onClick={onStart} className={`${primaryClass} h-11 px-6 text-sm sm:flex-1`} style={primaryStyle}>
             {t.start}
           </button>
           <button type="button" onClick={onStart} className={`${glassClass} h-11 px-5 text-sm`} style={glassStyle}>
@@ -136,26 +137,6 @@ function Intro({ onStart }: { onStart: () => void }) {
         </div>
       </div>
     </div>
-  );
-}
-
-/** A tiny drawn map: two lines, a few stops and three pins, so "a map of problems" is clear before any real map is read. */
-function MiniMap() {
-  const pinFill = { service: "fill-cat-service", access: "fill-cat-access", station: "fill-cat-station" } as const;
-  return (
-    <svg viewBox="0 0 320 120" role="img" aria-label="A small map with train lines and problem pins" className="h-24 w-full rounded-2xl bg-stone">
-      <path d="M0 90 C70 90 90 40 160 50 S270 30 320 20" className="fill-none stroke-cat-verify" strokeWidth="5" strokeLinecap="round" />
-      <path d="M40 120 C80 80 130 80 180 70 S250 90 300 110" className="fill-none stroke-cat-station" strokeWidth="5" strokeLinecap="round" />
-      {[[70, 80], [160, 50], [235, 36], [180, 70]].map(([x, y]) => (
-        <circle key={`${x}-${y}`} cx={x} cy={y} r="4.5" className="fill-ivory stroke-graphite" strokeWidth="2" />
-      ))}
-      {([[160, 50, "service"], [235, 36, "access"], [70, 80, "station"]] as const).map(([x, y, k]) => (
-        <g key={`${x}-${k}`} transform={`translate(${x} ${y - 16})`}>
-          <circle r="10" className={cn("stroke-ivory", pinFill[k])} strokeWidth="2.5" />
-          <circle r="3" className="fill-ivory" />
-        </g>
-      ))}
-    </svg>
   );
 }
 
