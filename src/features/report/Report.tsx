@@ -6,6 +6,7 @@ import { Activity } from "./Activity";
 import { checkPhoto, findNearby, ReportApiError } from "./api";
 import { Camera, type Shot } from "./Camera";
 import { content } from "./content";
+import { demoOn } from "./demo-mode";
 import { KnittedCamera, KnittedControl, KnittedSuccess, YarnBall } from "./Knitted";
 import { Prepare } from "./Prepare";
 import { Result, type Analysis } from "./Result";
@@ -30,6 +31,12 @@ type Step =
 export function Report() {
   const [step, setStep] = useState<Step>({ name: "entry" });
   const top = useRef<HTMLDivElement>(null);
+  // Demo mode comes from the address (?demo=1), so it is read after load.
+  const [demo, setDemo] = useState(false);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDemo(demoOn());
+  }, []);
 
   // Each new screen starts at the top.
   useEffect(() => {
@@ -48,6 +55,11 @@ export function Report() {
   return (
     <div className="mx-auto grid w-full max-w-4xl grid-cols-[minmax(0,1fr)] gap-4 pb-20 font-ui text-graphite">
       <div ref={top} className="scroll-mt-24" />
+      {demo && (
+        <p role="status" className="mx-auto w-fit rounded-full bg-stone-deep/70 px-3 py-1 text-xs text-graphite">
+          {content.demoBadge}
+        </p>
+      )}
       {step.name === "entry" && <Entry onStart={camera} onActivity={() => setStep({ name: "activity" })} />}
       {step.name === "activity" && (
         <div className="mx-auto grid w-full max-w-xl gap-4">
@@ -152,7 +164,7 @@ function Analyzing({ shot, note, onDone, onError }: { shot: Shot; note: string; 
     let live = true;
     (async () => {
       try {
-        const result = await checkPhoto({ image: shot.image, lat: shot.lat, lng: shot.lng, accuracy: shot.accuracy, note });
+        const result = await checkPhoto({ image: shot.image, lat: shot.lat, lng: shot.lng, accuracy: shot.accuracy, note, demo: demoOn() });
         let nearby: Analysis["nearby"] = "failed";
         if (result.verdict === "fixable") nearby = await findNearby(shot.lat, shot.lng, result.serviceName).catch(() => "failed" as const);
         else nearby = [];

@@ -15,6 +15,16 @@ export type QuestKind =
   | "shuttle" // buses replace trains
   | "suspension"; // no service on a stretch of line
 
+export type QuestChecks = {
+  /** Different riders who checked. */
+  riders: number;
+  /** When the latest check was saved. */
+  lastAt: string | null;
+  /** Verify answers only ("MBTA says fixed, is it?"). Reports are free text, so they are not counted here. */
+  working: number;
+  stillBroken: number;
+};
+
 export type Quest = {
   /** MBTA alert id. Stable for the life of the alert. */
   id: string;
@@ -38,6 +48,12 @@ export type Quest = {
   lines: string[];
   /** MBTA's own sentence describing the alert. */
   header: string;
+  /**
+   * MBTA's longer text, when it wrote one: often why the unit is out and step-free directions around it.
+   * Always MBTA's words, never ours. Null or absent when MBTA wrote nothing (most escalators) and for verify quests.
+   * Optional so code that builds its own Quest (tests, samples) keeps compiling.
+   */
+  description?: string | null;
   /** e.g. "MAINTENANCE", "UNKNOWN_CAUSE" */
   cause: string;
   startedAt: string;
@@ -51,6 +67,11 @@ export type Quest = {
   resolvedAt?: string;
   /** How many times this unit has been out in the last 90 days, counting this one. Set when the database is available. */
   failuresLast90Days?: number;
+  /**
+   * How many Tada riders have checked this alert (completed reports plus verifications). Counts only, never who.
+   * Set when the database is available; absent means "unknown", not zero.
+   */
+  checks?: QuestChecks;
   /** Always a Tada mission built from real MBTA data, never an official MBTA request for comment. */
   type: "community_mission";
   sourceUrl: string;
@@ -111,6 +132,7 @@ type RawAlert = {
     effect: string;
     cause: string;
     header: string;
+    description?: string | null;
     active_period: { start: string | null; end: string | null }[];
     informed_entity: RawEntity[];
   };
@@ -184,6 +206,7 @@ export function toQuests(raw: RawFeed, now: Date): Quest[] {
       stationIds: stationId && !stationIds.includes(stationId) ? [stationId, ...stationIds] : stationIds,
       lines,
       header: a.header,
+      description: a.description?.trim() || null,
       cause: a.cause,
       startedAt,
       expectedEnd: a.active_period.at(-1)?.end ?? null,

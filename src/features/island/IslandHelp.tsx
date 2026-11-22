@@ -5,7 +5,7 @@ import { CircleHelp, X } from "lucide-react";
 import { content } from "./content";
 
 /** Secondary explanations, sound, the preview and the credit, tucked behind one small button at the edge. */
-export function IslandHelp({ preview, onTogglePreview }: { preview: boolean; onTogglePreview: () => void }) {
+export function IslandHelp({ preview, onTogglePreview, onTour }: { preview: boolean; onTogglePreview: () => void; onTour?: () => void }) {
   const [open, setOpen] = useState(false);
   const h = content.help;
 
@@ -28,6 +28,18 @@ export function IslandHelp({ preview, onTogglePreview }: { preview: boolean; onT
             <li>{h.sound}</li>
           </ul>
           {preview && <p className="text-taupe">{h.previewNote}</p>}
+          {onTour && (
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                onTour();
+              }}
+              className="mr-2 inline-flex h-8 cursor-pointer items-center rounded-full bg-graphite px-3 font-medium text-ivory outline-none hover:opacity-90 focus-visible:ring-4 focus-visible:ring-graphite/25"
+            >
+              {content.tour.replay}
+            </button>
+          )}
           <button
             type="button"
             onClick={onTogglePreview}

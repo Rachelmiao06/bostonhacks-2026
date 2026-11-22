@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState, useSyncExternalStore } from "react";
 import { DiveGate, type GatePhase, type LoadStatus, type LocateError } from "./DiveGate";
 import { markSeen, welcomedOnLoad } from "./onboarding";
 import { startPrefetch } from "./prefetch";
@@ -27,6 +27,11 @@ const nothingToWatch = () => () => {};
 const ATLAS: Entry = { kind: "atlas" };
 
 export function ExploreLoader() {
+  // Next hides cached pages with Activity. MapLibre destroys its map on hide,
+  // so its markers and layers must mount against the new map when we return.
+  const [mapVisit, setMapVisit] = useState(0);
+  useLayoutEffect(() => () => setMapVisit((visit) => visit + 1), []);
+
   // A shared link (?quest=...) is known only in the browser; the server render assumes there is none.
   const deepLinked = useSyncExternalStore(nothingToWatch, () => new URLSearchParams(window.location.search).has("quest"), () => false);
   const [chosen, setEntry] = useState<Entry>({ kind: "pending" });
@@ -98,7 +103,7 @@ export function ExploreLoader() {
       {/* The paper under the map, so the first frame is never blank while the map code arrives. */}
       <div aria-hidden className="fixed inset-0 z-30 bg-stone" />
       {/* The first-map hint belongs only to a visit that began with the welcome and chose a starting place. */}
-      <ExploreMap entry={entry} onStatus={onStatus} onReveal={onReveal} guided={!skipGate && (chosen.kind === "geo" || chosen.kind === "spot")} />
+      <ExploreMap key={mapVisit} entry={entry} onStatus={onStatus} onReveal={onReveal} guided={!skipGate && (chosen.kind === "geo" || chosen.kind === "spot")} />
       {hydrated && !skipGate && phase !== "gone" && (
         <DiveGate
           phase={phase}

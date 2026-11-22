@@ -70,22 +70,31 @@ function writeMuted(value) {
 	}
 }
 
-// Fetch every sample's bytes at page load, so the first gesture only has to decode them.
+// Fetch every sample's bytes, but not while the island is still loading: about 1.9 MB of sound used to download the
+// moment this file was imported and competed with the island's own scripts. Nothing can play before the first gesture
+// anyway, so the fetch starts once the browser is idle (or at the first gesture, whichever comes first) at low priority.
 const bytes = new Map();
-{
+function fetchSamples() {
+	if (bytes.size) return;
 	const names = new Set(AMBIENCE_FILES);
 	for (const cue of Object.values(CUES)) for (const file of cue.files) names.add(file);
 	for (const name of names) {
-		const req = fetch(`/assets/island/sfx/${name}.mp3`).then((res) => res.arrayBuffer());
+		const req = fetch(`/assets/island/sfx/${name}.mp3`, { priority: 'low' }).then((res) => res.arrayBuffer());
 		req.catch(() => {}); // a missing sample just stays silent
 		bytes.set(name, req);
 	}
+}
+/** Start fetching the sounds once the first frames are on screen. */
+export function prefetchSamplesWhenIdle() {
+	if (typeof requestIdleCallback === 'function') requestIdleCallback(fetchSamples, { timeout: 6000 });
+	else setTimeout(fetchSamples, 3000);
 }
 
 // Decode every sample once the context exists.
 function loadSamples() {
 	if (loading) return;
 	loading = true;
+	fetchSamples();
 	for (const [name, req] of bytes) {
 		req
 			.then((data) => ctx.decodeAudioData(data))

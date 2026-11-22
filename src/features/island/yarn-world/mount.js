@@ -12,7 +12,7 @@ import { buildWorld } from './world.js';
 import { DofPass, makeDepthTarget } from './dof.js';
 import { setupPoke } from './poke.js';
 import { setupGuide } from './guide.js';
-import { setMuted, isMuted, unlockAudio, suspendAudio } from './sound.js';
+import { setMuted, isMuted, unlockAudio, suspendAudio, prefetchSamplesWhenIdle } from './sound.js';
 import { setupAmbience } from './ambience.js';
 import { S } from './layout.js';
 
@@ -30,6 +30,7 @@ export function mountIsland(container, { isUnlocked, onPhase, onHotspot, onHover
 	let { w, h } = size();
 
 	const renderer = new THREE.WebGLRenderer({ antialias: false });
+	renderer.setClearColor(BACKGROUND); // the same warm stone as the page behind it, so a frame drawn before the scene is ready never flashes
 	renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 	renderer.setSize(w, h);
 	renderer.shadowMap.enabled = true;
@@ -147,6 +148,10 @@ export function mountIsland(container, { isUnlocked, onPhase, onHotspot, onHover
 		camera.updateProjectionMatrix();
 		renderer.setSize(w, h);
 		composer.setSize(w, h);
+		// T Party: resizing a canvas empties it, and a ResizeObserver or the resolution step below runs after the frame was
+		// drawn, so the empty canvas used to be shown until the next frame (a flash of the page colour, once per step, up
+		// to four times on a retina screen). Draw again right away, before the browser paints.
+		composer.render(0);
 	};
 	const observer = new ResizeObserver(resize);
 	observer.observe(container);
@@ -259,6 +264,7 @@ export function mountIsland(container, { isUnlocked, onPhase, onHotspot, onHover
 	const anchorPoint = new THREE.Vector3();
 	const hotspot = (id) => world.hotspots.find((h) => h.id === id);
 	let lastPhase = '';
+	prefetchSamplesWhenIdle(); // sounds download after the island is up, not while it loads
 	renderer.setAnimationLoop(() => {
 		timer.update();
 		const rawDt = timer.getDelta();
@@ -318,6 +324,8 @@ export function mountIsland(container, { isUnlocked, onPhase, onHotspot, onHover
 		focusHotspot: (id) => focusOn(id),
 		/** Fly the camera back to the overview it started with. */
 		resetCamera: () => flyTo(home.pos, home.target),
+		/** Fly the camera in a little closer on the whole island (the welcome step of the tour). */
+		zoomIn: () => flyTo(home.target.clone().lerp(home.pos, 0.8), home.target),
 		/** Hold the gentle camera sway while a ticket is open, so the camera stays where it is. */
 		holdCamera: (hold) => {
 			swayHeld = hold;

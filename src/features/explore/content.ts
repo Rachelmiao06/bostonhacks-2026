@@ -20,6 +20,10 @@ export const content = {
   filters: {
     label: "Show problems",
     all: "All",
+    /** The last chip: fly to the rider's own block, asking for their location once if we do not know it yet. */
+    nearMe: "Near me",
+    nearMeBusy: "Finding you…",
+    nearMeFailed: "We could not find you. Allow location in your browser, or pick a start on the welcome.",
   },
 
   progress: {
@@ -190,6 +194,7 @@ export const dive = {
   spots: [
     { label: "Park Street", stationId: "place-pktrm" },
     { label: "BU · Comm Ave", stationId: "place-bucen" },
+    { label: "Downtown Crossing", stationId: "place-dwnxg" },
     { label: "Kenmore · Fenway", stationId: "place-kencl" },
     { label: "South Station", stationId: "place-sstat" },
     { label: "North Station", stationId: "place-north" },
@@ -209,6 +214,9 @@ export const world = {
     n === 1
       ? "1 problem within a short walk"
       : `${n} problems within a short walk`,
+  /** The small tag beside the start stop on the map. */
+  nearYou: "Near you",
+  nearbyCount: (n: number) => (n === 1 ? "1 problem nearby" : `${n} problems nearby`),
   far: "You are outside the T area, so we started you at Park Street.",
   quiet: (from: string) =>
     `Nothing is broken near ${from} right now. We moved you to the closest problem.`,

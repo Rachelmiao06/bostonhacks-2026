@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { content } from "./content";
 
 type Props = {
   /** A real photo, or an illustration of the kind of place. */
@@ -96,6 +97,13 @@ export function Voucher({ art, chip, stamp, kicker, title, sub, offer, stub, foo
         <div className="mt-3 border-t-2 border-dashed border-graphite/25 px-4 pt-3 pb-4">
           {stub}
           {foot && <div className="mt-3 space-y-1.5 text-[0.68rem] leading-snug text-graphite/70">{foot}</div>}
+          <button
+            type="button"
+            onClick={onClose}
+            className="mt-3 inline-flex h-9 w-full cursor-pointer items-center justify-center rounded-full bg-graphite px-4 text-xs font-medium text-ivory outline-none hover:opacity-90 focus-visible:ring-4 focus-visible:ring-graphite/25"
+          >
+            {content.gift.back}
+          </button>
         </div>
       </Fold>
     </article>
