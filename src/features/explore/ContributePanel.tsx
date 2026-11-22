@@ -11,19 +11,19 @@ type Props = {
 };
 
 /**
- * A mission over the map: a panel on the right on wide screens, a bottom sheet on phones.
- * The map stays visible behind it. The steps live in features/missions (one framework for every kind of problem).
+ * A mission over the map: a glass card on the right on wide screens, at the bottom on phones. The screen behind it is
+ * the mission's little world (drawn by MissionFlow), so the popup itself is transparent and tapping outside does not close it. The steps live in features/missions (one framework for every kind of problem).
  */
 export function ContributePanel({ quest, onClose }: Props) {
   return (
-    <Dialog.Root open={quest !== null} onOpenChange={(open) => !open && onClose()}>
+    <Dialog.Root open={quest !== null} onOpenChange={(open) => !open && onClose()} disablePointerDismissal>
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-40 bg-graphite/20 transition-opacity duration-200 data-ending-style:opacity-0 data-starting-style:opacity-0 sm:bg-graphite/5" />
         <Dialog.Popup
           className={cn(
-            "fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] flex-col overflow-hidden rounded-t-3xl border border-ivory/90 bg-linear-to-b from-ivory/95 via-ivory/90 to-ivory/80 text-graphite shadow-ticket outline-none backdrop-blur-2xl backdrop-saturate-150",
+            "fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] flex-col p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] text-graphite outline-none",
             "transition-transform duration-300 ease-out data-ending-style:translate-y-full data-starting-style:translate-y-full",
-            "sm:inset-x-auto sm:top-3 sm:right-3 sm:bottom-3 sm:max-h-none sm:w-[27rem] sm:rounded-3xl",
+            "sm:inset-x-auto sm:top-0 sm:right-0 sm:bottom-0 sm:max-h-none sm:w-[28.5rem]",
             "sm:data-ending-style:translate-x-[110%] sm:data-ending-style:translate-y-0 sm:data-starting-style:translate-x-[110%] sm:data-starting-style:translate-y-0",
           )}
         >
