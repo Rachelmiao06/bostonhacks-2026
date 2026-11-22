@@ -71,3 +71,5 @@ One line each: date · what · why.
 
 - 2026-11-21 · There are two gift boxes, not three: a local-treat box that opens a paper voucher (picture, name, offer or place, tear line, stub, zig-zag edge, unfolds out of the gift) and an "Unlock more of your island" box that opens the collection gallery; the locked parcels and the header link are removed · each box has one clear job, and the voucher should look like a voucher. The tour's third step points at the unlock box.
 - 2026-11-21 · Onboarding is one small welcome card plus two one-time hints (map pin, first ticket), kept in localStorage `tparty.onboarding` v1; a welcomed browser skips the card and does not auto-dive · the map stays the product; bump VERSION in `onboarding.ts` to show it all again.
+
+- 2026-11-21 · BU-area places (6 landmarks, 6 local food spots as pixel sprites) live in `src/features/bu-places/` and render from one line in `ExploreMap.tsx` (atlas mode only); food appears only at zoom 15.5+ and its Commonwealth Ave positions are nudged apart · the real spots are 10 m apart and would overlap; food links go to Google Maps, never an offer on a real shop.

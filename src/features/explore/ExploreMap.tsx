@@ -29,6 +29,7 @@ import { categories, content, dive, landmarks, world as worldText, type Category
 import type { LoadStatus } from "./DiveGate";
 import { MapHint } from "./Hints";
 import { LandmarkMarker } from "./LandmarkMarker";
+import { BuMarkers } from "@/features/bu-places/BuMarkers";
 import { FilterBar, PinLegend, ProgressChip, StatusChip } from "./MapOverlays";
 import { hasSeen } from "./onboarding";
 import { subwayDownload } from "./prefetch";
@@ -582,6 +583,7 @@ export default function ExploreMap({ entry, onStatus, onReveal, guided = false }
                   scale={landmarkScale}
                 />
               ))}
+            {data && mode === "atlas" && <BuMarkers zoom={zoom} />}
             {mode !== "world" &&
               clusters.map((cluster) =>
                 cluster.stops.length > 1 ? (

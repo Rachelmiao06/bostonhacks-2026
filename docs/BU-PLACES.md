@@ -10,12 +10,12 @@ Food spots are real local businesses: show no offers or discounts on them (see `
 
 | id | Name | Address / area | Intro for the popup (2 to 3 lines) | Link | Status |
 |---|---|---|---|---|---|
-| `gsu` | George Sherman Union (GSU) | 775 Commonwealth Ave, BU | The student centre of Boston University. You are here. | https://www.bu.edu/gsu/ | unchecked |
+| `gsu` | George Sherman Union (GSU) | 775 Commonwealth Ave, BU | The student centre of Boston University. You are here. | https://www.bu.edu/reservations/gsu/ | checked (bu.edu/gsu gives 404) |
 | `marsh-chapel` | Marsh Chapel and Marsh Plaza | 735 Commonwealth Ave, BU | BU's chapel. Howard Thurman, dean 1953 to 1965, mentored Martin Luther King Jr. (BU PhD). The day after King was killed in 1968, BU held a memorial on Marsh Plaza. | https://www.bu.edu/chapel/ | checked (BU pages) |
 | `citgo-sign` | Citgo Sign | 660 Beacon St, Kenmore Square | A Boston icon above Kenmore Square. The current sign went up in 1965. Boston's Landmarks Commission voted to designate it a landmark in 2018. | https://www.bu.edu/articles/2009/icons-among-us-the-citgo-sign | checked |
 | `fenway-park` | Fenway Park | 4 Jersey St, Fenway | Home of the Red Sox. A 60 minute guided tour runs through the year. (Sprite `fenway-park` already exists in `PixelLandmark.tsx`.) | https://www.mlb.com/redsox/ballpark/tours | checked |
 | `esplanade` | Charles River Esplanade and BU Bridge | along the Charles, behind BU | A three mile riverside park. The BU Bridge is its western end. | https://esplanade.org/the-esplanade | checked |
-| `mapparium` | Mapparium, Mary Baker Eddy Library | 200 Massachusetts Ave, Christian Science Plaza | A stained glass globe you walk inside, finished in 1935. Its sound bounces around like a whispering gallery. The library is free, the Mapparium costs a ticket. | https://www.marybakereddylibrary.org/ | unchecked |
+| `mapparium` | Mapparium, Mary Baker Eddy Library | 200 Massachusetts Ave, Christian Science Plaza | A stained glass globe you walk inside, finished in 1935. Its sound bounces around like a whispering gallery. The library is free, the Mapparium costs a ticket. | https://www.marybakereddylibrary.org/visit/ | official site (blocks scripted checks, open it in a browser) |
 
 ## Food (all marked local in `src/lib/data/nearby-places.json`)
 
