@@ -361,6 +361,9 @@ function IslandView({
         </div>
       )}
 
+      {/* Tapping the island outside an open ticket closes it, the same as the close button */}
+      {ticket !== null && <div aria-hidden onClick={closeTicket} className="absolute inset-0 z-10" />}
+
       {ticket === "journal" && <JournalTicket progress={progress} known={plan.progressKnown ? known : null} handle={handle} onClose={closeTicket} onRetry={onRetry} />}
       {ticket?.startsWith("gift-") && (
         <GiftTicket

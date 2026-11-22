@@ -172,7 +172,7 @@ export function Collection({ known, handle, onClose }: { known: number | null; h
   const need = known === null ? null : Math.max(0, active + 1 - known);
 
   return (
-    <div className="absolute inset-0 z-30 flex flex-col items-center justify-center overflow-hidden bg-linear-to-b from-ivory/75 via-ivory/62 to-ivory/75 px-4 pt-20 pb-20 font-ui text-graphite backdrop-blur-[5px]" role="dialog" aria-label={c.title}>
+    <div className="absolute inset-0 z-30 flex flex-col items-center justify-center overflow-hidden bg-linear-to-b from-ivory/75 via-ivory/62 to-ivory/75 px-4 pt-20 pb-20 font-ui text-graphite backdrop-blur-[5px]" role="dialog" aria-label={c.title} onClick={(e) => e.target === e.currentTarget && onClose()}>
       <button
         type="button"
         onClick={onClose}
@@ -181,6 +181,14 @@ export function Collection({ known, handle, onClose }: { known: number | null; h
         className="absolute top-[4.6rem] right-3 z-10 grid size-10 cursor-pointer place-items-center rounded-full border border-hairline bg-ivory/90 text-taupe shadow-float outline-none hover:text-graphite focus-visible:ring-4 focus-visible:ring-graphite/20 sm:top-24 sm:right-6"
       >
         <X className="size-4" aria-hidden />
+      </button>
+
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute bottom-5 left-1/2 z-10 inline-flex h-10 -translate-x-1/2 cursor-pointer items-center rounded-full bg-graphite px-5 text-sm font-medium text-ivory shadow-float outline-none hover:opacity-90 focus-visible:ring-4 focus-visible:ring-graphite/25"
+      >
+        {content.gift.back}
       </button>
 
       <header className="max-w-xl px-10 text-center sm:px-0">

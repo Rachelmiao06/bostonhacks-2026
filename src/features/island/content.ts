@@ -51,6 +51,7 @@ export const content = {
     codeNote: "Example only. This code works nowhere.",
     locked: (need: number) => `Locked. ${need} more ${need === 1 ? "contribution" : "contributions"} on the map opens it.`,
     close: "Close and go back to the island",
+    back: "Back to my world",
   },
 
   // The compact glass label that appears when you hover, focus or select an object on the island
