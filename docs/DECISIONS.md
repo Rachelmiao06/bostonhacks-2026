@@ -100,3 +100,5 @@ One line each: date · what · why.
 - 2026-11-21 · The 3D island repaints the canvas inside every resize (a ResizeObserver call or an automatic resolution step) · a resize empties the canvas and these ran after the frame was drawn, so the empty canvas showed for a frame: the white flashes after My World loaded, one per resolution step (four on a retina screen).
 
 - 2026-11-22 · The coach intro and the welcome now start over on every NEW visit (a new tab or window, or the browser reopened), not once per browser (`FRESH_EACH_VISIT` in `features/coach/CoachTour.tsx`) · for demos: every time the site is opened it begins at "Tiny missions for a better T"; a reload inside the same visit does not repeat it. Set the flag to false to go back to once per browser.
+
+- 2026-11-22 · Each coach banner for a kind of problem sits right under its own filter chip (ring plus a small arrow), and the filter chips now stay on screen in the zoomed-in world view (they used to show only in the whole-city view) · the guide needs something to point at, and filtering pins near you is as useful as filtering the whole city. The one-by-one banners at the top right are unchanged.

@@ -681,10 +681,10 @@ export default function ExploreMap({ entry, onStatus, onReveal, guided = false }
           style={{ background: "radial-gradient(ellipse 64% 60% at 50% 52%, transparent 52%, color-mix(in oklab, var(--atlas-land) 60%, transparent) 76%, var(--atlas-land) 100%)" }}
         />
 
-        {/* Overlays under the nav: the filters (city) or the name tag (world) on the left; the way out and progress on the right. */}
+        {/* Overlays under the nav: the filters (city and world; the guide points at them) and the name tag (world) on the left; the way out and progress on the right. */}
         <div className="pointer-events-none absolute inset-x-0 top-[3.75rem] z-20 flex flex-col gap-2 px-2 sm:top-[4.75rem] sm:flex-row sm:items-start sm:justify-between sm:px-4">
-          <div className="pointer-events-auto min-w-0">
-            {mode === "atlas" && quests.status === "ready" && <FilterBar counts={counts} show={show} onToggle={toggleFilter} nearMe={{ count: worldInfo ? worldProblemCount : null, busy: nearState === "locating", onClick: nearMe }} />}
+          <div className="pointer-events-auto flex min-w-0 flex-col items-start gap-2">
+            {(mode === "atlas" || mode === "world") && quests.status === "ready" && <FilterBar counts={counts} show={show} onToggle={toggleFilter} nearMe={{ count: worldInfo ? worldProblemCount : null, busy: nearState === "locating", onClick: nearMe }} />}
             {mode === "world" && arrived && worldInfo?.note && (
               <p aria-live="polite" className="w-fit max-w-72 rounded-2xl bg-ivory/80 px-3 py-2 font-ui text-xs text-taupe shadow-float backdrop-blur-xl backdrop-saturate-150">
                 {worldInfo.note.kind === "far" ? worldText.far : worldText.quiet(worldInfo.note.from)}
