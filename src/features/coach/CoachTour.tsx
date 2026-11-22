@@ -16,6 +16,14 @@ type Phase = "idle" | "intro" | "waiting" | "live";
 /** Fired by anything (a button, Trolley) to replay the coach: `window.dispatchEvent(new Event("tada:coach:start"))`. */
 export const COACH_START_EVENT = "tada:coach:start";
 
+/**
+ * Demo mode: every NEW visit (a new tab or window, or the browser reopened) starts like a first visit, from the
+ * "Tiny missions for a better T" card. A reload inside the same visit does not start over. Set to false to show
+ * the coach only once per browser, as before.
+ */
+const FRESH_EACH_VISIT = true;
+const VISIT_KEY = "tada:visit";
+
 /** Text on screen while the map is still zooming to the rider's start; the live guide waits until none of it is showing. */
 const BUSY_TEXT = ["Where should we start?", "Finding problems near you", "Almost there", "Finding the nearest stop"];
 
@@ -44,6 +52,22 @@ export function CoachTour() {
       window.history.replaceState(null, "", window.location.pathname);
       window.location.reload();
       return;
+    }
+    if (FRESH_EACH_VISIT) {
+      try {
+        if (!window.sessionStorage.getItem(VISIT_KEY)) {
+          window.sessionStorage.setItem(VISIT_KEY, "1");
+          // Only a browser that has seen it before needs the reset (and the one reload Explore needs to read it).
+          if (coachSeen("intro") || coachSeen("tour") || hasSeen("welcomed")) {
+            coachReset();
+            window.localStorage.removeItem("tparty.onboarding");
+            window.location.reload();
+            return;
+          }
+        }
+      } catch {
+        // storage blocked: fall back to the normal once-per-browser behaviour
+      }
     }
     const t = window.setTimeout(() => {
       if (!coachSeen("intro")) setPhase("intro");
