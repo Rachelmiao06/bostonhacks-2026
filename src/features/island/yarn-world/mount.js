@@ -148,6 +148,10 @@ export function mountIsland(container, { isUnlocked, onPhase, onHotspot, onHover
 		camera.updateProjectionMatrix();
 		renderer.setSize(w, h);
 		composer.setSize(w, h);
+		// T Party: resizing a canvas empties it, and a ResizeObserver or the resolution step below runs after the frame was
+		// drawn, so the empty canvas used to be shown until the next frame (a flash of the page colour, once per step, up
+		// to four times on a retina screen). Draw again right away, before the browser paints.
+		composer.render(0);
 	};
 	const observer = new ResizeObserver(resize);
 	observer.observe(container);
