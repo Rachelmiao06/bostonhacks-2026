@@ -76,7 +76,7 @@ export const text = {
   myWorld: "My World",
   progressAdded: (n: number) => `+1 contribution · ${n} so far`,
   progressTotal: (n: number) => `${n} contribution${n === 1 ? "" : "s"} so far`,
-  newPiece: (name: string) => `Next time you visit, ${name} lands on your island.`,
+  newPiece: (name: string) => `Next time you visit, your island gets ${name}.`,
   exploreWorld: "Explore My World",
 
   errors: {
