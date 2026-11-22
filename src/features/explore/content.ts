@@ -193,6 +193,7 @@ export const dive = {
   /** The quick picks above the station search. Each is the stop of a landmark in `landmarks`. */
   spots: [
     { label: "Park Street", stationId: "place-pktrm" },
+    { label: "Downtown Crossing", stationId: "place-dwnxg" },
     { label: "Kenmore · Fenway", stationId: "place-kencl" },
     { label: "South Station", stationId: "place-sstat" },
     { label: "North Station", stationId: "place-north" },
