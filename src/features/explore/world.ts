@@ -118,9 +118,9 @@ const BUILDINGS = "world-buildings";
 const ROOFS = "world-buildings-roofs";
 const BUILDING_LAYERS = [SHADOW, BUILDINGS, ROOFS] as const;
 /** The shadow stays fainter than the buildings however visible they are. */
-const SHADOW_SHARE = 0.22;
+const SHADOW_SHARE = 0.4;
 /** How thick the roof cap is, in metres. */
-const ROOF_M = 1.2;
+const ROOF_M = 2.4;
 
 /** Mixes two CSS colours (as the map needs them: rgb) by `t` (0 = a, 1 = b). */
 function mix(a: string, b: string, t: number): string {
@@ -139,19 +139,19 @@ function buildingPalette() {
   const paper = tokenColor("--paper");
   const ivory = tokenColor("--ivory");
   const walls = [
-    mix(tokenColor("--cherry"), paper, 0.66), // blush brick
-    mix(tokenColor("--sun"), paper, 0.58), // butter
-    mix(tokenColor("--sky"), paper, 0.62), // powder blue
-    mix(tokenColor("--leaf"), paper, 0.68), // mint
-    mix(tokenColor("--wood"), paper, 0.6), // clay
+    mix(tokenColor("--cherry"), paper, 0.42), // blush brick
+    mix(tokenColor("--sun"), paper, 0.36), // butter
+    mix(tokenColor("--sky"), paper, 0.4), // powder blue
+    mix(tokenColor("--leaf"), paper, 0.45), // mint
+    mix(tokenColor("--wood"), paper, 0.38), // clay
   ];
   const tall = mix(tokenColor("--steel"), tokenColor("--sky"), 0.3);
   return {
     walls,
-    roofs: walls.map((wall) => mix(wall, ivory, 0.55)),
+    roofs: walls.map((wall) => mix(wall, ivory, 0.42)),
     tall,
     tallRoof: mix(tall, ivory, 0.5),
-    shadow: mix(tokenColor("--graphite"), paper, 0.35),
+    shadow: tokenColor("--graphite"),
   };
 }
 
@@ -168,7 +168,7 @@ export function showWorldBuildings(map: MapLibreMap, center: LngLat) {
   }
 
   // Warm afternoon sun from the south-west: lit walls glow, the others sit in cool shade.
-  map.setLight({ anchor: "viewport", color: tokenColor("--ivory"), intensity: 0.55, position: [1.4, 220, 38] });
+  map.setLight({ anchor: "viewport", color: tokenColor("--ivory"), intensity: 0.9, position: [1.6, 235, 30] });
 
   const palette = buildingPalette();
   const rawHeight: unknown = ["coalesce", ["get", "render_height"], 9];
@@ -201,7 +201,7 @@ export function showWorldBuildings(map: MapLibreMap, center: LngLat) {
         "fill-extrusion-base": 0,
         "fill-extrusion-color": palette.shadow,
         "fill-extrusion-opacity": 0,
-        "fill-extrusion-translate": [7, -7],
+        "fill-extrusion-translate": [12, -12],
         "fill-extrusion-translate-anchor": "map",
         "fill-extrusion-vertical-gradient": false,
       },
