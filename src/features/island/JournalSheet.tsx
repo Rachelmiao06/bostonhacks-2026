@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Patrick_Hand } from "next/font/google";
-import { motion, useReducedMotion } from "motion/react";
+import { motion, useMotionValue, useReducedMotion, useSpring } from "motion/react";
 import { ArrowRight, ChevronLeft, ChevronRight, X } from "lucide-react";
 import type { QuestKind } from "@/lib/mbta";
 import { cn } from "@/lib/utils";
@@ -50,8 +50,10 @@ function EntrySticker({ e, size }: { e: Entry; size: string }) {
   return <Sticker id="folder" className={size} fallback={<FolderSticker className={size} />} />;
 }
 
-/** What a day shows: its stickers, a little crooked and overlapping like a scrapbook. A liked report adds a heart. */
-function DayStickers({ entries, size = "size-7 sm:size-9" }: { entries: Entry[]; size?: string }) {
+/** What a day shows: its stickers, a little crooked and overlapping like a scrapbook. A liked report adds a heart.
+ *  They slap onto the page when the month opens, and lift a little when the day is pointed at. */
+function DayStickers({ entries, delay = 0, size = "size-7 sm:size-9" }: { entries: Entry[]; delay?: number; size?: string }) {
+  const still = useReducedMotion();
   const items: { key: string; node: React.ReactNode }[] = [];
   for (const e of entries) {
     items.push({ key: e.id, node: <EntrySticker e={e} size={size} /> });
@@ -62,9 +64,15 @@ function DayStickers({ entries, size = "size-7 sm:size-9" }: { entries: Entry[];
   return (
     <span className="flex items-center justify-center">
       {shown.map((it, i) => (
-        <span key={it.key} className={cn("block", tilt[i % tilt.length], i > 0 && "-ml-2.5")}>
-          {it.node}
-        </span>
+        <motion.span
+          key={it.key}
+          initial={still ? false : { opacity: 0, scale: 1.7, y: -14 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 420, damping: 15, delay: delay + i * 0.08 }}
+          className={cn("block", i > 0 && "-ml-2.5")}
+        >
+          <span className={cn("block transition-transform duration-200 group-hover:-translate-y-1 group-hover:scale-110 group-hover:drop-shadow-md", tilt[i % tilt.length])}>{it.node}</span>
+        </motion.span>
       ))}
       {items.length > shown.length && <span className="ml-0.5 text-[0.65rem] text-cat-access">+{items.length - shown.length}</span>}
     </span>
@@ -82,6 +90,17 @@ export function JournalSheet({ progress, known, preview = false, onClose, onRetr
   const t = content.sheet;
   const h = content.history;
   const still = useReducedMotion();
+  // A gentle 3D tilt that follows the mouse, so the page feels like an object on a table (not for touch or Reduced Motion).
+  const tiltY = useMotionValue(0);
+  const tiltX = useMotionValue(0);
+  const rotateY = useSpring(tiltY, { stiffness: 110, damping: 18 });
+  const rotateX = useSpring(tiltX, { stiffness: 110, damping: 18 });
+  const onTilt = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (still || e.pointerType !== "mouse") return;
+    const r = e.currentTarget.getBoundingClientRect();
+    tiltY.set(((e.clientX - r.left) / r.width - 0.5) * 8);
+    tiltX.set(-((e.clientY - r.top) / r.height - 0.5) * 6);
+  };
   const today = useMemo(() => new Date(), []);
   const real = progress.status === "ready" ? progress.data : null;
   const isEmpty = real !== null && real.submissions.length === 0 && real.verifications.length === 0;
@@ -140,6 +159,11 @@ export function JournalSheet({ progress, known, preview = false, onClose, onRetr
       role="dialog"
       aria-label={t.label}
       onClick={(e) => e.target === e.currentTarget && onClose()}
+      onPointerMove={onTilt}
+      onPointerLeave={() => {
+        tiltX.set(0);
+        tiltY.set(0);
+      }}
       className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 bg-linear-to-b from-ivory/70 via-ivory/55 to-ivory/70 px-5 pt-20 pb-4 font-ui text-graphite backdrop-blur-[5px]"
     >
       {/* The planner unfolds from the top: it starts as a thin folded strip and opens out. */}
@@ -150,14 +174,24 @@ export function JournalSheet({ progress, known, preview = false, onClose, onRetr
         style={{ transformOrigin: "50% 0%", transformPerspective: 1600 }}
         className="relative h-[min(37rem,calc(100svh-12rem))] w-[min(35rem,calc(100vw-2.5rem))]"
       >
-        {/* the spiral binding, half in and half out of the page */}
+        <motion.div style={{ rotateX, rotateY, transformPerspective: 1300 }} className="relative h-full w-full">
+        {/* it sits on the table: a soft shadow, the cover board under the page, and a couple of loose sheets peeking out */}
+        <span aria-hidden className="absolute inset-x-4 -bottom-4 h-6 rounded-full bg-graphite/25 blur-xl" />
+        <span aria-hidden className="absolute inset-0 translate-x-2 translate-y-2.5 rounded-md bg-cat-access/80 shadow-float" />
+        <span aria-hidden className="absolute inset-0 translate-x-1 translate-y-1.5 rotate-[0.7deg] rounded-md border border-hairline bg-ivory" />
+        <span aria-hidden className="absolute inset-0 translate-x-0.5 translate-y-0.5 -rotate-[0.5deg] rounded-md border border-hairline bg-stone" />
+
+        {/* the spiral binding: metal rings that cast a little shadow on the page */}
         <div aria-hidden className="pointer-events-none absolute inset-y-5 -left-3 z-20 flex flex-col justify-between">
           {Array.from({ length: RINGS }, (_, i) => (
-            <span key={i} className="block h-2 w-6 rounded-full border-2 border-graphite/60 bg-ivory shadow-[inset_0_-1px_0_var(--hairline)]" />
+            <span key={i} className="block h-2.5 w-7 rounded-full border-2 border-graphite/55 bg-linear-to-b from-ivory via-stone to-graphite/30 shadow-[2px_3px_3px_var(--shade-soft)]" />
           ))}
         </div>
 
-        <div className="relative flex h-full overflow-hidden rounded-md border border-cat-access/30 bg-ivory shadow-float">
+        <div className="relative flex h-full overflow-hidden rounded-md border border-cat-access/30 bg-ivory bg-[radial-gradient(var(--hairline)_1px,transparent_1px)] bg-[length:14px_14px] shadow-float">
+          {/* shaded gutter by the binding, and a curled corner */}
+          <span aria-hidden className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-linear-to-r from-graphite/15 to-transparent" />
+          <span aria-hidden className="pointer-events-none absolute right-0 bottom-0 z-10 size-10 bg-linear-to-tl from-stone via-stone/70 to-transparent [clip-path:polygon(100%_0,0_100%,100%_100%)]" />
           <button
             type="button"
             onClick={onClose}
@@ -213,8 +247,8 @@ export function JournalSheet({ progress, known, preview = false, onClose, onRetr
                 <div className="flex gap-2">
                   {/* the month, in a blue-ruled frame with tape on its corners */}
                   <div className="relative min-w-0 flex-1 rounded-sm border-2 border-cat-access/60">
-                    <span aria-hidden className="absolute -top-3.5 left-4 z-10 h-4 w-14 -rotate-6 bg-cat-station/35" />
-                    <span aria-hidden className="absolute -top-3.5 right-6 z-10 h-4 w-12 rotate-3 bg-cat-access/25" />
+                    <span aria-hidden className="absolute -top-3.5 left-4 z-10 h-4 w-14 -rotate-6 bg-cat-station/40 [clip-path:polygon(0_0,100%_0,97%_25%,100%_50%,97%_75%,100%_100%,0_100%,3%_75%,0_50%,3%_25%)]" />
+                    <span aria-hidden className="absolute -top-3.5 right-6 z-10 h-4 w-12 rotate-3 bg-cat-access/30 [clip-path:polygon(0_0,100%_0,97%_25%,100%_50%,97%_75%,100%_100%,0_100%,3%_75%,0_50%,3%_25%)]" />
                     <div className="grid grid-cols-7 border-b border-cat-access/40 bg-cat-access/5 text-center font-pixel text-[0.4rem] tracking-wide text-cat-access uppercase">
                       {t.weekdays.map((d) => (
                         <span key={d} className="py-1.5">
@@ -241,14 +275,14 @@ export function JournalSheet({ progress, known, preview = false, onClose, onRetr
                             aria-label={`${date.toLocaleDateString("en-US", { month: "long", day: "numeric" })}${list.length ? `, ${t.dayEntries(list.length)}` : ""}`}
                             aria-pressed={list.length ? isSel : undefined}
                             className={cn(
-                              "relative flex h-12 items-center justify-center border-r border-b border-cat-access/20 p-0.5 outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-cat-access/50 sm:h-16",
+                              "group relative flex h-12 items-center justify-center border-r border-b border-cat-access/20 p-0.5 outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-cat-access/50 sm:h-16",
                               list.length > 0 ? "cursor-pointer hover:bg-cat-access/5" : "cursor-default",
                               isSel && "bg-cat-station/15",
                             )}
                           >
                             <span className={cn("absolute top-0.5 left-1 text-[0.68rem] leading-none text-cat-access", isToday && "rounded-full bg-cat-access px-1 py-0.5 text-ivory")}>{i + 1}</span>
                             <span className="mt-2 block">
-                              <DayStickers entries={list} />
+                              <DayStickers key={`${view.y}-${view.m}-${i}`} entries={list} delay={0.25 + i * 0.025} />
                             </span>
                           </button>
                         );
@@ -301,6 +335,7 @@ export function JournalSheet({ progress, known, preview = false, onClose, onRetr
             )}
           </div>
         </div>
+        </motion.div>
       </motion.div>
 
       <button data-autofocus type="button" onClick={onClose} className={`inline-flex h-9 cursor-pointer items-center rounded-full px-4 font-ui text-xs font-medium outline-none hover:opacity-90 focus-visible:ring-4 focus-visible:ring-graphite/25 ${glass}`}>
@@ -334,7 +369,7 @@ function EntryNote({ e, demo, tilt }: { e: Entry; demo: boolean; tilt: string })
   const fb = isReport ? e.s.ai_feedback : null;
 
   return (
-    <li className={cn("relative rounded-sm border border-hairline bg-ivory px-3 pt-4 pb-3 shadow-float", tilt)}>
+    <li className={cn("relative rounded-sm border border-hairline bg-ivory px-3 pt-4 pb-3 shadow-float transition-transform duration-200 hover:-translate-y-0.5 hover:rotate-0", tilt)}>
       <span aria-hidden className="absolute -top-2.5 left-1/2 h-4 w-16 -translate-x-1/2 rotate-2 bg-cat-station/30" />
       <p className="text-xl leading-tight">
         <span className={cn("mr-1.5 rounded-sm px-1.5 text-base", style.soft, style.text)}>{isReport ? kindLabel(e.s) : h.checks}</span>
