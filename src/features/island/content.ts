@@ -90,23 +90,26 @@ export const content = {
     viewOnMap: "Continue on the map",
   },
 
-  // The journal as an open book you page through
-  book: {
-    label: "Your journal, an open book",
-    prev: "Previous page",
-    next: "Next page",
-    pages: (from: number, to: number, total: number) => (from === to ? `Page ${from} of ${total}` : `Pages ${from}-${to} of ${total}`),
-    toc: "Contents",
-    reportOf: (n: number, total: number) => `Report ${n} of ${total}`,
-    youWrote: "What you wrote",
+  // The journal as one handwritten sheet of paper, unfolded over the island
+  sheet: {
+    label: "Your journal, an unfolded sheet of paper",
+    title: "My journal",
+    sub: "What I have done on the map",
+    search: "Search my journal",
+    all: "All",
+    reports: "Reports",
+    checks: "Fixes I checked",
+    entries: (n: number) => `${n} ${n === 1 ? "entry" : "entries"}`,
+    noMatch: "Nothing matches that.",
+    open: "Open this entry",
+    close: "Close this entry",
+    youWrote: "What I wrote",
     noText: "Nothing was saved with this one yet.",
-    coach: "Coach feedback",
+    coach: "The coach says",
     tryAdding: "Try adding",
     likes: (n: number) => `${n} ${n === 1 ? "rider" : "riders"} liked this`,
-    checksTitle: "Fixes you checked",
-    endTitle: "More pages to fill",
-    endBody: "Every report you send and every fix you check adds a page to your journal.",
-    turnTo: (what: string) => `Turn to ${what}`,
+    checkedFix: (station: string) => `I checked the fix at ${station}`,
+    reportAt: (station: string) => `My report at ${station}`,
   },
 
   // The paper voucher a gift unfolds into
