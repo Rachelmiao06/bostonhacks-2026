@@ -77,7 +77,8 @@ export const text = {
   progressAdded: (n: number) => `+1 contribution · ${n} so far`,
   progressTotal: (n: number) => `${n} contribution${n === 1 ? "" : "s"} so far`,
   newPiece: (name: string) => `Next time you visit, your island gets ${name}.`,
-  exploreWorld: "Explore My World",
+  exploreWorld: "Visit My Little World",
+  another: "Explore another mission",
 
   errors: {
     network: "We couldn’t reach Tada. Check your connection. Your answers are saved here, so you can try again.",

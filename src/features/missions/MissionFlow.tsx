@@ -5,11 +5,11 @@ import Link from "next/link";
 import { Dialog } from "@base-ui/react/dialog";
 import { ArrowLeft, ExternalLink, Loader2, MapPin, Sparkles, TriangleAlert, X } from "lucide-react";
 import type { Quest } from "@/lib/mbta";
-import { unlockSteps } from "@/features/island/content";
 import { stampCount, useMyProgress } from "@/features/explore/progress";
 import { cn } from "@/lib/utils";
 import { EARLIER_LABELS, partsOf, type Answers } from "./compose";
 import { text } from "./content";
+import { WorldPreview } from "./Collectibles";
 import { Choice, PhotoField, Primary, primaryClass, primaryStyle, Secondary, SummaryCard } from "./Parts";
 import { PixelIcon } from "./PixelIcon";
 import { locationOf } from "./templates";
@@ -96,7 +96,7 @@ export function MissionFlow({ quest, onClose }: { quest: Quest; onClose: () => v
             <Link href="/world" style={primaryStyle} className={cn(primaryClass, "h-12 w-full px-5 text-base")}>
               {text.exploreWorld} <span aria-hidden>→</span>
             </Link>
-            <Secondary onClick={onClose}>{text.backToMap}</Secondary>
+            <Secondary onClick={onClose}>{text.another}</Secondary>
           </>
         )}
       </footer>
@@ -316,7 +316,6 @@ function DoneStep({ m, stampsBefore }: { m: M; stampsBefore: number | null }) {
   const already = m.done?.already ?? false;
   const stamps = progress.status === "ready" ? stampCount(progress.data) : null;
   const added = !already && stamps !== null && stampsBefore !== null && stamps > stampsBefore;
-  const piece = added && stamps !== null && stamps <= unlockSteps.length ? unlockSteps[stamps - 1] : null;
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-3">
@@ -331,6 +330,7 @@ function DoneStep({ m, stampsBefore }: { m: M; stampsBefore: number | null }) {
         <Heading>{already ? text.alreadyTitle : text.doneTitle}</Heading>
         <p className="text-base text-graphite/85">{already ? text.alreadyBody : text.doneBody}</p>
       </div>
+      {stamps !== null && <WorldPreview known={stamps} justUnlocked={added} />}
       <div className="space-y-2 rounded-2xl border border-graphite/12 bg-ivory/70 p-4">
         <p className="text-xs font-medium tracking-wide text-taupe uppercase">{text.mission}</p>
         <p className="font-semibold text-graphite">{m.template.title}</p>
@@ -350,13 +350,6 @@ function DoneStep({ m, stampsBefore }: { m: M; stampsBefore: number | null }) {
           <PixelIcon name="check" className="size-4" /> {text.status}: {m.verify ? text.statusSaved : text.statusShared}
         </p>
       </div>
-      {stamps !== null && (
-        <div className="space-y-1 rounded-2xl border border-graphite/12 bg-ivory/70 p-4">
-          <p className="text-xs font-medium tracking-wide text-taupe uppercase">{text.myWorld}</p>
-          <p className="text-base font-semibold text-graphite">{added ? text.progressAdded(stamps) : text.progressTotal(stamps)}</p>
-          {piece && <p className="text-sm text-taupe">{text.newPiece(piece.name)}</p>}
-        </div>
-      )}
     </div>
   );
 }
