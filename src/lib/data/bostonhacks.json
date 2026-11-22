@@ -1,0 +1,246 @@
+{
+  "source": "https://bostonhacks.org/",
+  "scrapedAt": "2026-11-22",
+  "theme": "Boston Bound",
+  "dates": "Nov 21–22, 2026 (24 hours, in person)",
+  "venue": {
+    "name": "Boston University George Sherman Union (GSU)",
+    "address": "775 Commonwealth Ave, Boston, MA 02215",
+    "map": "https://www.google.com/maps/search/?api=1&query=George+Sherman+Union%2C+775+Commonwealth+Ave%2C+Boston%2C+MA+02215"
+  },
+  "tracks": [
+    {
+      "title": "Transit Gamification",
+      "direction": "Inbound",
+      "color": "blue",
+      "paragraphs": [
+        "Hundreds of thousands of people use the MBTA everyday. They endure the same predictable routine, platform waits, and unexpected friction points. For locals, transit has largely become a functional necessity rather than an enjoyable experience, while for tourists, navigating the system can feel passive and disconnected from the vibrant city above ground. Public transportation is one of Boston’s greatest shared spaces, yet the daily journey remains an untapped opportunity for connection and engagement."
+      ],
+      "prompt": "How can we transform the common T ride from something that is dreaded to something people can look forward to?",
+      "questions": [
+        "What aspect of riding the T can be more exciting?",
+        "How can we make the T more engaging and memorable for tourists?",
+        "How can we encourage community engagement?",
+        "How could we introduce this new addition to public transportation and make it widely accessible?",
+        "What would incentivize Boston residents to actually use your product?",
+        "How can your product make the T experience better for all riders?"
+      ]
+    },
+    {
+      "title": "Bos(tons) of Eats and Streets",
+      "direction": "To Trains",
+      "color": "green",
+      "paragraphs": [
+        "From early morning matcha runs to midnight meals and touring new parts of the city to attending local concerts, exploring Boston is what makes college here unforgettable. Yet, almost every student faces the same major hurdle: not having a car. So, we’ve learned to adapt. Whether you’re looking for cheap eats off the Orange Line, a cool spot to hang out in the city, or just that one restaurant open past 3:00am during finals week, the MBTA is how college students move."
+      ],
+      "prompt": "Your goal is to build a web application for college students that leverages the public transit systems of Boston to help them discover and navigate food spots, local activities, and the Boston aesthetic based on their cravings, budget, and location.",
+      "questions": [
+        "Boston is infamous for closing early. How might your app help a student who is starving past midnight find spots that are actually open and accessible before the last train runs?",
+        "Is there a way you can keep track of new trends in the Boston area?",
+        "How can you determine what hobbies and activities people enjoy?",
+        "How can you weigh affordability and transit distance travelled?",
+        "How might your UI help a group of indecisive friends pick a specific spot without endless searching?"
+      ]
+    },
+    {
+      "title": "Boundless Boston",
+      "direction": "Outbound",
+      "color": "red",
+      "paragraphs": [
+        "No one knows Boston as well as… well the Bostonians. What makes Boston so special is the diverse community of individuals who have come together to build it. We are America’s college city after all. However, as you walk the streets, eat at new restaurants, you realize that there are some differences from your daily life that you think could drastically improve this city. Today’s the day to turn these niche original ideas into reality, building from scratch or merging different products together to create your very own concept.",
+        "Add new features to your favorite parts of Boston, apply an existing feature in a novel way, or throw it into the ocean and create something completely different from anything the city has seen before. Boston is your city, push those boundaries and show us your big ideas!"
+      ],
+      "prompt": null,
+      "questions": [
+        "What are some popular complaints about living in Boston?",
+        "What feature hasn’t been updated to fit with the modern age?",
+        "What group of people is being hurt by a Boston characteristic or lack thereof?",
+        "What city services are confusing or difficult to access digitally?",
+        "What do newcomers to Boston struggle with the most?"
+      ]
+    }
+  ],
+  "schedule": [
+    {
+      "day": "Day 1 — Sat, Nov 21",
+      "events": [
+        {
+          "time": "9:00 am",
+          "title": "Check-In"
+        },
+        {
+          "time": "10:00 am",
+          "title": "Opening Ceremony"
+        },
+        {
+          "time": "10:30 am",
+          "title": "Hacking Begins"
+        },
+        {
+          "time": "10:30 am",
+          "title": "Find Your Dream Team"
+        },
+        {
+          "time": "11:00 am",
+          "title": "Hackathon 101"
+        },
+        {
+          "time": "11:00 am",
+          "title": "Let's Connect & Make Friends"
+        },
+        {
+          "time": "11:30 am",
+          "title": "Intro to Claude Code"
+        },
+        {
+          "time": "11:30 am",
+          "title": "Switching Majors (Tech or Not)"
+        },
+        {
+          "time": "12:00 pm",
+          "title": "Lunch"
+        },
+        {
+          "time": "1:00 pm",
+          "title": "Figma Mockup Workshop"
+        },
+        {
+          "time": "1:00 pm",
+          "title": "Sponsor Workshop"
+        },
+        {
+          "time": "2:00 pm",
+          "title": "Leetcode / Competitive Programming"
+        },
+        {
+          "time": "2:00 pm",
+          "title": "Professional Panel"
+        },
+        {
+          "time": "3:00 pm",
+          "title": "Screentime: Off"
+        },
+        {
+          "time": "3:00 pm",
+          "title": "Startup Pitch Competition"
+        },
+        {
+          "time": "4:00 pm",
+          "title": "Internship Experience Panel"
+        },
+        {
+          "time": "4:00 pm",
+          "title": "Chrome Extension Workshop"
+        },
+        {
+          "time": "5:00 pm",
+          "title": "Mock Interviews: Spicy Edition"
+        },
+        {
+          "time": "5:00 pm",
+          "title": "Songs: AI or Real"
+        },
+        {
+          "time": "6:30 pm",
+          "title": "Dinner"
+        },
+        {
+          "time": "8:00 pm",
+          "title": "MS Paint Bob Ross"
+        },
+        {
+          "time": "8:00 pm",
+          "title": "Game Break!"
+        },
+        {
+          "time": "9:30 pm",
+          "title": "Movie Night"
+        },
+        {
+          "time": "10:00 pm",
+          "title": "Sleeping Spaces Open"
+        },
+        {
+          "time": "12:00 am",
+          "title": "Midnight Snack"
+        }
+      ]
+    },
+    {
+      "day": "Day 2 — Sun, Nov 22",
+      "events": [
+        {
+          "time": "7:30 am",
+          "title": "Breakfast"
+        },
+        {
+          "time": "8:00 am",
+          "title": "1 Hour Until Submissions"
+        },
+        {
+          "time": "9:00 am",
+          "title": "Submissions Due, Judging Begins"
+        },
+        {
+          "time": "11:00 am",
+          "title": "Closing Ceremony"
+        },
+        {
+          "time": "12:00 pm",
+          "title": "Event Ends"
+        }
+      ]
+    }
+  ],
+  "prizes": [
+    "Fujifilm Mini 99 Instax Film Camera",
+    "Syitren Paron Vinyl Record Player",
+    "Deco Gear 34” Curved Gaming Monitor"
+  ],
+  "faq": [
+    {
+      "question": "What is BostonHacks?",
+      "answer": "BostonHacks is a 24-hour event where students from different backgrounds gather together to use technology to create cool projects. Come to BostonHacks to expand your knowledge and skills, make new friends, win prizes and network with recruiters from our corporate sponsors!"
+    },
+    {
+      "question": "When and where is BostonHacks?",
+      "answer": "BostonHacks is an in-person 24-hour hackathon on November 21st-22nd, 2026. It takes place in the Boston University George Sherman Union (GSU)."
+    },
+    {
+      "question": "Who can attend?",
+      "answer": "All college students including undergraduate and graduate students with any background, all across the world are welcome!"
+    },
+    {
+      "question": "Do I need experience?",
+      "answer": "No experience is necessary. We will have plenty of mentors and resources available, along with several workshops targeted for beginners. Come learn and experience your first hackathon at BostonHacks!"
+    },
+    {
+      "question": "Is it free?",
+      "answer": "Yes — food, swag, and a place to hack are all provided at no cost! Unfortunately, we wont be providing any travel reimbursements this year."
+    },
+    {
+      "question": "Do I need a team?",
+      "answer": "No — you can register solo and form a team at the event."
+    },
+    {
+      "question": "What should I bring?",
+      "answer": "Your laptop, charger, and any hardware you want to hack with."
+    },
+    {
+      "question": "Where can I ask more questions?",
+      "answer": "Reach out to us on our social pages, linked in the footer."
+    },
+    {
+      "question": "Are there any rules?",
+      "answer": "Read the MLH Code of Conduct: https://github.com/MLH/mlh-policies/blob/main/code-of-conduct.md"
+    },
+    {
+      "question": "MLH Code of Conduct",
+      "answer": "TL;DR. Be respectful. Harassment and abuse are never tolerated. Full MLH Code of Conduct: https://github.com/MLH/mlh-policies/blob/main/code-of-conduct.md"
+    },
+    {
+      "question": "What do I get if I win?",
+      "answer": "See the prizes list."
+    }
+  ]
+}
