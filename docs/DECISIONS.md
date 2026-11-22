@@ -100,3 +100,5 @@ One line each: date · what · why.
 - 2026-11-21 · The 3D island repaints the canvas inside every resize (a ResizeObserver call or an automatic resolution step) · a resize empties the canvas and these ran after the frame was drawn, so the empty canvas showed for a frame: the white flashes after My World loaded, one per resolution step (four on a retina screen).
 
 - 2026-11-22 · The coach intro and the welcome now start over on every NEW visit (a new tab or window, or the browser reopened), not once per browser (`FRESH_EACH_VISIT` in `features/coach/CoachTour.tsx`) · for demos: every time the site is opened it begins at "Tiny missions for a better T"; a reload inside the same visit does not repeat it. Set the flag to false to go back to once per browser.
+
+- 2026-11-22 · The coach's problem-kind tips are ONE centred card with all four kinds at once (rows pop in 90 ms apart) instead of banners that arrive one by one at the top right · it reads in one look, sits nearer the middle of the screen, and the dotted guide now leaves from the card's bottom centre.

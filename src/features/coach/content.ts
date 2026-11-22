@@ -19,10 +19,8 @@ export const coach = {
   feed: {
     label: "Tada tips",
     app: "Tada",
-    now: "now",
+    heading: "What you will find",
     firstDelayMs: 900,
-    gapMs: 3400, // between banners
-    lingerMs: 7500, // how long a kind banner stays before it slides away
     close: "Close",
     /** The last banner: it stays, and points at the nearest problem pin. */
     pin: {

@@ -186,11 +186,9 @@ function Intro({ onStart }: { onStart: () => void }) {
 
 /* ---------- 3. Notification feed + the nearest pin ---------- */
 
-type Banner = { id: number; kind?: (typeof categories)[number]["id"]; hidden: boolean };
-const TOTAL = categories.length + 1; // one banner per problem kind, then the "every pin" banner
 const PIN_RE = /: \d+ problems?$|working again|riders? report/;
 
-/** The problem pin (its marker button) nearest the middle of the screen that is on screen and not under the banners or the top bar. */
+/** The problem pin (its marker button) nearest the middle of the screen that is on screen and not under the card or the top bar. */
 function findPin(): HTMLElement | null {
   const w = window.innerWidth;
   const h = window.innerHeight;
@@ -200,102 +198,101 @@ function findPin(): HTMLElement | null {
       const r = el.getBoundingClientRect();
       return { el, x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width };
     })
-    .filter((p) => p.w > 0 && p.x > 40 && p.x < w - 40 && p.y > 130 && p.y < h - 90 && !(p.x > w - 350 && p.y < 420))
+    // not under the top bar, the bottom, or the card (centred, in the upper part of the screen)
+    .filter((p) => p.w > 0 && p.x > 40 && p.x < w - 40 && p.y > 130 && p.y < h - 90 && !(Math.abs(p.x - w / 2) < 200 && p.y < 470))
     .sort((a, b) => Math.hypot(a.x - w / 2, a.y - h / 2) - Math.hypot(b.x - w / 2, b.y - h / 2))[0];
   return best?.el ?? null;
 }
 
+/**
+ * ONE card, centred near the middle of the screen, that shows all four kinds of problem at once (the rows pop in a
+ * moment apart so it reads fast but not as a wall) and ends on "every pin is a challenge". The guide then leads from the
+ * card to the nearest pin. It stays until a pin is tapped, the X is pressed or Escape is hit.
+ */
 function Feed({ onDone }: { onDone: () => void }) {
   const f = coach.feed;
-  const [banners, setBanners] = useState<Banner[]>([]);
+  const [shown, setShown] = useState(false);
   // The marker the guide follows. It is chosen once (and again only if that marker leaves the page), so the ring stays on
   // one pin while the rider moves the map; PinGuide then tracks it frame by frame.
   const [pin, setPin] = useState<HTMLElement | null>(null);
-  const finalRef = useRef<HTMLDivElement>(null);
-  const finalShown = banners.length >= TOTAL;
+  const cardRef = useRef<HTMLDivElement>(null);
 
-  // Banners arrive one at a time; each kind banner slides away after a while, the last one stays.
   useEffect(() => {
-    const timers: number[] = [];
-    for (let i = 0; i < TOTAL; i++) {
-      timers.push(
-        window.setTimeout(() => {
-          setBanners((b) => [{ id: i, kind: categories[i]?.id, hidden: false }, ...b]);
-          if (i < categories.length) timers.push(window.setTimeout(() => setBanners((b) => b.map((x) => (x.id === i ? { ...x, hidden: true } : x))), f.lingerMs));
-        }, f.firstDelayMs + i * f.gapMs),
-      );
-    }
-    return () => timers.forEach((t) => window.clearTimeout(t));
-  }, [f.firstDelayMs, f.gapMs, f.lingerMs]);
+    const t = window.setTimeout(() => setShown(true), f.firstDelayMs);
+    return () => window.clearTimeout(t);
+  }, [f.firstDelayMs]);
 
-  // Once the last banner is up, pick the nearest pin (the map may still be settling, so look again until one is found
+  // Once the card is up, pick the nearest pin (the map may still be settling, so look again until one is found
   // and whenever the chosen marker has been removed from the page).
   useEffect(() => {
-    if (!finalShown) return;
+    if (!shown) return;
     const pick = () => setPin((cur) => (cur && cur.isConnected ? cur : findPin()));
     pick();
     const id = window.setInterval(pick, 400);
     return () => window.clearInterval(id);
-  }, [finalShown]);
+  }, [shown]);
 
   // Tapping a real pin completes the tour (the tap itself still goes through).
   useEffect(() => {
-    if (!finalShown) return;
+    if (!shown) return;
     const onClick = (e: MouseEvent) => {
       const el = e.target instanceof Element ? e.target.closest(".maplibregl-marker button[aria-label]") : null;
       if (el && PIN_RE.test(el.getAttribute("aria-label") ?? "")) onDone();
     };
     window.addEventListener("click", onClick, true);
     return () => window.removeEventListener("click", onClick, true);
-  }, [finalShown, onDone]);
+  }, [shown, onDone]);
 
+  if (!shown) return null;
   return (
     <>
-      <section aria-label={f.label} aria-live="polite" className="pointer-events-none fixed top-[8.5rem] right-2 z-50 flex w-[min(19rem,calc(100vw-1rem))] flex-col gap-2 sm:top-[7.75rem] sm:right-4 sm:w-80">
-        {banners.map((b) => {
-          const rank = banners.filter((x) => !x.hidden || x.id === TOTAL - 1).findIndex((x) => x.id === b.id);
-          const isFinal = b.id === TOTAL - 1;
-          return (
-            <Banner key={b.id} banner={b} rank={rank} isFinal={isFinal} hasPin={!!pin} onClose={onDone} boxRef={isFinal ? finalRef : undefined} />
-          );
-        })}
+      <section aria-label={f.label} aria-live="polite" className="pointer-events-none fixed top-[6.5rem] left-1/2 z-50 w-[min(22rem,calc(100vw-1.5rem))] -translate-x-1/2 sm:top-[6rem]">
+        <TipCard hasPin={!!pin} onClose={onDone} boxRef={cardRef} />
       </section>
-      {finalShown && pin && <PinGuide pin={pin} boxRef={finalRef} />}
+      {pin && <PinGuide pin={pin} boxRef={cardRef} />}
     </>
   );
 }
 
-function Banner({ banner, rank, isFinal, hasPin, onClose, boxRef }: { banner: Banner; rank: number; isFinal: boolean; hasPin: boolean; onClose: () => void; boxRef?: React.Ref<HTMLDivElement> }) {
+function TipCard({ hasPin, onClose, boxRef }: { hasPin: boolean; onClose: () => void; boxRef: React.Ref<HTMLDivElement> }) {
   const f = coach.feed;
-  const kind = banner.kind ? categories.find((c) => c.id === banner.kind) : undefined;
-  const st = banner.kind ? categoryStyle[banner.kind] : undefined;
-  const Icon = st?.icon ?? TrainFront;
-  const title = isFinal ? f.pin.title : kind?.label;
-  const text = isFinal ? (hasPin ? f.pin.text : f.pin.textNoPin) : banner.kind ? coach.kinds[banner.kind] : "";
-  // Older banners tuck behind the newest one, like a notification stack.
-  const depth = banner.hidden ? 3 : Math.min(rank, 3);
   return (
     <div
       ref={boxRef}
-      style={{ opacity: banner.hidden ? 0 : [1, 0.88, 0.7, 0][depth], transform: `scale(${[1, 0.97, 0.94, 0.92][depth]})`, transformOrigin: "top right" }}
-      className="pointer-events-auto flex items-start gap-3 rounded-[1.4rem] bg-ivory/80 p-3 font-ui text-graphite shadow-float backdrop-blur-xl backdrop-saturate-150 transition-[opacity,transform] duration-500 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-6 motion-safe:duration-500"
+      className="pointer-events-auto rounded-[1.6rem] bg-ivory/85 p-4 font-ui text-graphite shadow-float backdrop-blur-xl backdrop-saturate-150 motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:slide-in-from-top-3 motion-safe:duration-500"
     >
-      <span aria-hidden className={cn("flex size-9 shrink-0 items-center justify-center rounded-xl", st ? st.soft : "bg-cat-verify")}>
-        <Icon className={cn("size-[1.15rem]", st ? st.text : "text-ivory")} />
-      </span>
-      <div className="min-w-0 flex-1 text-xs leading-snug">
-        <p className="flex items-center justify-between font-mono text-[0.6rem] tracking-[0.12em] text-taupe uppercase">
-          <span>{f.app}</span>
-          <span>{f.now}</span>
-        </p>
-        <p className="mt-0.5 font-heading text-sm leading-tight font-semibold">{title}</p>
-        <p className="mt-0.5 text-taupe">{text}</p>
-      </div>
-      {isFinal && (
-        <button type="button" onClick={onClose} aria-label={f.close} className="-mt-1 -mr-1 flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-full text-taupe outline-none hover:bg-stone-deep/60 hover:text-graphite focus-visible:ring-2 focus-visible:ring-graphite/30">
+      <p className="flex items-center justify-between font-mono text-[0.6rem] tracking-[0.12em] text-taupe uppercase">
+        <span>{f.app} · {f.heading}</span>
+        <button type="button" onClick={onClose} aria-label={f.close} className="-my-1.5 -mr-1.5 flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-full text-taupe outline-none hover:bg-stone-deep/60 hover:text-graphite focus-visible:ring-2 focus-visible:ring-graphite/30">
           <X className="size-3.5" aria-hidden />
         </button>
-      )}
+      </p>
+      <ul className="mt-2.5 space-y-2.5">
+        {categories.map((c, i) => {
+          const st = categoryStyle[c.id];
+          const Icon = st.icon;
+          return (
+            <li key={c.id} className="flex items-center gap-3 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-300 motion-safe:fill-mode-backwards" style={{ animationDelay: `${150 + i * 90}ms` }}>
+              <span aria-hidden className={cn("flex size-9 shrink-0 items-center justify-center rounded-xl", st.soft)}>
+                <Icon className={cn("size-[1.15rem]", st.text)} />
+              </span>
+              <span className="min-w-0 text-xs leading-snug">
+                <span className="block font-heading text-sm leading-tight font-semibold">{c.label}</span>
+                <span className="block text-taupe">{coach.kinds[c.id]}</span>
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+      <div className="mt-3 flex items-center gap-3 border-t border-graphite/10 pt-3 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-300 motion-safe:fill-mode-backwards" style={{ animationDelay: `${150 + categories.length * 90 + 60}ms` }}>
+        <span aria-hidden className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-cat-verify">
+          <TrainFront className="size-[1.15rem] text-ivory" />
+        </span>
+        <span className="min-w-0 text-xs leading-snug">
+          <span className="block font-heading text-sm leading-tight font-semibold">{f.pin.title}</span>
+          <span className="block text-taupe">{hasPin ? f.pin.text : f.pin.textNoPin}</span>
+        </span>
+      </div>
     </div>
   );
 }
@@ -327,7 +324,7 @@ function PinGuide({ pin, boxRef }: { pin: HTMLElement; boxRef: RefObject<HTMLDiv
       const visible = r.width > 0 && x > 0 && x < vw && y > 0 && y < vh;
       w.style.opacity = visible ? "1" : "0";
       if (!visible) return;
-      const from = { x: box.left + 36, y: box.bottom };
+      const from = { x: box.left + box.width / 2, y: box.bottom };
       const dx = x - from.x;
       const dy = y - from.y;
       const len = Math.hypot(dx, dy) || 1;
