@@ -7,6 +7,7 @@ import { completeReport, loadMyProgress, reviewReport, sendVerification } from "
 import { metaFor, photoTypeProblem, shrinkPhoto, validatePhoto } from "@/features/challenge/photo";
 import { settings } from "@/features/challenge/content";
 import { refreshProgress } from "@/features/explore/progress";
+import { text as words } from "./content";
 import { buildSummary, EMPTY_ANSWERS, submissionText, whenIsFirstHand, type Answers } from "./compose";
 import { templateFor } from "./templates";
 
@@ -46,6 +47,14 @@ function clear(questId: string) {
   try {
     window.localStorage.removeItem(key(questId));
   } catch {}
+}
+
+/** Plain words for a failed call. The server's own message is kept for rules like "too many checks this hour". */
+function friendly(status: number, message: string, fallback: string = words.errors.ai) {
+  if (status === 0) return words.errors.network;
+  if (status === 502) return words.errors.ai;
+  if (status === 429 || status === 409 || status === 413 || status === 415) return message;
+  return fallback;
 }
 
 export type Review =
@@ -147,7 +156,7 @@ export function useMission(quest: Quest) {
     setChecking(true);
     const res = await reviewReport({ questId: quest.id, userId, text: submissionText(s), photo: photo?.file ?? null });
     setChecking(false);
-    if (!res.ok) return setReview({ sig: thisSig, state: "error", message: res.message });
+    if (!res.ok) return setReview({ sig: thisSig, state: "error", message: friendly(res.status, res.message) });
     if (res.data.review.status === "reviewed") return setReview({ sig: thisSig, state: "ready", aiChecked: true });
     // Short or thin is never a failure. Ask ONE clear question, once; after that, say plainly we could not finish.
     const question = res.data.review.suggestions[0] ?? res.data.review.feedback;
@@ -174,7 +183,7 @@ export function useMission(quest: Quest) {
         })
       : await completeReport({ questId: quest.id, userId, text, hasPhoto: photo !== null });
     setSharing(false);
-    if (!res.ok) return setShareError(res.message); // answers stay put
+    if (!res.ok) return setShareError(friendly(res.status, res.message, words.errors.save)); // answers stay put
     clear(quest.id);
     await refreshProgress(); // pins, chip and My World read the same store
     setDone({ already: false, text, stampsBefore });

@@ -57,7 +57,7 @@ export function templateFor(quest: Facts): MissionTemplate {
     case "escalator": {
       const thing = quest.kind;
       return {
-        chip: "Accessibility issue",
+        chip: quest.kind === "elevator" ? "Accessibility issue" : "Escalator outage",
         icon: "elevator",
         title: verify ? `Is this ${thing} really working again?` : `Is this ${thing} working again?`,
         description: working(`this ${thing}`, quest),

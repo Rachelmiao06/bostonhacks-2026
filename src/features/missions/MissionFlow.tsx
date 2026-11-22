@@ -278,7 +278,7 @@ function FollowUp({ question, onSend }: { question: string; onSend: (answer: str
         aria-label={text.followUpAnswer}
         className="w-full resize-none rounded-xl border border-graphite/20 bg-ivory p-3 text-base text-graphite outline-none focus-visible:ring-4 focus-visible:ring-graphite/10"
       />
-      <Secondary onClick={() => ref.current?.value.trim() && onSend(ref.current.value.trim())}>{text.followUpSend}</Secondary>
+      <Primary onClick={() => ref.current?.value.trim() && onSend(ref.current.value.trim())}>{text.followUpSend}</Primary>
     </div>
   );
 }
@@ -302,6 +302,7 @@ function ReviewActions({ m, onClose, stampsBefore }: { m: M; onClose: () => void
       </>
     );
   }
+  if (r.state === "question") return <Secondary onClick={() => m.go("note")}>{text.edit}</Secondary>;
   return (
     <>
       <Primary onClick={() => m.go("note")}>{text.edit}</Primary>
@@ -335,11 +336,15 @@ function DoneStep({ m, stampsBefore }: { m: M; stampsBefore: number | null }) {
         <p className="font-semibold text-graphite">{m.template.title}</p>
         {m.summary && !already ? (
           <p className="text-base leading-snug text-graphite/85">
-            {m.summary.place}{m.summary.unit ? ` · ${m.summary.unit}` : ""}. {m.summary.statusSentence} {m.summary.when}.
-            {m.summary.note ? ` “${m.summary.note}”` : ""}
+            {[m.summary.unit ? `${m.summary.place} · ${m.summary.unit}` : m.summary.place, m.summary.status, m.summary.when].join(" · ")}
+            {m.summary.note ? ` — “${m.summary.note}”` : ""}
           </p>
         ) : (
-          m.done?.text && <p className="text-sm whitespace-pre-line text-graphite/85">{m.done.text}</p>
+          m.done?.text && (
+            <p className="text-base leading-snug whitespace-pre-line text-graphite/85">
+              {m.done.text.split("\n").filter((line) => !line.startsWith("Community observation") && !line.startsWith("No photo")).join("\n")}
+            </p>
+          )
         )}
         <p className="flex items-center gap-1.5 border-t border-graphite/10 pt-2 text-sm font-medium text-cat-verify">
           <PixelIcon name="check" className="size-4" /> {text.status}: {m.verify ? text.statusSaved : text.statusShared}

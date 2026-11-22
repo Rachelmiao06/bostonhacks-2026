@@ -74,7 +74,7 @@ export function submissionText(s: Summary) {
   return [
     "Community observation from a rider (not an official MBTA report).",
     `Place: ${s.place}${s.unit ? `, ${s.unit}` : ""}.`,
-    `What the rider observed: ${s.status}. ${s.statusSentence}`,
+    `Observed: ${s.statusSentence}`,
     `When: ${s.when}.`,
     s.note && `Note: ${s.note}`,
     s.extra && `More detail: ${s.extra}`,

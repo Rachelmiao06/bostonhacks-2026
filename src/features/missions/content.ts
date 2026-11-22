@@ -80,6 +80,8 @@ export const text = {
   exploreWorld: "Explore My World",
 
   errors: {
-    saveLost: "That didn’t save. Your answers are still here, so you can try again.",
+    network: "We couldn’t reach Tada. Check your connection. Your answers are saved here, so you can try again.",
+    ai: "Tada’s AI helper couldn’t answer just now. Your answers are saved here. Try again in a moment, or come back to this mission later.",
+    save: "That didn’t save. Your answers are still here, so you can try again.",
   },
 };
