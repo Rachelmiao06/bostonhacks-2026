@@ -19,10 +19,10 @@ Each question moves the camera in on its object (sky and station, the landmark, 
 - `Diorama.tsx`: the scene. GSAP timelines for the beats, a pointer-depth drift. Layers are listed in `LAYERS` (positions in a 420 x 400 stage).
 - `DioramaLab.tsx`: the test page with switches (Reduced Motion, Slow-mo, server fails on next share).
 - `ASSET-PROMPTS.md`: prompts for the art still missing.
-- Art: `public/assets/challenge-diorama/*.webp`.
-  - NEW generated pieces (cut out from white backgrounds): `base-tile`, `tower`, `door-a`, `lamp-*`, `rider`, `rider-walk`, `escalator`, `gate-open`, `gate-closed`, `bus`, `train`, `signpost`.
-  - Still ROUGH, from the first sheet (different, softer look): `building`, `sky-day`, `sky-dusk`, `bubble-note`, `bubble-question`, `sign`, `seal`, `frame`, `puff-*`, `spark-*`. Replace file for file.
-  - Unused for now: `lamp-off` (the tower's own dome shows instead).
+- Art: `public/assets/challenge-diorama/*.webp`, all generated crochet pieces cut out from white backgrounds: `base-tile`, `tower`, `door-a`, `lamp-*`, `rider`, `rider-walk`, `building`, `sky-day`, `sky-dusk`, `bubble-note`, `bubble-question`, `sign`, `seal`, `escalator`, `gate-open`, `gate-closed`, `bus`, `train`, `signpost`.
+  - Still from the first sheet (softer look): `puff-*`, `spark-*`, `frame` (the frame is not shown in the full-screen layout).
+  - Unused: `lamp-off`.
+  - `style-reference.jpg`: one image to upload to the generator as the style reference. Prompts: `ASSET-PROMPTS.md`.
 - The lab has a Category switch (elevator, escalator, gate, shuttle bus, train, sign): one `LANDMARKS` entry per category in `Diorama.tsx`.
 
 ## To go into the real flow

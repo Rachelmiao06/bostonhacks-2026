@@ -86,15 +86,15 @@ export type DioramaProps = {
 };
 
 const FIXED = {
-  skyDay: L("sky-day", 448, 263, 34, 4, 352),
-  skyDusk: L("sky-dusk", 443, 268, 34, 4, 352),
+  skyDay: L("sky-day", 1200, 782, 40, 0, 340),
+  skyDusk: L("sky-dusk", 1200, 747, 40, 6, 340),
   tile: L("base-tile", 900, 681, 20, 110, 380),
-  building: L("building", 386, 342, 24, 92, 190),
-  sign: L("sign", 165, 171, 0, 0, 46),
+  building: L("building", 900, 703, 6, 96, 205),
+  sign: L("sign", 520, 544, 0, 0, 40),
   rider: L("rider", 340, 557, 170, 212, 46),
-  note: L("bubble-note", 204, 165, 134, 150, 92),
-  question: L("bubble-question", 160, 163, 0, 0, 62),
-  seal: L("seal", 197, 198, 326, 296, 68),
+  note: L("bubble-note", 600, 462, 150, 148, 84),
+  question: L("bubble-question", 600, 479, 0, 0, 62),
+  seal: L("seal", 520, 542, 322, 290, 74),
   puff1: L("puff-1", 120, 98, 0, 0, 46),
   puff2: L("puff-2", 80, 75, 0, 0, 28),
   puff3: L("puff-3", 75, 71, 0, 0, 26),
@@ -281,7 +281,8 @@ export function Diorama(p: DioramaProps) {
         tl.add(() => walk(true), 0.5)
           .to(rider, { x: 138, y: -46, scale: 0.8, transformOrigin: "50% 100%", duration: 1.6, ease: "power1.inOut" }, 0.5)
           .to(e("riderWalk"), { y: -3, duration: 0.15, yoyo: true, repeat: 9, ease: "sine.inOut" }, 0.5)
-          .to(rider, { autoAlpha: 0, duration: 0.25 }, ">-0.2");
+          .to(rider, { autoAlpha: 0, duration: 0.25 }, ">-0.2")
+          .to(e("note"), { autoAlpha: 0, duration: 0.4 }, 0.6);
       } else tl.to(rider, { y: -14, duration: 0.17, yoyo: true, repeat: 1, ease: "power2.out" }, 0.35);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
