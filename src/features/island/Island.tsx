@@ -6,13 +6,13 @@ import { refreshProgress, stampCount, useMyProgress, type ProgressState } from "
 import { allowedFor, content, giftMilestones, giftStatesFor, isIn, unlockSteps, type GiftState } from "./content";
 import { attributions } from "@/lib/places";
 import { demoGifts } from "./gifts";
-import { CloudGuide } from "./CloudGuide";
 import { Collection } from "./Collection";
 import { GiftTicket } from "./GiftTicket";
 import { HotspotLabel, type TagIcon } from "./HotspotLabel";
 import { IslandHelp } from "./IslandHelp";
 import { JournalTicket } from "./JournalTicket";
 import { Tour } from "./Tour";
+import { WorldNotes } from "./WorldNotes";
 import { IslandScene } from "./IslandLoader";
 import type { IslandHandle } from "./IslandScene";
 import { useNearbyPlaces } from "./usePlaces";
@@ -299,7 +299,7 @@ function IslandView({
       {status && (
         <p
           role="status"
-          className="absolute top-52 left-4 z-10 flex items-center gap-2 rounded-full border border-hairline bg-ivory/90 py-1.5 pr-1.5 pl-3 text-xs text-taupe shadow-float backdrop-blur-md sm:top-20 sm:right-6 sm:left-auto"
+          className="absolute bottom-16 left-4 z-10 flex items-center gap-2 rounded-full border border-hairline bg-ivory/90 py-1.5 pr-1.5 pl-3 text-xs text-taupe shadow-float backdrop-blur-md sm:top-20 sm:right-6 sm:bottom-auto sm:left-auto"
         >
           {status.text}
           {"retry" in status && (
@@ -387,8 +387,8 @@ function IslandView({
 
       {collectionOpen && <Collection known={plan.progressKnown ? known : null} handle={handle} onClose={closeCollection} />}
 
-      {/* The cloud hangs at the top left for good (not during the tour, a ticket or the gallery) and says what My World is */}
-      {phase === "idle" && <CloudGuide hidden={tourShown || ticket !== null || collectionOpen} onPick={(id) => handle.current?.focusHotspot(id)} />}
+      {/* Three phone-style banners at the top left say what My World is (not during the tour, a ticket or the gallery) */}
+      {phase === "idle" && <WorldNotes hidden={tourShown || ticket !== null || collectionOpen} onPick={(id) => handle.current?.focusHotspot(id)} />}
 
       <IslandHelp preview={preview} onTogglePreview={onTogglePreview} onTour={phase === "idle" ? startTour : undefined} />
 

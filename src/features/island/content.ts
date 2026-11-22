@@ -140,13 +140,12 @@ export const content = {
     replay: "Take the tour again",
   },
 
-  // The little cloud that hangs at the top left: what My World is, in three lines, always one tap away.
-  cloud: {
-    hint: "What is My World?",
-    title: "What is My World?",
-    intro: "A little knitted island that is yours. Tap a line to look at it.",
-    open: "Open the My World guide",
-    close: "Tuck the cloud away",
+  // What My World is, as three phone-style notification banners at the top left, popping in one after another.
+  notes: {
+    app: "My World",
+    now: "now",
+    pill: "What is My World?",
+    hide: "Hide",
     points: [
       { id: "unlock", title: "It keeps growing", body: "Every report or check you make on the map drops something new onto your island." },
       { id: "gift-0", title: "Gifts and promo codes", body: "Little treats open as it grows. They are examples for now." },
