@@ -83,3 +83,20 @@ export function writeCollectionSeen(n: number) {
     // storage blocked: a newly earned piece may rise into view again next time
   }
 }
+
+/** Whether this browser has already seen the cloud guide open by itself (it opens once, then stays tucked until tapped). */
+export function readCloudSeen(): boolean {
+  try {
+    return window.localStorage.getItem(`tparty.island.cloud:${getRiderId()}`) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function writeCloudSeen() {
+  try {
+    window.localStorage.setItem(`tparty.island.cloud:${getRiderId()}`, "1");
+  } catch {
+    // storage blocked: the cloud simply opens by itself again next time
+  }
+}
