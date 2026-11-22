@@ -81,6 +81,8 @@ export type DioramaProps = {
   slow: number;
   /** Optional synthesized sounds (off by default). */
   sound: boolean;
+  /** No card around the scene: it is the whole world behind the page. */
+  bare?: boolean;
 };
 
 const FIXED = {
@@ -290,18 +292,19 @@ export function Diorama(p: DioramaProps) {
     const card = e("card");
     const groups = [e("gBack"), e("gMid"), e("gFront")];
     if (!card || p.reduced || !window.matchMedia("(hover: hover)").matches) return;
+    const target = (p.bare ? window : card) as HTMLElement;
     const amt = [3, 7, 13];
     const qx = groups.map((g, i) => [gsap.quickTo(g!, "x", { duration: 0.7, ease: "power3.out" }), gsap.quickTo(g!, "y", { duration: 0.7, ease: "power3.out" }), amt[i]] as const);
     const move = (ev: PointerEvent) => {
-      const r = card.getBoundingClientRect();
+      const r = p.bare ? { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight } : card.getBoundingClientRect();
       const nx = ((ev.clientX - r.left) / r.width) * 2 - 1, ny = ((ev.clientY - r.top) / r.height) * 2 - 1;
       for (const [x, y, a] of qx) { x(-nx * a); y(-ny * a * 0.6); }
     };
     const leave = () => { for (const [x, y] of qx) { x(0); y(0); } };
-    card.addEventListener("pointermove", move);
-    card.addEventListener("pointerleave", leave);
-    return () => { card.removeEventListener("pointermove", move); card.removeEventListener("pointerleave", leave); gsap.set(groups, { x: 0, y: 0 }); };
-  }, [p.reduced]);
+    target.addEventListener("pointermove", move);
+    target.addEventListener("pointerleave", leave);
+    return () => { target.removeEventListener("pointermove", move); target.removeEventListener("pointerleave", leave); gsap.set(groups, { x: 0, y: 0 }); };
+  }, [p.reduced, p.bare]);
 
   // 5. Small life, never required: the rider breathes, and tapping him or the lamp gives a little reaction.
   useEffect(() => {
@@ -379,8 +382,8 @@ export function Diorama(p: DioramaProps) {
   const gr = lm.glow.r * 2.6;
 
   return (
-    <div ref={reg("card")} className="relative overflow-hidden rounded-[1.6rem] border border-ivory/80 shadow-float" style={{ background: "linear-gradient(180deg, color-mix(in oklab, var(--sky) 20%, var(--ivory)) 0%, var(--ivory) 70%)" }}>
-      <div aria-hidden className="absolute inset-0" style={{ background: "linear-gradient(180deg, color-mix(in oklab, var(--cherry) 20%, var(--sun) 40%) 0%, color-mix(in oklab, var(--sun) 24%, var(--ivory)) 70%)", opacity: dusk ? 1 : 0, transition: p.reduced ? "none" : "opacity 0.9s" }} />
+    <div ref={reg("card")} className={p.bare ? "relative" : "relative overflow-hidden rounded-[1.6rem] border border-ivory/80 shadow-float"} style={p.bare ? undefined : { background: "linear-gradient(180deg, color-mix(in oklab, var(--sky) 20%, var(--ivory)) 0%, var(--ivory) 70%)" }}>
+      {!p.bare && <div aria-hidden className="absolute inset-0" style={{ background: "linear-gradient(180deg, color-mix(in oklab, var(--cherry) 20%, var(--sun) 40%) 0%, color-mix(in oklab, var(--sun) 24%, var(--ivory)) 70%)", opacity: dusk ? 1 : 0, transition: p.reduced ? "none" : "opacity 0.9s" }} />}
       <div ref={reg("root")} role="img" aria-label={label} className="relative w-full" style={{ aspectRatio: `${SW} / ${SH}`, perspective: PERSPECTIVE }}>
         <div ref={reg("cam")} className="absolute inset-0" style={{ transformStyle: "preserve-3d" }}>
         <div ref={reg("gBack")} className="absolute inset-0">
@@ -439,7 +442,7 @@ export function Diorama(p: DioramaProps) {
           {img(at(FIXED.spark4, lm.glow.x - 16, lm.glow.y - 36, 22), "spark4", hidden)}
         </div>
         </div>
-        <div ref={reg("frame")} aria-hidden className="pointer-events-none absolute inset-0" style={hidden}>
+        <div ref={reg("frame")} aria-hidden className="pointer-events-none absolute inset-0" style={p.bare ? { ...hidden, display: "none" } : hidden}>
           <div className="size-full" style={{ borderStyle: "solid", borderWidth: 26, borderImage: `url(${A}/frame.webp) 62 / 26px stretch`, borderRadius: 0 }} />
         </div>
       </div>
