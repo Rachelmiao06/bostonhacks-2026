@@ -13,7 +13,11 @@ Status: rough test only. NOT in the real Challenge flow. The real flow (`feature
 - `Diorama.tsx`: the scene. GSAP timelines for the beats, a pointer-depth drift. Layers are listed in `LAYERS` (positions in a 420 x 400 stage).
 - `DioramaLab.tsx`: the test page with switches (Reduced Motion, Slow-mo, server fails on next share).
 - `ASSET-PROMPTS.md`: prompts for the art still missing.
-- Art: `public/assets/challenge-diorama/*.webp`, ROUGH cut-outs of the desktop sheet. Replace file for file with the final layers.
+- Art: `public/assets/challenge-diorama/*.webp`.
+  - NEW generated pieces (cut out from white backgrounds): `base-tile`, `tower`, `door-a`, `lamp-*`, `rider`, `rider-walk`, `escalator`, `gate-open`, `gate-closed`, `bus`, `train`, `signpost`.
+  - Still ROUGH, from the first sheet (different, softer look): `building`, `sky-day`, `sky-dusk`, `bubble-note`, `bubble-question`, `sign`, `seal`, `frame`, `puff-*`, `spark-*`. Replace file for file.
+  - Unused for now: `lamp-off` (the tower's own dome shows instead).
+- The lab has a Category switch (elevator, escalator, gate, shuttle bus, train, sign): one `LANDMARKS` entry per category in `Diorama.tsx`.
 
 ## To go into the real flow
 Pass `when`, `status`, `rider`, `note` and the real save state into `<Diorama />` from `useMission`. The saved state must come only from the server's success. No rule moves into this folder.

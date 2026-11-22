@@ -7,7 +7,7 @@ import { Choice, Primary, Secondary } from "@/features/missions/Parts";
 import { Sprite } from "@/features/missions/Collectibles";
 import { text } from "@/features/missions/content";
 import { cn } from "@/lib/utils";
-import { Diorama, type Status, type When } from "./Diorama";
+import { Diorama, LANDMARKS, type Landmark, type Status, type When } from "./Diorama";
 import { play } from "./sound";
 
 type Step = "overview" | "when" | "status" | "note" | "done";
@@ -33,6 +33,8 @@ export function DioramaLab() {
   const [slow, setSlow] = useState(false);
   const [failNext, setFailNext] = useState(false);
   const [sound, setSound] = useState(false);
+  const [landmark, setLandmark] = useState<Landmark>("elevator");
+  const noun = LANDMARKS[landmark].label;
   const tick = () => { if (sound) play("tick"); };
   const reduced = os || forced;
 
@@ -79,6 +81,11 @@ export function DioramaLab() {
               <Toggle label="Reduced Motion" on={reduced} locked={os} onChange={setForced} />
               <Toggle label="Slow-mo ×3" on={slow} onChange={setSlow} />
               <Toggle label="Sound" on={sound} onChange={setSound} />
+              <label className="flex items-center gap-2 text-xs font-semibold">Category
+                <select value={landmark} onChange={(e) => setLandmark(e.target.value as Landmark)} className="rounded-full border border-graphite/25 bg-ivory px-2 py-1 text-xs outline-none focus-visible:ring-4 focus-visible:ring-graphite/25">
+                  {(Object.keys(LANDMARKS) as Landmark[]).map((k) => <option key={k} value={k}>{LANDMARKS[k].label}</option>)}
+                </select>
+              </label>
               <Toggle label="Server fails on next share" on={failNext} onChange={setFailNext} />
             </div>
           </section>
@@ -93,22 +100,22 @@ export function DioramaLab() {
             </div>
 
             <div className="px-3">
-              <Diorama when={sceneWhen} status={status} rider={step === "note" || step === "done"} note={note.trim().length > 0} saving={phase === "saving"} failed={phase === "failed"} confirmed={phase === "saved"} reduced={reduced} slow={slow ? 3 : 1} sound={sound} />
+              <Diorama landmark={landmark} when={sceneWhen} status={status} rider={step === "note" || step === "done"} note={note.trim().length > 0} saving={phase === "saving"} failed={phase === "failed"} confirmed={phase === "saved"} reduced={reduced} slow={slow ? 3 : 1} sound={sound} />
             </div>
 
             <div ref={body} className="relative min-h-[17rem] overflow-hidden px-5 pt-4 pb-3">
               <AnimatePresence mode="popLayout" custom={{ dir, reduced }} initial={false}>
                 <motion.div key={step} custom={{ dir, reduced }} variants={panel} initial="enter" animate="center" exit="exit">
                   {step === "overview" && (
-                    <Panel title="Is the elevator at Park Street working?">
-                      <p className="text-[0.95rem] leading-relaxed text-graphite/85">The MBTA lists this elevator as out of service. Help other riders by checking the current status.</p>
+                    <Panel title={`Is the ${noun} at Park Street working?`}>
+                      <p className="text-[0.95rem] leading-relaxed text-graphite/85">The MBTA lists this {noun} as out of service. Help other riders by checking the current status.</p>
                       <p className="text-sm text-taupe">Pick an answer on each step and watch the little station respond.</p>
                     </Panel>
                   )}
                   {step === "when" && (
-                    <Panel title={text.whenTitle("the elevator")}>
+                    <Panel title={text.whenTitle(`the ${noun}`)}>
                       <fieldset className="space-y-2.5">
-                        <legend className="sr-only">{text.whenTitle("the elevator")}</legend>
+                        <legend className="sr-only">{text.whenTitle(`the ${noun}`)}</legend>
                         <Choice name="when" value="now" checked={when === "now"} onChange={() => { tick(); setWhen("now"); }} label={text.whenNow.label} hint={text.whenNow.hint} icon="spark" />
                         <Choice name="when" value="earlier" checked={when === "earlier"} onChange={() => { tick(); setWhen("earlier"); }} label={text.whenEarlier.label} hint={text.whenEarlier.hint} icon="train" />
                         <Choice name="when" value="not_yet" checked={when === "not_yet"} onChange={() => { tick(); setWhen("not_yet"); }} label={text.whenNot.label} hint={text.whenNot.hint} icon="question" />
