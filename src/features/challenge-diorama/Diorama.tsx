@@ -83,6 +83,8 @@ export type DioramaProps = {
   sound: boolean;
   /** No card around the scene: it is the whole world behind the page. */
   bare?: boolean;
+  /** How strongly the camera zooms in (1 = full, lower = gentler). Wide screens use less, so the whole world stays in view. */
+  zoom?: number;
 };
 
 const FIXED = {
@@ -114,8 +116,11 @@ const PERSPECTIVE = 1100;
 
 type Cam = { xp: number; yp: number; s: number; rx: number; ry: number };
 /** Where the camera sits for each moment. (fx, fy) is the point of the 420 x 400 stage to bring to the middle. */
-function camTarget(view: CamView, lm: LM): Cam {
-  const at = (fx: number, fy: number, s: number, rx: number, ry: number): Cam => ({ xp: (((SW / 2 - fx) * s) / SW) * 100, yp: (((SH / 2 - fy) * s) / SH) * 100, s, rx, ry });
+function camTarget(view: CamView, lm: LM, zoom = 1): Cam {
+  const at = (fx: number, fy: number, s0: number, rx: number, ry: number): Cam => {
+    const s = s0 >= 1 ? 1 + (s0 - 1) * zoom : s0;
+    return { xp: (((SW / 2 - fx) * s) / SW) * 100, yp: (((SH / 2 - fy) * s) / SH) * 100, s, rx, ry };
+  };
   if (view === "when") return at(150, 156, 1.45, 3, 7);
   if (view === "status") {
     const h = (lm.base.dw * lm.base.h) / lm.base.w;
@@ -345,7 +350,7 @@ export function Diorama(p: DioramaProps) {
     if (!cam) return;
     camTween.current.forEach((t) => t.kill());
     camTween.current = [];
-    const t = camTarget(p.view, lm);
+    const t = camTarget(p.view, lm, p.zoom ?? 1);
     const to = { xPercent: t.xp, yPercent: t.yp, scale: t.s, rotationX: t.rx, rotationY: t.ry };
     if (p.reduced || camFirst.current) { camFirst.current = false; gsap.set(cam, { ...to, transformOrigin: "50% 50%" }); return; }
     const final = p.view === "final";
@@ -356,7 +361,7 @@ export function Diorama(p: DioramaProps) {
     tw.timeScale(1 / p.slow);
     camTween.current.push(tw);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [p.view, p.landmark, p.reduced, p.slow]);
+  }, [p.view, p.landmark, p.reduced, p.slow, p.zoom]);
 
   useEffect(() => () => {
     killLoops();

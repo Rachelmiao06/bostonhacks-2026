@@ -1,5 +1,6 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import type { QuestKind } from "@/lib/mbta";
 import { Diorama, type CamView, type Landmark, type Status, type When } from "./Diorama";
@@ -22,6 +23,15 @@ const VIEW_OF: Record<WorldStep, CamView> = { overview: "overview", when: "when"
 
 const DAY = "linear-gradient(180deg, color-mix(in oklab, var(--sky) 42%, var(--ivory)) 0%, color-mix(in oklab, var(--sky) 14%, var(--ivory)) 55%, var(--ivory) 100%)";
 const DUSK = "linear-gradient(180deg, color-mix(in oklab, var(--cherry) 22%, var(--sun) 38%) 0%, color-mix(in oklab, var(--sun) 30%, var(--ivory)) 60%, var(--ivory) 100%)";
+
+/** Wide screens (the mission panel is a side card): there is plenty of room, so the whole world is shown and the camera zooms gently. */
+const WIDE = "(min-width: 640px)";
+const subscribeWide = (cb: () => void) => {
+  const m = window.matchMedia(WIDE);
+  m.addEventListener("change", cb);
+  return () => m.removeEventListener("change", cb);
+};
+const isWide = () => window.matchMedia(WIDE).matches;
 
 type Props = {
   kind: QuestKind;
@@ -48,6 +58,7 @@ type Props = {
  * the screen while the mission panel floats over it. Not read by screen readers: the card says everything in words.
  */
 export default function MissionWorld(p: Props) {
+  const wide = useSyncExternalStore(subscribeWide, isWide, () => false);
   const when: When | null = p.when === "now" || p.when === "earlier" ? p.when : null;
   const status: Status | null = p.tone ? STATUS_OF[p.tone] : null;
   const dusk = when === "earlier";
@@ -57,9 +68,10 @@ export default function MissionWorld(p: Props) {
       <div className="absolute inset-0 pt-4 pb-[var(--bi)] sm:pr-[28.5rem] sm:pb-0" style={{ "--bi": `${p.bottomInset}px` } as React.CSSProperties}>
         <div className="relative size-full" style={{ containerType: "size" }}>
           <div className="absolute inset-0 grid place-items-center">
-            <div style={{ width: "min(100cqw, 170cqh)" }}>
+            <div className="w-[min(100cqw,170cqh)] sm:w-[min(100cqw,96cqh)]">
               <Diorama
                 bare
+                zoom={wide ? 0.4 : 1}
                 view={VIEW_OF[p.step]}
                 landmark={LANDMARK_OF[p.kind]}
                 when={when}

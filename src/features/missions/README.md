@@ -39,3 +39,4 @@ rewards nothing: `confirmed` is true only when `useMission` says the server save
 a failed save never shows a seal. The question card is glass over the world. `ContributePanel.tsx` (explore) was made
 transparent for this and no longer closes when you tap outside it (the screen behind is now the main picture).
 
+On wide screens (the panel is a side card) the whole world fits in the space beside it and the camera zooms gently (`zoom` 0.4 in `MissionWorld`), so it never fills the screen with a few stitches; on phones the world is larger and the camera zooms fully, because the card covers its lower part.
