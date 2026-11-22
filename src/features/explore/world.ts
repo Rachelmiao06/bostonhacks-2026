@@ -2,7 +2,7 @@
 // Pure helpers only (no React): district maths, the 3D building layer, the GSAP camera flight.
 import gsap from "gsap";
 import type { FilterSpecification, Map as MapLibreMap } from "maplibre-gl";
-import { ATLAS } from "@/lib/map";
+import { tokenColor } from "@/lib/map";
 import type { ProblemStop } from "./quests";
 import type { SubwayStation } from "./types";
 
@@ -111,44 +111,137 @@ export function insideWorld(center: LngLat, point: LngLat, factor = 1) {
 
 // ---------- 3D buildings ----------
 
+// Three stacked extrusions make a small painted model: a soft ground shadow, the coloured walls,
+// and a lighter roof cap on top. All three share one footprint filter and fade together.
+const SHADOW = "world-buildings-shadow";
 const BUILDINGS = "world-buildings";
+const ROOFS = "world-buildings-roofs";
+const BUILDING_LAYERS = [SHADOW, BUILDINGS, ROOFS] as const;
+/** The shadow stays fainter than the buildings however visible they are. */
+const SHADOW_SHARE = 0.22;
+/** How thick the roof cap is, in metres. */
+const ROOF_M = 1.2;
+
+/** Mixes two CSS colours (as the map needs them: rgb) by `t` (0 = a, 1 = b). */
+function mix(a: string, b: string, t: number): string {
+  const rgb = (css: string) => (css.match(/[\d.]+/g) ?? ["0", "0", "0"]).slice(0, 3).map(Number);
+  const [ar, ag, ab] = rgb(a);
+  const [br, bg, bb] = rgb(b);
+  const channel = (x: number, y: number) => Math.round(x + (y - x) * t);
+  return `rgb(${channel(ar, br)},${channel(ag, bg)},${channel(ab, bb)})`;
+}
+
+/**
+ * Walls and roofs in the app's own colours (the `--cherry`, `--sun`, `--sky`, `--leaf`, `--wood` tokens),
+ * softened with cream paper so the blocks look like painted wood. Index = the building's colour group.
+ */
+function buildingPalette() {
+  const paper = tokenColor("--paper");
+  const ivory = tokenColor("--ivory");
+  const walls = [
+    mix(tokenColor("--cherry"), paper, 0.66), // blush brick
+    mix(tokenColor("--sun"), paper, 0.58), // butter
+    mix(tokenColor("--sky"), paper, 0.62), // powder blue
+    mix(tokenColor("--leaf"), paper, 0.68), // mint
+    mix(tokenColor("--wood"), paper, 0.6), // clay
+  ];
+  const tall = mix(tokenColor("--steel"), tokenColor("--sky"), 0.3);
+  return {
+    walls,
+    roofs: walls.map((wall) => mix(wall, ivory, 0.55)),
+    tall,
+    tallRoof: mix(tall, ivory, 0.5),
+    shadow: mix(tokenColor("--graphite"), paper, 0.35),
+  };
+}
 
 /**
  * Raises the real buildings of the district into 3D. Only inside the circle (a few hundred buildings),
- * so the rest of the city stays flat and light. Colours come from the atlas palette.
+ * so the rest of the city stays flat and light.
  */
 export function showWorldBuildings(map: MapLibreMap, center: LngLat) {
   // `within` does not work on building outlines in MapLibre; `distance` does, and gives us the circle.
   const filter = ["<=", ["distance", { type: "Point", coordinates: center }], WORLD_RADIUS_M * 1.05] as unknown as FilterSpecification;
-  if (!map.getLayer(BUILDINGS)) {
-    // Capped so a tower never hides the stop behind it; a diorama, not a skyline.
-    const height: unknown = ["min", 40, ["max", 6, ["coalesce", ["get", "render_height"], 9]]];
-    map.addLayer(
-      {
-        id: BUILDINGS,
-        type: "fill-extrusion",
-        source: "openmaptiles",
-        "source-layer": "building",
-        minzoom: 14,
-        filter,
-        paint: {
-          "fill-extrusion-height": height as never,
-          "fill-extrusion-base": ["coalesce", ["get", "render_min_height"], 0],
-          "fill-extrusion-color": ["interpolate", ["linear"], height as never, 6, ATLAS.building, 40, ATLAS.road] as never,
-          "fill-extrusion-opacity": 0,
-          "fill-extrusion-vertical-gradient": true,
-        },
-      },
-      // Under every label and the T lines, so street names, stop names and routes always read on top of the buildings.
-      map.getStyle().layers.find((layer) => layer.type === "symbol")?.id,
-    );
-  } else {
-    map.setFilter(BUILDINGS, filter);
+  if (map.getLayer(BUILDINGS)) {
+    for (const id of BUILDING_LAYERS) map.setFilter(id, filter);
+    return;
   }
+
+  // Warm afternoon sun from the south-west: lit walls glow, the others sit in cool shade.
+  map.setLight({ anchor: "viewport", color: tokenColor("--ivory"), intensity: 0.55, position: [1.4, 220, 38] });
+
+  const palette = buildingPalette();
+  const rawHeight: unknown = ["coalesce", ["get", "render_height"], 9];
+  // Capped so a tower never hides the stop behind it; a diorama, not a skyline.
+  const height: unknown = ["min", 40, ["max", 6, rawHeight]];
+  const base: unknown = ["coalesce", ["get", "render_min_height"], 0];
+  const isTall: unknown = [">", rawHeight, 34];
+  // The tiles' feature ids are no help (nearly all the same), so the height picks one of five colours:
+  // neighbours of different heights differ, and a row of identical houses stays one colour, like a painted street.
+  const group: unknown = ["%", ["floor", ["*", rawHeight, 3.7]], 5];
+  const pick = (colours: string[], tallColour: string): unknown => [
+    "case",
+    isTall,
+    tallColour,
+    ["match", group, 0, colours[0], 1, colours[1], 2, colours[2], 3, colours[3], colours[4]],
+  ];
+  const roofTop: unknown = ["max", ["+", base, 1], ["-", height, ROOF_M]];
+
+  // Under every label and the T lines, so street names, stop names and routes always read on top of the buildings.
+  const beforeId = map.getStyle().layers.find((layer) => layer.type === "symbol")?.id;
+  const common = { type: "fill-extrusion" as const, source: "openmaptiles", "source-layer": "building", minzoom: 14, filter };
+
+  map.addLayer(
+    {
+      ...common,
+      id: SHADOW,
+      paint: {
+        // A flat copy slid to the north-east: the soft pool of shade each block throws on the street.
+        "fill-extrusion-height": 0.2,
+        "fill-extrusion-base": 0,
+        "fill-extrusion-color": palette.shadow,
+        "fill-extrusion-opacity": 0,
+        "fill-extrusion-translate": [7, -7],
+        "fill-extrusion-translate-anchor": "map",
+        "fill-extrusion-vertical-gradient": false,
+      },
+    },
+    beforeId,
+  );
+  map.addLayer(
+    {
+      ...common,
+      id: BUILDINGS,
+      paint: {
+        "fill-extrusion-height": roofTop as never,
+        "fill-extrusion-base": base as never,
+        "fill-extrusion-color": pick(palette.walls, palette.tall) as never,
+        "fill-extrusion-opacity": 0,
+        "fill-extrusion-vertical-gradient": true,
+      },
+    },
+    beforeId,
+  );
+  map.addLayer(
+    {
+      ...common,
+      id: ROOFS,
+      paint: {
+        "fill-extrusion-height": height as never,
+        "fill-extrusion-base": roofTop as never,
+        "fill-extrusion-color": pick(palette.roofs, palette.tallRoof) as never,
+        "fill-extrusion-opacity": 0,
+        "fill-extrusion-vertical-gradient": false,
+      },
+    },
+    beforeId,
+  );
 }
 
 export function setWorldBuildingsOpacity(map: MapLibreMap, opacity: number) {
-  if (map.getLayer(BUILDINGS)) map.setPaintProperty(BUILDINGS, "fill-extrusion-opacity", opacity);
+  for (const id of BUILDING_LAYERS) {
+    if (map.getLayer(id)) map.setPaintProperty(id, "fill-extrusion-opacity", id === SHADOW ? opacity * SHADOW_SHARE : opacity);
+  }
 }
 
 // ---------- camera ----------
