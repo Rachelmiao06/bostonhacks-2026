@@ -365,7 +365,7 @@ function IslandView({
       {/* Tapping the island outside an open ticket closes it, the same as the close button */}
       {ticket !== null && <div aria-hidden onClick={closeTicket} className="absolute inset-0 z-10" />}
 
-      {ticket === "journal" && <JournalSheet progress={progress} known={plan.progressKnown ? known : null} onClose={closeTicket} onRetry={onRetry} />}
+      {ticket === "journal" && <JournalSheet progress={progress} known={plan.progressKnown ? known : null} preview={preview} onClose={closeTicket} onRetry={onRetry} />}
       {ticket?.startsWith("gift-") && (
         <GiftTicket
           gift={demoGifts[Number(ticket.slice(5))]}

@@ -112,6 +112,10 @@ export const content = {
     brokenTag: "BROKEN",
     dayEntries: (n: number) => `${n} ${n === 1 ? "thing" : "things"} that day`,
     monthTabs: "Jump to a month",
+    notes: "Notes",
+    exampleEmpty: "Example page: your reports and fixes will land here as stickers.",
+    examplePreview: "Example page for the preview. Nothing here is yours.",
+    exampleTag: "Example",
   },
 
   // The paper voucher a gift unfolds into
