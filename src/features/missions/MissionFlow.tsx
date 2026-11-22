@@ -8,7 +8,7 @@ import type { Quest } from "@/lib/mbta";
 import { unlockSteps } from "@/features/island/content";
 import { stampCount, useMyProgress } from "@/features/explore/progress";
 import { cn } from "@/lib/utils";
-import { EARLIER_LABELS, type Answers } from "./compose";
+import { EARLIER_LABELS, partsOf, type Answers } from "./compose";
 import { text } from "./content";
 import { Choice, PhotoField, Primary, primaryClass, primaryStyle, Secondary, SummaryCard } from "./Parts";
 import { PixelIcon } from "./PixelIcon";
@@ -342,7 +342,7 @@ function DoneStep({ m, stampsBefore }: { m: M; stampsBefore: number | null }) {
         ) : (
           m.done?.text && (
             <p className="text-base leading-snug whitespace-pre-line text-graphite/85">
-              {m.done.text.split("\n").filter((line) => !line.startsWith("Community observation") && !line.startsWith("No photo")).join("\n")}
+              {partsOf(m.done.text).join("\n")}
             </p>
           )
         )}

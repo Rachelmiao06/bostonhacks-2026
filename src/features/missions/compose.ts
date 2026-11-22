@@ -21,6 +21,13 @@ export const EARLIER_LABELS: Record<NonNullable<Answers["earlier"]>, string> = {
   week: "Earlier this week",
 };
 
+/** Splits a saved update back into its labelled parts, for showing an update finished on an earlier visit. */
+export function partsOf(saved: string) {
+  return saved
+    .split(/ (?=(?:Place|Observed|When|Note|More detail):)/)
+    .filter((part) => /^(Place|Observed|When|Note|More detail):/.test(part));
+}
+
 /** Can the rider move on from the "when" step with a first-hand observation? "Haven't checked" can never submit. */
 export function whenIsFirstHand(a: Answers) {
   return a.when === "now" || (a.when === "earlier" && a.earlier !== null);
@@ -67,7 +74,9 @@ export function buildSummary(quest: Quest, a: Answers, hasPhoto: boolean): Summa
 }
 
 /**
- * The text that goes to the existing review and submission routes. Built only from the rider's answers,
+ * The text that goes to the existing review and submission routes. ONE line on purpose: the review route gets it as
+ * form data (browsers turn "\n" into "\r\n"), the save route as JSON, and the server only saves text that is
+ * byte-for-byte what was reviewed. Built only from the rider's answers,
  * so it can never contain a date, an observation or a photo the rider did not give.
  */
 export function submissionText(s: Summary) {
@@ -81,5 +90,5 @@ export function submissionText(s: Summary) {
     s.hasPhoto ? "The rider attached a photo." : "No photo attached.",
   ]
     .filter(Boolean)
-    .join("\n");
+    .join(" ");
 }
