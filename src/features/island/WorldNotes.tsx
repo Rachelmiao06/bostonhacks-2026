@@ -47,7 +47,7 @@ export function WorldNotes({ onPick, hidden }: { onPick: (id: string) => void; h
     <div
       onPointerEnter={() => setPaused(true)}
       onPointerLeave={() => setPaused(false)}
-      className={`pointer-events-none absolute top-[7.5rem] left-2 z-20 w-[min(20rem,calc(100%-1rem))] flex-col items-start gap-2 sm:left-4 ${hidden ? "hidden" : "flex"}`}
+      className={`pointer-events-none absolute top-[9rem] left-2 z-20 w-[min(20rem,calc(100%-1rem))] flex-col items-start gap-2 sm:left-4 ${hidden ? "hidden" : "flex"}`}
     >
       {/* the pill: names the banners, and hides or brings them back */}
       <button
