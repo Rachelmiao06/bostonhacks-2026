@@ -91,7 +91,7 @@ const FIXED = {
   tile: L("base-tile", 1300, 974, 20, 110, 380),
   building: L("building", 1000, 788, 6, 96, 205),
   sign: L("sign", 520, 544, 0, 0, 40),
-  rider: L("rider", 340, 557, 170, 212, 46),
+  rider: L("rider", 520, 849, 170, 212, 46),
   note: L("bubble-note", 600, 462, 150, 148, 84),
   question: L("bubble-question", 600, 479, 0, 0, 62),
   seal: L("seal", 520, 542, 322, 290, 74),
