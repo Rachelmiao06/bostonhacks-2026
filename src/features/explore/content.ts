@@ -208,6 +208,9 @@ export const world = {
     n === 1
       ? "1 problem within a short walk"
       : `${n} problems within a short walk`,
+  /** The small tag beside the start stop on the map. */
+  nearYou: "Near you",
+  nearbyCount: (n: number) => (n === 1 ? "1 problem nearby" : `${n} problems nearby`),
   far: "You are outside the T area, so we started you at Park Street.",
   quiet: (from: string) =>
     `Nothing is broken near ${from} right now. We moved you to the closest problem.`,
