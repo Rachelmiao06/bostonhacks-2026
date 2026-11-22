@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Camera, MapPin, Sparkles, TrainFront, type LucideIcon } from "lucide-react";
+import { Camera, MapPin, Sparkles, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { categories } from "@/features/explore/content";
 import { categoryStyle } from "@/features/explore/category";
@@ -23,9 +23,8 @@ const BUSY_TEXT = ["Where should we start?", "Finding problems near you", "Almos
  * The first-visit coach, spread over the first minute instead of one big tour:
  *  1. a punchy card that says what Tada is and its three features, before anything else;
  *  2. the normal welcome, where the rider picks a start and the map zooms to it;
- *  3. four short tips that pop up one at a time like notifications, each beside the thing it explains
- *     (the pins, the problem kinds, My World, Trolley), then go away.
- * It never blocks the map. Escape or "Skip tips" ends it for good.
+ *  3. one small card at the top left: "every pin is a challenge" and the four kinds of problems.
+ * It never blocks the map. Escape or "Got it" ends it for good.
  */
 export function CoachTour() {
   const [phase, setPhase] = useState<Phase>("idle");
@@ -85,7 +84,7 @@ export function CoachTour() {
   }, [phase, endIntro, endLive]);
 
   if (phase === "intro") return <Intro onStart={endIntro} />;
-  if (phase === "live") return <Tips onDone={endLive} />;
+  if (phase === "live") return <GuideCard onDone={endLive} />;
   return null;
 }
 
@@ -139,141 +138,40 @@ function Intro({ onStart }: { onStart: () => void }) {
   );
 }
 
-/* ---------- 3. The tips ---------- */
+/* ---------- 3. The guide card ---------- */
 
-type Tip = (typeof coach.tips)[number];
-const GAP_MS = 700; // empty pause between two tips
-const LEAVE_MS = 350;
-const TIP_W = 288;
-
-/** Where a measured element sits on screen (or null if it is not there), re-read on resize. */
-function useRect(selector: string | undefined) {
-  const [rect, setRect] = useState<DOMRect | null>(null);
+function GuideCard({ onDone }: { onDone: () => void }) {
+  const g = coach.guide;
+  const done = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    if (!selector) return;
-    const read = () => setRect(document.querySelector(selector)?.getBoundingClientRect() ?? null);
-    read();
-    window.addEventListener("resize", read);
-    return () => window.removeEventListener("resize", read);
-  }, [selector]);
-  return rect;
-}
-
-const anchorSelector = { world: 'header a[href="/world"]', trolley: 'button[aria-label="Open Trolley chat"]' } as const;
-
-function Tips({ onDone }: { onDone: () => void }) {
-  const tips = coach.tips;
-  const [index, setIndex] = useState(0);
-  const [leaving, setLeaving] = useState(false);
-
-  useEffect(() => {
-    if (index >= tips.length) {
-      onDone();
-      return;
-    }
-    const enter = index === 0 ? 700 : GAP_MS;
-    let leave = 0;
-    let next = 0;
-    const show = window.setTimeout(() => {
-      setLeaving(false);
-      leave = window.setTimeout(() => setLeaving(true), tips[index].ms - LEAVE_MS);
-      next = window.setTimeout(() => setIndex(index + 1), tips[index].ms);
-    }, enter);
-    return () => {
-      window.clearTimeout(show);
-      window.clearTimeout(leave);
-      window.clearTimeout(next);
-    };
-  }, [index, tips, onDone]);
-
-  // The tip is only on screen between its own timers; before that (the pause) nothing shows.
-  const [shownIndex, setShownIndex] = useState(-1);
-  useEffect(() => {
-    const id = window.setTimeout(() => setShownIndex(index), index === 0 ? 700 : GAP_MS);
-    return () => window.clearTimeout(id);
-  }, [index]);
-  const tip = shownIndex === index ? tips[index] : undefined;
-
+    done.current?.focus({ preventScroll: true });
+  }, []);
   return (
-    <>
-      {tip && <TipCard key={tip.id} tip={tip} leaving={leaving} />}
-      <button
-        type="button"
-        onClick={onDone}
-        className="fixed bottom-3 left-1/2 z-50 -translate-x-1/2 cursor-pointer rounded-full border border-ivory/80 bg-ivory/90 px-3 py-1 font-ui text-xs text-taupe shadow-float backdrop-blur-xl outline-none hover:text-graphite focus-visible:ring-2 focus-visible:ring-graphite/30"
-      >
-        {coach.skip}
-      </button>
-    </>
-  );
-}
-
-const tipIcon: Record<string, LucideIcon> = { pin: MapPin, kinds: MapPin, world: Sparkles, trolley: TrainFront };
-
-function TipCard({ tip, leaving }: { tip: Tip; leaving: boolean }) {
-  const selector = tip.place === "world" || tip.place === "trolley" ? anchorSelector[tip.place] : undefined;
-  const rect = useRect(selector);
-  const Icon = tipIcon[tip.id];
-
-  // Fixed corners for the two tips that explain the map as a whole; the other two point at their own button.
-  let style: React.CSSProperties = {};
-  let cls = "";
-  let tail: { side: "top" | "bottom"; left: number } | null = null;
-  if (tip.place === "right") cls = "top-[9.5rem] right-2 sm:top-[7.75rem] sm:right-4";
-  else if (tip.place === "left") cls = "top-[9.5rem] left-2 sm:top-[8.75rem] sm:left-4";
-  else if (rect) {
-    const w = Math.min(TIP_W, window.innerWidth - 16);
-    const cx = rect.left + rect.width / 2;
-    const left = Math.min(Math.max(cx - w + 40, 8), window.innerWidth - w - 8);
-    if (tip.place === "world") style = { top: rect.bottom + 12, left };
-    else style = { bottom: window.innerHeight - rect.top + 12, left };
-    tail = { side: tip.place === "world" ? "top" : "bottom", left: Math.min(Math.max(cx - left - 6, 14), w - 26) };
-  } else cls = tip.place === "world" ? "top-[9.5rem] right-2 sm:right-4" : "bottom-20 right-2 sm:right-4";
-
-  return (
-    <div
-      role="status"
-      style={style}
-      className={cn(
-        "pointer-events-none fixed z-50 w-[min(18rem,calc(100vw-1rem))] rounded-2xl border border-ivory/80 bg-ivory/95 p-3 font-ui text-graphite shadow-float backdrop-blur-xl duration-300",
-        leaving ? "motion-safe:animate-out motion-safe:fade-out motion-safe:zoom-out-95" : "motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:slide-in-from-top-2",
-        cls,
-      )}
+    <section
+      role="dialog"
+      aria-label={g.label}
+      className="fixed top-[9.5rem] left-2 z-50 w-[min(19rem,calc(100vw-1rem))] rounded-3xl bg-ivory/80 p-4 font-ui text-graphite shadow-float backdrop-blur-xl backdrop-saturate-150 sm:top-[8.75rem] sm:left-4 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-2 motion-safe:duration-500"
     >
-      <div className="flex gap-2.5">
-        <span aria-hidden className="flex size-8 shrink-0 items-center justify-center rounded-full bg-cat-verify">
-          <Icon className="size-4 text-ivory" />
-        </span>
-        <div className="min-w-0 text-xs leading-snug">
-          <p className="font-heading text-sm font-semibold">{tip.title}</p>
-          {tip.text && <p className="mt-0.5 text-taupe">{tip.text}</p>}
-        </div>
-      </div>
-      {tip.id === "kinds" && (
-        <ul className="mt-2.5 space-y-1.5">
-          {categories.map((c) => {
-            const st = categoryStyle[c.id];
-            const KindIcon = st.icon;
-            return (
-              <li key={c.id} className="flex items-start gap-2 text-xs leading-snug">
-                <span className={cn("mt-px flex size-5 shrink-0 items-center justify-center rounded-full", st.soft)}>
-                  <KindIcon className={cn("size-3", st.text)} aria-hidden />
-                </span>
-                <span>
-                  <span className="font-semibold">{c.label}.</span> <span className="text-taupe">{coach.kinds[c.id]}</span>
-                </span>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-      {tail && (
-        <span
-          aria-hidden
-          style={{ left: tail.left }}
-          className={cn("absolute size-3 rotate-45 border-ivory/80 bg-ivory", tail.side === "top" ? "-top-1.5 border-t border-l" : "-bottom-1.5 border-r border-b")}
-        />
-      )}
-    </div>
+      <p className="font-heading text-lg leading-tight font-semibold">{g.title}</p>
+      <p className="mt-1 text-xs leading-snug text-taupe">{g.text}</p>
+      <p className="mt-4 font-mono text-[0.62rem] tracking-[0.14em] text-taupe uppercase">{g.kindsTitle}</p>
+      <ul className="mt-2 space-y-2.5">
+        {categories.map((c) => {
+          const st = categoryStyle[c.id];
+          const KindIcon = st.icon;
+          return (
+            <li key={c.id} className="flex items-start gap-2.5 text-xs leading-snug">
+              <KindIcon className={cn("mt-0.5 size-4 shrink-0", st.text)} aria-hidden />
+              <span>
+                <span className="font-semibold">{c.label}.</span> <span className="text-taupe">{coach.kinds[c.id]}</span>
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+      <button ref={done} type="button" onClick={onDone} className={`${primaryClass} mt-4 h-9 w-full px-4 text-xs`} style={primaryStyle}>
+        {g.done}
+      </button>
+    </section>
   );
 }

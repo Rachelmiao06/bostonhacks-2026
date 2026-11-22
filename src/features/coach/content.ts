@@ -15,37 +15,14 @@ export const coach = {
     skip: "Skip",
   },
 
-  /** Short tips that pop up one at a time, each next to the thing it explains, then go away. */
-  tips: [
-    {
-      id: "pin",
-      place: "right",
-      title: "Every pin is a challenge",
-      text: "Tap one, tell us what you see there. It takes about a minute.",
-      ms: 5000,
-    },
-    {
-      id: "kinds",
-      place: "left",
-      title: "Four kinds of problems",
-      text: "",
-      ms: 8000,
-    },
-    {
-      id: "world",
-      place: "world",
-      title: "Finish one, grow your island",
-      text: "Every challenge you complete adds to My World.",
-      ms: 5000,
-    },
-    {
-      id: "trolley",
-      place: "trolley",
-      title: "Stuck? Ask Trolley",
-      text: "Questions about the map or a mission, any time.",
-      ms: 5000,
-    },
-  ] as const,
+  /** One card at the top left, after the map has zoomed to the rider's start. */
+  guide: {
+    label: "Tada guide",
+    title: "Every pin is a challenge",
+    text: "Tap one and tell us what you see there. It takes about a minute.",
+    kindsTitle: "Four kinds of problems",
+    done: "Got it",
+  },
 
   /** One line per problem kind, shown in the "Four kinds" tip. */
   kinds: {
@@ -55,5 +32,4 @@ export const coach = {
     verify: "MBTA says it's fixed. Go confirm.",
   },
 
-  skip: "Skip tips",
 };
