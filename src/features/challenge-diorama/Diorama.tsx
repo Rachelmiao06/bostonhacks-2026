@@ -89,7 +89,7 @@ const FIXED = {
   skyDay: L("sky-day", 1200, 782, 40, 0, 340),
   skyDusk: L("sky-dusk", 1200, 777, 40, 0, 340),
   tile: L("base-tile", 1300, 974, 20, 110, 380),
-  building: L("building", 900, 703, 6, 96, 205),
+  building: L("building", 1000, 788, 6, 96, 205),
   sign: L("sign", 520, 544, 0, 0, 40),
   rider: L("rider", 340, 557, 170, 212, 46),
   note: L("bubble-note", 600, 462, 150, 148, 84),
