@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { BookOpen, ChevronDown, Gift, Sprout, X } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 import { content } from "./content";
-import { glass } from "./glass";
+import { glassSoft } from "./glass";
 
-const icons = { unlock: Sprout, "gift-0": Gift, journal: BookOpen } as const;
 const FIRST_MS = 700;
 const GAP_MS = 1500;
 
@@ -41,7 +40,7 @@ export function WorldNotes({ onPick, hidden }: { onPick: (id: string) => void; h
           setTucked((t) => !t);
         }}
         aria-expanded={!tucked}
-        className={`pointer-events-auto inline-flex cursor-pointer items-center gap-1.5 rounded-full py-1 pr-2 pl-3 text-[0.72rem] font-medium text-graphite outline-none focus-visible:ring-4 focus-visible:ring-graphite/25 ${glass}`}
+        className={`pointer-events-auto inline-flex cursor-pointer items-center gap-1.5 rounded-full py-1 pr-2 pl-3 text-[0.72rem] font-medium text-graphite outline-none focus-visible:ring-4 focus-visible:ring-graphite/25 ${glassSoft}`}
       >
         <span className="relative">{n.pill}</span>
         {tucked ? <ChevronDown className="relative size-3.5" aria-hidden /> : <X className="relative size-3.5" aria-label={n.hide} />}
@@ -51,7 +50,6 @@ export function WorldNotes({ onPick, hidden }: { onPick: (id: string) => void; h
         <ul className="flex w-full flex-col gap-2" aria-label={n.pill}>
           <AnimatePresence initial={false}>
             {n.points.slice(0, shown).map((p) => {
-              const Icon = icons[p.id as keyof typeof icons];
               return (
                 <motion.li
                   key={p.id}
@@ -64,17 +62,13 @@ export function WorldNotes({ onPick, hidden }: { onPick: (id: string) => void; h
                   <button
                     type="button"
                     onClick={() => onPick(p.id)}
-                    className={`pointer-events-auto flex w-full cursor-pointer items-start gap-2.5 rounded-3xl p-2.5 text-left font-ui text-graphite outline-none focus-visible:ring-4 focus-visible:ring-graphite/25 ${glass}`}
+                    className={`pointer-events-auto flex w-full cursor-pointer items-start rounded-3xl px-4 py-2.5 text-left font-ui text-graphite outline-none focus-visible:ring-4 focus-visible:ring-graphite/25 ${glassSoft}`}
                   >
-                    <span className="relative mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl bg-graphite text-ivory">
-                      <Icon className="size-4" aria-hidden />
-                    </span>
                     <span className="relative min-w-0 flex-1">
                       <span className="flex items-baseline justify-between gap-2">
-                        <span className="font-pixel text-[0.5rem] tracking-wide text-taupe uppercase">{n.app}</span>
+                        <span className="text-sm leading-tight font-semibold">{p.title}</span>
                         <span className="text-[0.62rem] text-taupe">{n.now}</span>
                       </span>
-                      <span className="block text-sm leading-tight font-semibold">{p.title}</span>
                       <span className="block text-[0.72rem] leading-snug text-taupe">{p.body}</span>
                     </span>
                   </button>

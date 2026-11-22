@@ -142,7 +142,6 @@ export const content = {
 
   // What My World is, as three phone-style notification banners at the top left, popping in one after another.
   notes: {
-    app: "My World",
     now: "now",
     pill: "What is My World?",
     hide: "Hide",
