@@ -79,7 +79,7 @@ export function DioramaLab() {
         <div aria-hidden className="absolute inset-0" style={{ background: DUSK, opacity: dusk ? 1 : 0, transition: reduced ? "none" : "opacity 0.9s" }} />
 
         {/* Floating top bar: back, where you are, and the test switches. No box. */}
-        <div className="relative z-20 mx-auto flex w-full max-w-[34rem] items-center justify-between gap-2 px-3 pt-[4.75rem]">
+        <div className="relative z-20 mx-auto flex w-full max-w-[34rem] items-center justify-between gap-2 px-3 pt-[4.75rem] [@media(max-height:740px)]:pt-[4.25rem]">
           {step !== "overview" ? (
             <button type="button" aria-label={text.back} onClick={back} className="grid size-11 cursor-pointer place-items-center rounded-full border border-ivory/80 bg-ivory/55 text-graphite shadow-float outline-none backdrop-blur-xl focus-visible:ring-4 focus-visible:ring-graphite/25">
               <ArrowLeft className="size-5" aria-hidden />
@@ -109,16 +109,18 @@ export function DioramaLab() {
         </div>
 
         {/* The world fills the screen behind everything. The camera moves inside it. */}
-        <div className="relative z-0 flex min-h-0 flex-1 items-center justify-center">
-          <div className="w-[min(100%,34rem)]">
+        <div className="relative z-0 min-h-0 flex-1" style={{ containerType: "size" }}>
+          <div className="absolute inset-0 grid place-items-center">
+          <div style={{ width: "min(100cqw, 34rem, 170cqh)" }}>
             <Diorama bare view={view} landmark={landmark} when={sceneWhen} status={status} rider={step === "note" || step === "done"} note={note.trim().length > 0} saving={phase === "saving"} failed={phase === "failed"} confirmed={phase === "saved"} reduced={reduced} slow={slow ? 3 : 1} sound={sound} />
+          </div>
           </div>
         </div>
 
         {/* The question: a glass card floating over the world. */}
         <div className="relative z-10 mx-auto w-full max-w-[34rem] shrink-0 px-3 pb-3">
           <div className="overflow-hidden rounded-[1.75rem] border border-ivory/80 bg-ivory/60 shadow-ticket backdrop-blur-2xl">
-            <div ref={body} className="relative max-h-[52dvh] min-h-[12rem] overflow-y-auto overscroll-contain px-5 pt-5 pb-2">
+            <div ref={body} className="relative max-h-[52dvh] min-h-[10rem] overflow-y-auto overscroll-contain px-5 pt-5 pb-2 [@media(max-height:740px)]:pt-4 [@media(max-height:740px)]:[&_fieldset]:space-y-2 [@media(max-height:740px)]:[&_label]:min-h-12 [@media(max-height:740px)]:[&_label]:p-2.5 [@media(max-height:740px)]:[&_span.text-taupe]:hidden">
               <AnimatePresence mode="popLayout" custom={{ dir, reduced }} initial={false}>
                 <motion.div key={step} custom={{ dir, reduced }} variants={panel} initial="enter" animate="center" exit="exit">
                   {step === "overview" && (
@@ -168,7 +170,7 @@ export function DioramaLab() {
               </AnimatePresence>
             </div>
 
-            <footer className="space-y-2 px-5 pt-1 pb-5">
+            <footer className="space-y-2 px-5 pt-1 pb-5 [@media(max-height:740px)]:pb-4">
               {step === "overview" && <Primary onClick={() => go("when")}>{text.start} <span aria-hidden>→</span></Primary>}
               {(step === "when" || step === "status") && <Primary disabled={!canNext} onClick={() => go(step === "when" ? "status" : "note")}>Next <span aria-hidden>→</span></Primary>}
               {step === "note" && <Primary disabled={phase === "saving"} onClick={share}>{phase === "saving" ? text.sharing : phase === "failed" ? text.retry : text.share}</Primary>}
@@ -185,7 +187,7 @@ function Panel({ title, sub, children }: { title: string; sub?: string; children
   return (
     <div className="space-y-4">
       <div className="space-y-1">
-        <h2 data-heading tabIndex={-1} className="font-serif text-[1.55rem] leading-tight font-semibold tracking-tight text-graphite outline-none">{title}</h2>
+        <h2 data-heading tabIndex={-1} className="font-serif text-[1.55rem] leading-tight font-semibold tracking-tight text-graphite outline-none [@media(max-height:740px)]:text-[1.3rem]">{title}</h2>
         {sub && <p className="text-sm font-medium text-taupe">{sub}</p>}
       </div>
       {children}
