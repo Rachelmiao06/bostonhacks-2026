@@ -56,7 +56,7 @@ Until then, after any UI change run `npm run lint && npx tsc --noEmit && npm run
 - `SubmitForm.tsx`: text, one photo (preview, replace, remove), Check with AI, Complete.
 - `review.ts`: an offline PRACTICE reviewer. It reads text only. Replace `reviewDraft` with a call to `/api/review` (Gemini) when that exists. Keep its output shape.
 - `storage.ts`: drafts, AI results, completions and tokens in localStorage (`tparty:v1`). Tokens are summed from reward events, one per quest.
-- `photo.ts`: photo validation and IndexedDB storage. Photos never go to localStorage or our server.
+- `photo.ts`: photo validation and IndexedDB storage. Photos never go to localStorage; the older practice flow keeps them on the device. In the live flow a photo passes through our server once, on its way to Gemini for the check, and is not stored.
 - `content.ts`: all text and settings, including the [TBD] photo size limit and `requirePassToComplete`.
 
 ## Rules (docs/SPEC.md)
