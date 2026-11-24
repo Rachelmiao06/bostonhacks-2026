@@ -2,8 +2,6 @@
 
 **Live demo: https://bostonhacks-2026.vercel.app** · Built for BostonHacks 2026
 
-Created and maintained by [Rachel Miao](https://github.com/Rachelmiao06), repository administrator.
-
 Your elevator is out again. You tell nobody, because you don't know who to tell. The MBTA posts an alert, the city has a 311 site, and a rider's note usually lives in neither. Tada puts all of it on one map and turns a quick report into something you can see, check and feel good about.
 
 You open a pixel map of the T, find a real problem near you, report it, check whether it's fixed, and watch a small knitted island grow with every real thing you do.
@@ -27,6 +25,8 @@ Every real action adds a piece to **My World**, a knitted island. The look is wa
 - Demo mode (`?demo=1`) uses a fixed Boston spot and sample photos so the demo works without live data.
 
 ## How we built it
+
+[Rachel Miao](https://github.com/Rachelmiao06) designed Tada and built it from idea to launch, and she administers this repository. Here is what each tool does for you:
 
 **MBTA API.** Live alerts become the pins on the map. We cache them for 5 minutes and fall back to a saved snapshot, so the demo never depends on the MBTA being up. A scheduled job (`.github/workflows/sync.yml`) refreshes every 5 minutes so fix times stay accurate when nobody is using the app.
 
