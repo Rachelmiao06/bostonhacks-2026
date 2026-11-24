@@ -26,7 +26,7 @@ Every real action adds a piece to **My World**, a knitted island. The look is wa
 
 ## How we built it
 
-[Rachel Miao](https://github.com/Rachelmiao06) designed Tada and built it from idea to launch, and she administers this repository. Here is what each tool does for you:
+Here is what each tool does for you:
 
 **MBTA API.** Live alerts become the pins on the map. We cache them for 5 minutes and fall back to a saved snapshot, so the demo never depends on the MBTA being up. A scheduled job (`.github/workflows/sync.yml`) refreshes every 5 minutes so fix times stay accurate when nobody is using the app.
 
