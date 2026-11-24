@@ -26,6 +26,8 @@ Every real action adds a piece to **My World**, a knitted island. The look is wa
 
 ## How we built it
 
+[Rachel Miao](https://github.com/Rachelmiao06) designed Tada and built it from idea to launch, and she administers this repository. Here is what each tool does for you:
+
 **MBTA API.** Live alerts become the pins on the map. We cache them for 5 minutes and fall back to a saved snapshot, so the demo never depends on the MBTA being up. A scheduled job (`.github/workflows/sync.yml`) refreshes every 5 minutes so fix times stay accurate when nobody is using the app.
 
 **Boston 311 open data (data.boston.gov).** We query past 311 reports near a spot to warn about duplicates, and we open the 311 form with your description filled in. If the check can't run, the screen says so and never claims there are no duplicates.
