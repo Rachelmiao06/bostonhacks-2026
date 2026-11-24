@@ -26,7 +26,7 @@ Every real action adds a piece to **My World**, a knitted island. The look is wa
 
 ## How we built it
 
-[Rachel Miao](https://github.com/Rachelmiao06) designed Tada and built it from idea to launch, and she administers this repository. Here is what each tool does for you:
+Here is what each tool does for you:
 
 **MBTA API.** Live alerts become the pins on the map. We cache them for 5 minutes and fall back to a saved snapshot, so the demo never depends on the MBTA being up. A scheduled job (`.github/workflows/sync.yml`) refreshes every 5 minutes so fix times stay accurate when nobody is using the app.
 
@@ -55,3 +55,7 @@ Open http://localhost:3000. Copy `.env.example` to `.env.local` and fill in the 
 - `docs/DECISIONS.md`: one line per decision, with the reason.
 - `src/features/<name>/`: one folder per feature, each with its own README.
 - `TEAM.md` and `CLAUDE.md`: how we worked together.
+
+## Team
+
+Made at BostonHacks 2026 by [Rachel Miao](https://github.com/Rachelmiao06) (repository admin), [Junlin831](https://github.com/Junlin831) and [kelseywang6718](https://github.com/kelseywang6718).
