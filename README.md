@@ -6,13 +6,15 @@ Your elevator is out again. You tell nobody, because you don't know who to tell.
 
 You open a pixel map of the T, find a real problem near you, report it, check whether it's fixed, and watch a small knitted world grow with every real thing you do.
 
-![Tada mission, desktop](docs/screenshots/missions/after-desktop-2-overview.jpg)
+![Tada's map of live MBTA problems](docs/readme/explore-map.jpg)
 
 ## What Tada does
 
 Tada has three parts that work as one loop: **Explore** finds the problem, **Reports and missions** let you act on it, and **My Little World** is what you get back.
 
 ### Explore: one map for what is broken right now
+![First-visit guide](docs/readme/explore-intro.jpg)
+
 - A pixel map of the T in line colours. Every pin is a real MBTA alert: elevator, escalator, station issue, closure, shuttle or suspension.
 - Filter chips by kind, a **Near me** chip that flies to your block, and a 3D world view.
 - Pixel landmarks and local food around Boston University. Tap one for a short intro and a link.
@@ -20,6 +22,8 @@ Tada has three parts that work as one loop: **Explore** finds the problem, **Rep
 - **Coach**: the first time you open the app, a short guide explains the four kinds of problem and points a ring and a dotted line at the nearest pin.
 
 ### Reports: take a photo, get it written up, send it to Boston 311
+![Report: take a photo](docs/readme/report-entry.jpg)
+
 1. **Take a photo.** The camera is live, one photo only, and Tada reads your location when you press the shutter. It has to be a spot inside Boston.
 2. **Tada checks it.** The AI sorts the photo into fixable, private, unclear or emergency, and gives a plain reason. A photo of a screen or a printed picture is judged by what it shows, not turned away. Fire, injury or a gas smell is never filed: you see "Call 911".
 3. **Edit the draft.** Tada picks a Boston 311 category and writes a description. You can change both. The pin stays where you took the photo.
@@ -37,6 +41,8 @@ Tap a pin and take a short three-step mission: when you saw it, what you saw, an
 - Each rider can complete a mission once.
 
 ### My Little World: what you get back
+![My Little World, the knitted island](docs/readme/my-little-world.jpg)
+
 Every real action adds a piece to a knitted island. The island has 12 steps: a bare quilt at the start, then grass and flowers, a tree, pines, stones, a cottage, a sheep, a flock, a bridge, a kite and laundry, and clouds. When you finish a mission, you see the new piece float in and then choose to visit your world or do more.
 - Pull the loose thread to knit the island in. There is a keyboard option for people who can't drag.
 - A journal keeps your reports and checks, with a month calendar and stickers on the days you did something.
@@ -46,6 +52,8 @@ Every real action adds a piece to a knitted island. The island has 12 steps: a b
 The look is warm and soft on purpose, so it feels like thanking you, not like a form.
 
 ### Stats: what the city is doing
+![Stats page](docs/readme/stats.jpg)
+
 A numbers page shows how long MBTA elevators and escalators stay broken, repeat offenders and busiest stations. It uses medians, so a few outages that last years don't distort the numbers. Sample numbers are always labelled as samples.
 
 ## What is real and what is not
