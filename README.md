@@ -2,6 +2,8 @@
 
 **Live demo: https://bostonhacks-2026.vercel.app** · Built for BostonHacks 2026
 
+Created and maintained by [Rachel Miao](https://github.com/Rachelmiao06), repository administrator.
+
 Your elevator is out again. You tell nobody, because you don't know who to tell. The MBTA posts an alert, the city has a 311 site, and a rider's note usually lives in neither. Tada puts all of it on one map and turns a quick report into something you can see, check and feel good about.
 
 You open a pixel map of the T, find a real problem near you, report it, check whether it's fixed, and watch a small knitted island grow with every real thing you do.
